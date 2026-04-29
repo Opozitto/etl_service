@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Callable
 
 from app.pipeline.extractors.base import BaseExtractor
-from app.pipeline.errors import UnsupportedImageFormatError
+from app.pipeline.errors import UnsupportedImageFormatError, UnsupportedSpreadsheetFormatError
 
 
 SUPPORTED_STANDALONE_IMAGE_SUFFIXES: tuple[str, ...] = (".jpg", ".jpeg", ".png")
@@ -26,6 +26,8 @@ class ExtractorRegistry:
         for extensions, factory in self._factories:
             if suffix in extensions:
                 return factory()
+        if suffix == ".xls":
+            raise UnsupportedSpreadsheetFormatError(suffix, (".xlsx",))
         if suffix in KNOWN_UNSUPPORTED_IMAGE_SUFFIXES:
             raise UnsupportedImageFormatError(suffix, SUPPORTED_STANDALONE_IMAGE_SUFFIXES)
         raise ValueError(f"Unsupported file type: {path.suffix}")

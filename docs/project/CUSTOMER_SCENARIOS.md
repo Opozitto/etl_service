@@ -128,7 +128,7 @@ Stage 10 должен зафиксировать не функциональну
 | EC-05 | Calculation inputs | Найти исходные данные для расчёта | Text and numeric fragments in docs | Вернуть числа и фрагменты с references | yes | partial | Может требоваться table awareness и/или OCR |
 | EC-06 | Audit visibility | Документ без chunks должен быть замечен audit'ом | Batch corpus outputs and audit report | Появление в problem documents / audit summary | no | supported now | Связка с Stage 7–9 audit foundation |
 | EC-07 | OCR limitation | Скан или фото документа | JPG / JPEG / PNG / HEIC candidate inputs | Отметить limitation / future OCR spike | no | future | Пока не обещать готовый OCR |
-| EC-08 | Table input | XLS / XLSX table-heavy document | Spreadsheet or table-like source | Partial support or explicit future decision point | yes | partial | Decision по XLS ещё не закрыт |
+| EC-08 | Table input | XLS / XLSX table-heavy document | Spreadsheet or table-like source | XLSX baseline support, XLS explicitly unsupported | yes | partial | Table extraction works for XLSX, but this is flattened lexical retrieval, not full table reasoning |
 | EC-09 | Summarization | Сделать краткое саммари документа | Source document plus request for summary | Future spike only | yes | future | Не объявлять готовую summarization |
 | EC-10 | Draft generation | Подготовить черновик раздела документации | Project doc context and task brief | Future spike only | yes | future | Не объявлять готовую LLM generation |
 | EC-11 | Source attribution | Указать, откуда взят ответ | Search hits and chunk references | Answer must carry explicit source references | yes | supported now | Это критерий доверия для pilot track |
@@ -138,7 +138,7 @@ Stage 10 должен зафиксировать не функциональну
 
 - Stage 11 should prove ask / extractive QA with sources on top of the current corpus, without turning it into generation.
 - Stage 12 should test OCR / image intake and separate confirmed support from limitation, especially for scans and phone photos.
-- Stage 13 should resolve the XLS / tables decision and document what is really supported for semi-structured inputs.
+- Stage 13 closes the XLS / tables decision and documents what is really supported for semi-structured inputs.
 - Stage 14 should evaluate summarization / draft generation as a future spike, not as a baseline claim.
 - Stage 15 should connect the confirmed pieces into a prototype integration flow, while keeping audit and eval visible.
 

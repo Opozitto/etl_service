@@ -56,6 +56,20 @@ def test_process_known_unsupported_image_format_returns_clear_error() -> None:
     assert "OCR пока не реализован" in detail
 
 
+def test_process_xls_returns_clear_unsupported_spreadsheet_error() -> None:
+    response = client.post(
+        "/api/v1/documents/process",
+        files={"file": ("sample.XLS", b"fake-spreadsheet-payload", "application/vnd.ms-excel")},
+    )
+
+    assert response.status_code == 400
+    detail = response.json()["detail"]
+    assert "Неподдерживаемый формат электронной таблицы" in detail
+    assert ".xls" in detail
+    assert ".xlsx" in detail
+    assert "XLS пока не реализован" in detail
+
+
 def test_process_standalone_png_image_returns_image_metadata(monkeypatch) -> None:
     project_root = Path(__file__).resolve().parents[1]
     smoke_root = project_root / "tests" / ".stage12_api_smoke_png"

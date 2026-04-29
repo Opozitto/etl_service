@@ -35,7 +35,7 @@
 
 ## next
 
-- Stage 13 — XLS / tables / semi-structured input decision.
+- Stage 13 closed as the XLS / tables baseline decision.
 
 ## alignment
 
@@ -45,7 +45,7 @@
 
 ## risks
 
-- `.XLS` decision is still not closed, and table support remains only partially defined.
+- `.XLS` is now explicitly unsupported as a legacy spreadsheet format; `.XLSX` remains the supported baseline spreadsheet input.
 - OCR is not implemented.
 - `HEIC` is not confirmed.
 - LLM / RAG / generation are not implemented.
@@ -63,5 +63,5 @@
 
 ## open questions
 
-- `не подтверждено`: whether `.XLS` should be documented separately as a legacy input beyond the current Stage 2 baseline.
+- `не подтверждено`: whether future work should add true table-aware reasoning beyond the current flattened retrieval baseline.
 

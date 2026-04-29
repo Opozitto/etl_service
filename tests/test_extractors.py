@@ -8,6 +8,7 @@ from PIL import Image
 
 from app.core.config import get_settings
 from app.pipeline.errors import UnsupportedImageFormatError
+from app.pipeline.errors import UnsupportedSpreadsheetFormatError
 from app.pipeline.extractors.image import ImageExtractor
 from app.pipeline.extractors.registry import (
     ExtractorRegistry,
@@ -61,15 +62,22 @@ def test_registry_preserves_generic_unsupported_extension_error() -> None:
     assert str(exc_info.value) == "Unsupported file type: .foo"
 
 
-def test_registry_routes_xlsx_and_rejects_xls() -> None:
+@pytest.mark.parametrize("suffix", [".xls", ".XLS"])
+def test_registry_rejects_xls_as_known_unsupported_spreadsheet_format(suffix: str) -> None:
+    with pytest.raises(UnsupportedSpreadsheetFormatError) as exc_info:
+        ExtractorRegistry().get_for_path(Path(f"sample{suffix}"))
+
+    message = str(exc_info.value)
+    assert "Неподдерживаемый формат электронной таблицы" in message
+    assert ".xls" in message
+    assert ".xlsx" in message
+    assert "XLS пока не реализован" in message
+
+
+def test_registry_routes_xlsx() -> None:
     registry = ExtractorRegistry()
 
     assert isinstance(registry.get_for_path(Path("sample.xlsx")), XlsxExtractor)
-
-    with pytest.raises(ValueError) as exc_info:
-        registry.get_for_path(Path("sample.xls"))
-
-    assert str(exc_info.value) == "Unsupported file type: .xls"
 
 
 def test_xlsx_table_baseline_is_structured_and_searchable(monkeypatch: pytest.MonkeyPatch) -> None:

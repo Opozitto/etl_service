@@ -223,13 +223,13 @@ conda run -n etl_env python -m py_compile scripts\audit_corpus.py tests\test_aud
 
 ## Stage 13. XLS / tables / semi-structured input decision
 
-- Цель: принять отдельное решение по `XLS` и уточнить baseline для table extraction в полу-структурированных данных.
+- Цель: закрыть baseline decision по `XLS` и таблицам без расширения scope за пределы текущего ETL/search baseline.
 - Подзадачи:
-  - подтвердить, остаётся ли `XLS` legacy-only ограничением или требует расширения;
-  - описать статус table extraction для `XLSX` и табличных блоков в других форматах;
-  - зафиксировать ограничения для неструктурированных и полуструктурированных данных;
-  - обновить claims в документации без опережающих обещаний.
-- Статус: planned.
+  - подтвердить, что `XLSX` поддерживается на текущем baseline-уровне;
+  - зафиксировать, что table blocks/chunks из `XLSX` попадают в retrieval path;
+  - явно оформить старый бинарный `XLS` как unsupported known spreadsheet format;
+  - не обещать полноценную table-aware reasoning / analytics.
+- Статус: completed.
 
 ## Stage 14. Summarization / draft generation spike
 
