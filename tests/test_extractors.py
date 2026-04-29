@@ -14,7 +14,10 @@ from app.pipeline.extractors.registry import (
     KNOWN_UNSUPPORTED_IMAGE_SUFFIXES,
     SUPPORTED_STANDALONE_IMAGE_SUFFIXES,
 )
+from app.pipeline.extractors.xlsx import XlsxExtractor
+from app.pipeline.transform.structure import build_structure
 from app.pipeline.extractors.txt import TxtExtractor
+from app.search.index import CorpusSearchEngine
 from app.services.document_service import DocumentService
 
 
@@ -56,6 +59,59 @@ def test_registry_preserves_generic_unsupported_extension_error() -> None:
         ExtractorRegistry().get_for_path(Path("sample.foo"))
 
     assert str(exc_info.value) == "Unsupported file type: .foo"
+
+
+def test_registry_routes_xlsx_and_rejects_xls() -> None:
+    registry = ExtractorRegistry()
+
+    assert isinstance(registry.get_for_path(Path("sample.xlsx")), XlsxExtractor)
+
+    with pytest.raises(ValueError) as exc_info:
+        registry.get_for_path(Path("sample.xls"))
+
+    assert str(exc_info.value) == "Unsupported file type: .xls"
+
+
+def test_xlsx_table_baseline_is_structured_and_searchable(monkeypatch: pytest.MonkeyPatch) -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    sample_path = project_root / "first_test_data" / "Форма 2 Плановая калькуляция затрат.xlsx"
+    smoke_root = project_root / "tests" / ".stage13_xlsx_smoke"
+    storage_dir = smoke_root / "storage"
+    shutil.rmtree(smoke_root, ignore_errors=True)
+    storage_dir.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setenv("ETL_STORAGE_DIR", str(storage_dir))
+    get_settings.cache_clear()
+
+    try:
+        extracted = XlsxExtractor().extract(sample_path)
+        assert any(block.kind == "table" for block in extracted.blocks)
+
+        sections, blocks, tables, images, chunks = build_structure(extracted)
+        assert tables
+        assert any(block.type == "table" for block in blocks)
+        assert chunks
+        assert any("Трудоемкость" in chunk.text and "1199" in chunk.text for chunk in chunks)
+
+        service = DocumentService()
+        outcome = service.process_path_with_status(sample_path)
+        assert outcome.status == "processed"
+        assert outcome.document.tables
+        assert outcome.document.blocks
+        assert outcome.document.chunks
+        assert Path(outcome.document.artifacts.result_json_path).is_file()
+
+        search_engine = CorpusSearchEngine(service.storage)
+        hits = search_engine.search("трудоемкость 1199", top_k=3)
+        assert hits
+        assert any("Трудоемкость" in hit.snippet and "1199" in hit.snippet for hit in hits)
+
+        ask_response = search_engine.ask("Какая трудоемкость указана в документе?", top_k=3, max_sentences=2)
+        assert ask_response.sources
+        assert ask_response.hits
+        assert any("Трудоемкость" in source.snippet and "1199" in source.snippet for source in ask_response.sources)
+    finally:
+        get_settings.cache_clear()
+        shutil.rmtree(smoke_root, ignore_errors=True)
 
 
 @pytest.mark.parametrize("suffix", SUPPORTED_STANDALONE_IMAGE_SUFFIXES)
