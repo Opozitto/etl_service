@@ -90,9 +90,29 @@ def test_process_xls_document_returns_table_metadata(monkeypatch) -> None:
         assert document["blocks"]
         assert any(block["type"] == "table" for block in document["blocks"])
         assert document["chunks"]
+        assert any("Строка" in chunk["text"] for chunk in document["chunks"])
         assert any("сырья" in chunk["text"].lower() for chunk in document["chunks"])
         assert document["processing_info"]["features"]["tables_detected"] is True
         assert Path(document["artifacts"]["result_json_path"]).is_file()
+
+        search_response = client.post(
+            "/api/v1/search",
+            json={"query": "сырья", "top_k": 3},
+        )
+        assert search_response.status_code == 200
+        search_data = search_response.json()
+        assert search_data["hits"]
+        assert any("Строка" in hit["snippet"] for hit in search_data["hits"])
+
+        ask_response = client.post(
+            "/api/v1/ask",
+            json={"question": "Где указаны затраты на приобретение сырья?", "top_k": 3, "max_sentences": 2},
+        )
+        assert ask_response.status_code == 200
+        ask_data = ask_response.json()
+        assert ask_data["sources"]
+        assert ask_data["hits"]
+        assert any("Строка" in source["snippet"] for source in ask_data["sources"])
     finally:
         get_settings.cache_clear()
         shutil.rmtree(smoke_root, ignore_errors=True)

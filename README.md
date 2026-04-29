@@ -49,6 +49,7 @@ conda run -n etl_env uvicorn app.main:app --reload
 `AskResponse` включает `question`, `answer`, `sources`, `hits`, `strategy`.
 `sources` — source-backed evidence snippets, а `hits` сохранён для обратной совместимости.
 Для `xlsx`/`xls`/табличных документов ответы строятся через flattened lexical retrieval по чанкам, а не через полноценную table-aware логику.
+Для `xlsx`/`xls` table chunks теперь получают row-level context с sheet/table/row/column-value текстом, что улучшает lexical retrieval по строкам таблиц без изменения API contract.
 Если в корпусе нет ответа, сервис возвращает `нет информации в корпусе`.
 
 ## Batch обработка директории
@@ -113,6 +114,6 @@ OCR не входит в текущий baseline. `jpg`/`jpeg`/`png` подде�
 ## Stage 14 note
 
 - `.xls` is now supported at baseline level through `XlsExtractor`.
-- `.xls` and `.xlsx` share the same flattened table extraction contract for search/ask.
+- `.xls` and `.xlsx` share the same flattened table extraction contract for search/ask, with additional row-level lexical chunks for better row/value retrieval.
 - Advanced Excel semantics such as formulas, macros, styles, merged cells, and hidden-sheet behavior remain out of scope.
 - Stage 13's unsupported-XLS decision is historical only and has been superseded by Stage 14.

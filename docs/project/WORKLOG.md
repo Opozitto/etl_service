@@ -46,6 +46,7 @@
 ## risks
 
 - `.XLS` is now baseline-supported through Stage 14; `.XLSX` remains supported baseline spreadsheet input.
+- Spreadsheet retrieval is still lexical; the quality gain comes from row-level chunks, not from table-aware analytics.
 - OCR is not implemented.
 - `HEIC` is not confirmed.
 - LLM / RAG / generation are not implemented.
@@ -67,6 +68,7 @@
 
 
 - Stage 14 completed as practical XLS baseline support.
+- Stage 16 table retrieval quality improvement completed for spreadsheet row-level lexical chunks with column/value context.
 - Local full pytest result: `conda run -n etl_env python -m pytest -q --basetemp=D:\Projects\etl_service\.pytest-run-temp\stage14` -> `39 passed in 14.16s`
 - Runtime artifacts after local pytest were restored and must not be committed.
 - Stage 15 next: customer demo readiness / docs and scenario alignment.

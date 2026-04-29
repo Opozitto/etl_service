@@ -128,7 +128,7 @@ Stage 10 должен зафиксировать не функциональну
 | EC-05 | Calculation inputs | Найти исходные данные для расчёта | Text and numeric fragments in docs | Вернуть числа и фрагменты с references | yes | partial | Может требоваться table awareness и/или OCR |
 | EC-06 | Audit visibility | Документ без chunks должен быть замечен audit'ом | Batch corpus outputs and audit report | Появление в problem documents / audit summary | no | supported now | Связка с Stage 7–9 audit foundation |
 | EC-07 | OCR limitation | Скан или фото документа | JPG / JPEG / PNG / HEIC candidate inputs | Отметить limitation / future OCR spike | no | future | Пока не обещать готовый OCR |
-| EC-08 | Table input | XLS / XLSX table-heavy document | Spreadsheet or table-like source | XLS and XLSX baseline support with flattened lexical retrieval | yes | supported now | Table extraction works for XLS and XLSX, but this is flattened lexical retrieval, not full table-aware reasoning |
+| EC-08 | Table input | XLS / XLSX table-heavy document | Spreadsheet or table-like source | XLS and XLSX baseline support with flattened lexical retrieval | yes | supported now | Table extraction works for XLS and XLSX, and row-level chunks now add sheet/table/row/column-value context; this is still flattened lexical retrieval, not full table-aware reasoning |
 | EC-09 | Summarization | Сделать краткое саммари документа | Source document plus request for summary | Future spike only | yes | future | Не объявлять готовую summarization |
 | EC-10 | Draft generation | Подготовить черновик раздела документации | Project doc context and task brief | Future spike only | yes | future | Не объявлять готовую LLM generation |
 | EC-11 | Source attribution | Указать, откуда взят ответ | Search hits and chunk references | Answer must carry explicit source references | yes | supported now | Это критерий доверия для pilot track |
@@ -152,4 +152,5 @@ Stage 10 должен зафиксировать не функциональну
 ## Stage 14 note
 
 - EC-08 now reflects practical `.xls`/`.xlsx` table baseline support.
-- The scenario set still uses flattened lexical retrieval and does not claim full table reasoning.
+  - The scenario set still uses flattened lexical retrieval and does not claim full table reasoning.
+  - Row-level spreadsheet chunks improve source-backed table row/value retrieval without table-aware analytics.

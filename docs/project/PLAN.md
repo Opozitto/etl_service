@@ -306,4 +306,5 @@ conda run -n etl_env python -m scripts.batch_process --input-dir first_test_data
 
 - Stage 14 is completed in code: `.xls` baseline support is implemented and verified.
 - The practical baseline contract now includes `.xls`/`.XLS` alongside `.xlsx` for table extraction, chunking, and retrieval.
+- Table retrieval is still lexical, but row-level chunks now carry sheet/table/row/column-value context for better row/value matching.
 - Advanced Excel semantics remain out of scope.

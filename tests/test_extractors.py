@@ -97,6 +97,7 @@ def test_xls_table_baseline_is_structured_and_searchable(monkeypatch: pytest.Mon
         assert tables
         assert any(block.type == "table" for block in blocks)
         assert chunks
+        assert any("Строка" in chunk.text and "сырья" in chunk.text for chunk in chunks)
         assert any(
             "Форма № 4" in chunk.text and "Затраты на приобретение сырья" in chunk.text
             for chunk in chunks
@@ -119,11 +120,13 @@ def test_xls_table_baseline_is_structured_and_searchable(monkeypatch: pytest.Mon
         search_engine = CorpusSearchEngine(service.storage)
         hits = search_engine.search("сырья", top_k=3)
         assert hits
+        assert any("Строка" in hit.snippet for hit in hits)
         assert any("сырья" in hit.snippet.lower() for hit in hits)
 
         ask_response = search_engine.ask("Где указаны затраты на приобретение сырья?", top_k=3, max_sentences=2)
         assert ask_response.sources
         assert ask_response.hits
+        assert any("Строка" in source.snippet for source in ask_response.sources)
         assert any("сырья" in source.snippet.lower() for source in ask_response.sources)
     finally:
         get_settings.cache_clear()
@@ -148,6 +151,7 @@ def test_xlsx_table_baseline_is_structured_and_searchable(monkeypatch: pytest.Mo
         assert tables
         assert any(block.type == "table" for block in blocks)
         assert chunks
+        assert any("Строка" in chunk.text and "1199" in chunk.text for chunk in chunks)
         assert any("Трудоемкость" in chunk.text and "1199" in chunk.text for chunk in chunks)
 
         service = DocumentService()
@@ -161,11 +165,13 @@ def test_xlsx_table_baseline_is_structured_and_searchable(monkeypatch: pytest.Mo
         search_engine = CorpusSearchEngine(service.storage)
         hits = search_engine.search("Трудоемкость 1199", top_k=3)
         assert hits
+        assert any("Строка" in hit.snippet for hit in hits)
         assert any("Трудоемкость" in hit.snippet and "1199" in hit.snippet for hit in hits)
 
         ask_response = search_engine.ask("Какая трудоемкость указана в документе?", top_k=3, max_sentences=2)
         assert ask_response.sources
         assert ask_response.hits
+        assert any("Строка" in source.snippet for source in ask_response.sources)
         assert any("Трудоемкость" in source.snippet and "1199" in source.snippet for source in ask_response.sources)
     finally:
         get_settings.cache_clear()

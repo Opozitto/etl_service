@@ -47,6 +47,7 @@ def build_structure(
     tables: list[TableData] = []
     images: list[ImageInfo] = []
     chunks: list[Chunk] = []
+    table_block_ids: dict[str, str] = {}
 
     section_counter = count(1)
     block_counter = count(1)
@@ -109,6 +110,7 @@ def build_structure(
                 metadata={"table_id": table_id, **raw.metadata},
             )
             blocks.append(block)
+            table_block_ids[table_id] = block.block_id
             _attach_block_to_section(sections, current_section_id, block.block_id, raw.page_num)
             continue
 
@@ -160,6 +162,23 @@ def build_structure(
         )
         chunks.extend(section_chunks)
         chunk_order += len(section_chunks)
+
+    for table in tables:
+        table_block_id = table_block_ids.get(table.table_id)
+        if not table_block_id:
+            continue
+        table_section = next((section for section in sections if section.section_id == table.section_id), root_section)
+        row_chunks = _build_table_row_chunks(
+            table=table,
+            section=table_section,
+            table_block_id=table_block_id,
+            chunk_counter=chunk_counter,
+            start_order=chunk_order,
+            table_title=_table_title(table_section),
+            sheet_name=_table_sheet_name(blocks, table_block_id),
+        )
+        chunks.extend(row_chunks)
+        chunk_order += len(row_chunks)
 
     return sections, blocks, tables, images, chunks
 
@@ -247,6 +266,86 @@ def _build_section_chunks(
     if current_parts:
         flush()
     return chunks
+
+
+def _build_table_row_chunks(
+    table: TableData,
+    section: Section,
+    table_block_id: str,
+    chunk_counter,
+    start_order: int,
+    table_title: str,
+    sheet_name: str,
+) -> list[Chunk]:
+    rows = [row for row in table.rows if any(normalize_text(cell) for cell in row)]
+    if not rows:
+        return []
+
+    chunks: list[Chunk] = []
+    order = start_order
+    headers = rows[0] if len(rows) > 1 else []
+    data_rows = rows[1:] if len(rows) > 1 else rows
+
+    for row_index, row in enumerate(data_rows, start=2 if len(rows) > 1 else 1):
+        row_text = _format_table_row_text(table_title, sheet_name, row_index, headers, row)
+        if not row_text:
+            continue
+        chunks.append(
+            Chunk(
+                chunk_id=f"chk-{next(chunk_counter)}",
+                document_id="",
+                section_id=section.section_id,
+                block_ids=[table_block_id],
+                text=row_text,
+                order=order,
+                token_estimate=estimate_tokens(row_text),
+            )
+        )
+        order += 1
+    return chunks
+
+
+def _format_table_row_text(
+    table_title: str,
+    sheet_name: str,
+    row_index: int,
+    headers: list[str],
+    row: list[str],
+) -> str:
+    context_parts: list[str] = []
+    if table_title:
+        context_parts.append(f"Таблица: {table_title}")
+    if sheet_name and sheet_name != table_title:
+        context_parts.append(f"Лист: {sheet_name}")
+
+    value_parts: list[str] = []
+    for column_index, value in enumerate(row):
+        value_text = normalize_text(value)
+        if not value_text:
+            continue
+        header_text = normalize_text(headers[column_index]) if column_index < len(headers) else ""
+        label = header_text or f"Колонка {column_index + 1}"
+        value_parts.append(f"{label}: {value_text}")
+
+    if not value_parts:
+        return ""
+
+    context_parts.append(f"Строка {row_index}.")
+    context_parts.append("; ".join(value_parts))
+    return normalize_text(" ".join(context_parts))
+
+
+def _table_title(section: Section) -> str:
+    if section.title and section.title != "Document":
+        return section.title
+    return ""
+
+
+def _table_sheet_name(blocks: list[Block], table_block_id: str) -> str:
+    for block in blocks:
+        if block.block_id == table_block_id:
+            return normalize_text(str(block.metadata.get("sheet_name", "")))
+    return ""
 
 
 def _split_block_for_chunking(text: str) -> list[str]:
