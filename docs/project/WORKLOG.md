@@ -12,7 +12,7 @@
 - After Stage 9, a roadmap realignment was performed against the extended customer brief.
 - Stage 10 customer scenarios and evaluation set created as a docs-only artifact.
 - Stage 11 closed as the source-backed ask response alignment.
-- Stage 12 partial: explicit unsupported image format contract added for known image-like formats outside `jpg`/`jpeg`/`png`.
+- Stage 12 partial: explicit unsupported image format contract added for known image-like formats outside `jpg`/`jpeg`/`png`, with user-facing wording localized to Russian.
 - Commit: `1a02af5` `Add source-backed ask response`.
 - Checks:
   - `python -m pytest -q tests\test_api.py` -> 4 passed

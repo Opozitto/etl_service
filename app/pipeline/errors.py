@@ -9,9 +9,9 @@ class UnsupportedImageFormatError(ValueError):
         normalized_suffix = suffix.lower()
         supported_list = ", ".join(supported_suffixes)
         message = (
-            f"Unsupported image format: {normalized_suffix}. "
-            f"Supported standalone image formats: {supported_list}. "
-            "OCR is not implemented yet."
+            f"Неподдерживаемый формат изображения: {normalized_suffix}. "
+            f"Поддерживаемые standalone image-форматы: {supported_list}. "
+            "OCR пока не реализован."
         )
         super().__init__(message)
         self.code = "unsupported_image_format"

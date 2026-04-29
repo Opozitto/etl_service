@@ -40,10 +40,10 @@ def test_registry_rejects_known_unsupported_image_suffixes(suffix: str) -> None:
         ExtractorRegistry().get_for_path(Path(f"sample{suffix}"))
 
     message = str(exc_info.value)
-    assert "Unsupported image format" in message
+    assert "Неподдерживаемый формат изображения" in message
     assert suffix in message
-    assert "Supported standalone image formats: .jpg, .jpeg, .png" in message
-    assert "OCR is not implemented yet." in message
+    assert "Поддерживаемые standalone image-форматы: .jpg, .jpeg, .png" in message
+    assert "OCR пока не реализован" in message
 
 
 def test_registry_preserves_generic_unsupported_extension_error() -> None:

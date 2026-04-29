@@ -35,10 +35,10 @@ def test_process_known_unsupported_image_format_returns_clear_error() -> None:
 
     assert response.status_code == 400
     detail = response.json()["detail"]
-    assert "Unsupported image format" in detail
+    assert "Неподдерживаемый формат изображения" in detail
     assert ".heic" in detail
-    assert "Supported standalone image formats: .jpg, .jpeg, .png" in detail
-    assert "OCR is not implemented yet." in detail
+    assert "Поддерживаемые standalone image-форматы: .jpg, .jpeg, .png" in detail
+    assert "OCR пока не реализован" in detail
 
 
 def test_search_and_ask_work_for_uploaded_document() -> None:
