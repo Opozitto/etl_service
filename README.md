@@ -102,6 +102,7 @@ conda run -n etl_env python -m scripts.cleanup_storage --apply
 OCR не входит в текущий baseline. `jpg`/`jpeg`/`png` поддерживаются только как standalone image input и используются для фиксации наличия изображений, без OCR.
 `HEIC`/`HEIF`/`TIFF`/`TIF`/`BMP`/`WEBP` сейчас намеренно остаются неподдерживаемыми image-like форматами до отдельной проверки local decoding/OCR.
 Для standalone image intake в `processing_info.features` фиксируются `images_detected=True` и `ocr_used=False`, а результат сохраняется в обычный JSON.
+Для ручной проверки image intake можно использовать sample-файлы из `first_test_data`, но они не нужны для автоматических тестов.
 
 ## Поддержка DOC
 

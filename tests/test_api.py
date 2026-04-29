@@ -1,9 +1,24 @@
-from fastapi.testclient import TestClient
+from io import BytesIO
+from pathlib import Path
+import shutil
 
+from fastapi.testclient import TestClient
+from PIL import Image
+
+from app.api.routes import documents as documents_routes
+from app.core.config import get_settings
 from app.main import app
+from app.search.index import CorpusSearchEngine
+from app.services.document_service import DocumentService
 
 
 client = TestClient(app)
+
+
+def _make_png_bytes() -> bytes:
+    buffer = BytesIO()
+    Image.new("RGB", (2, 2), color="white").save(buffer, format="PNG")
+    return buffer.getvalue()
 
 
 def test_healthcheck() -> None:
@@ -39,6 +54,43 @@ def test_process_known_unsupported_image_format_returns_clear_error() -> None:
     assert ".heic" in detail
     assert "Поддерживаемые standalone image-форматы: .jpg, .jpeg, .png" in detail
     assert "OCR пока не реализован" in detail
+
+
+def test_process_standalone_png_image_returns_image_metadata(monkeypatch) -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    smoke_root = project_root / "tests" / ".stage12_api_smoke_png"
+    storage_dir = smoke_root / "storage"
+    shutil.rmtree(smoke_root, ignore_errors=True)
+    storage_dir.mkdir(parents=True, exist_ok=True)
+
+    monkeypatch.setenv("ETL_STORAGE_DIR", str(storage_dir))
+    get_settings.cache_clear()
+    monkeypatch.setattr(documents_routes, "service", DocumentService())
+    monkeypatch.setattr(
+        documents_routes,
+        "search_engine",
+        CorpusSearchEngine(documents_routes.service.storage),
+    )
+
+    try:
+        response = client.post(
+            "/api/v1/documents/process",
+            files={"file": ("sample.png", _make_png_bytes(), "image/png")},
+        )
+
+        assert response.status_code == 200
+        document = response.json()["document"]
+        assert document["source"]["filename"] == "sample.png"
+        assert document["source"]["extension"] == ".png"
+        assert document["metadata"]["image_count"] == 1
+        assert document["images"]
+        assert document["blocks"]
+        assert document["blocks"][0]["type"] == "image"
+        assert document["processing_info"]["features"]["images_detected"] is True
+        assert document["processing_info"]["features"]["ocr_used"] is False
+    finally:
+        get_settings.cache_clear()
+        shutil.rmtree(smoke_root, ignore_errors=True)
 
 
 def test_search_and_ask_work_for_uploaded_document() -> None:

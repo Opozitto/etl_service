@@ -203,22 +203,12 @@ conda run -n etl_env python -m py_compile scripts\audit_corpus.py tests\test_aud
 
 ## Stage 12. OCR / image intake spike
 
-- Следующий шаг: OCR / image intake spike.
-  - Цель: сделать локальный OCR spike для `JPG`/`JPEG`/`PNG` и отдельно зафиксировать `HEIC` как decision point / limitation.
-- Standalone image intake остаётся ограниченным `jpg`/`jpeg`/`png` в режиме metadata-only; `HEIC`/`HEIF`/`TIFF`/`TIF`/`BMP`/`WEBP` явно считаются неподдерживаемыми image-like форматами до добавления local decoding и OCR checks.
-- Подзадачи:
-  - провести audit / разведку до любого кода:
-    - какие image formats сейчас поддерживаются;
-    - где обрабатываются `jpg`/`png`;
-    - как фиксируется image presence;
-    - есть ли локальные OCR dependencies;
-    - что делать с `HEIC`;
-    - как сделать spike без внешних APIs и без ломки baseline;
-  - оценить локальные OCR options без внешних proprietary API;
-  - проверить, какой минимум image intake нужен для проекта;
-  - отдельно задокументировать статус `HEIC`;
-  - не обещать production-ready OCR до подтверждённого spike.
-- Статус: planned.
+- Статус: completed.
+- Итог:
+  - `jpg`/`jpeg`/`png` принимаются как standalone image input в metadata-only режиме;
+  - OCR не реализован;
+  - `HEIC`/`HEIF`/`TIFF`/`TIF`/`BMP`/`WEBP` остаются known unsupported image-like форматами с русским user-facing сообщением;
+  - API smoke для `/api/v1/documents/process` покрыт тестом.
 
 ## Stage 12.2. Standalone image intake smoke/evaluation
 

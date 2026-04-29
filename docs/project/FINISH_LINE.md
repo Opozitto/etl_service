@@ -4,6 +4,8 @@
 
 - ETL baseline запускается end-to-end в подтверждённом локальном окружении.
 - Поддерживаемые форматы baseline продолжают работать: `pdf`, `doc`, `docx`, `rtf`, `txt`, `xlsx`, плюс baseline image presence handling.
+- Standalone `jpg`/`jpeg`/`png` image intake работает metadata-only, фиксирует `images_detected=True`, `ocr_used=False` и сохраняет обычный JSON result.
+- Stage 12 закрыт: known unsupported image-like formats `HEIC`/`HEIF`/`TIFF`/`TIF`/`BMP`/`WEBP` остаются unsupported с русским user-facing message, а API smoke покрыт тестом.
 - JSON output contract остаётся стабильным для обработанных документов, corpus index и manifest.
 - API flow продолжает работать для upload/process, fetch/list documents, corpus stats, corpus reindex, search и ask.
 - Минимальное retrieval proof остаётся доступным и возвращает top hits из локального demo corpus.
@@ -13,7 +15,7 @@
 
 - После закрытия Stage 7–9 проект получает отдельный pilot track, привязанный к расширенному брифу заказчика.
 - Этот track не означает, что OCR, semantic retrieval, полноценный RAG, vector DB или LLM generation уже готовы.
-- Следующие этапы должны вести к source-backed QA, OCR spike, XLS / tables decision, summarization / generation spike и prototype integration.
+- Следующие этапы должны вести к source-backed QA, XLS / tables decision, summarization / generation spike и prototype integration.
 
 ## Вне текущего baseline
 
