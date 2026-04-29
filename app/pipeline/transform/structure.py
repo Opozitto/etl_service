@@ -15,11 +15,11 @@ SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?;])\s+")
 
 
 def classify_text_block(block: RawBlock) -> str:
+    if block.kind in {"heading", "list_item", "table", "image"}:
+        return block.kind
     text = normalize_text(block.text or "")
     if not text:
         return "text"
-    if block.kind in {"heading", "list_item", "table", "image"}:
-        return block.kind
     if block.style_hint and "heading" in block.style_hint.lower():
         return "heading"
     if HEADING_RE.match(text):

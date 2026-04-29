@@ -220,6 +220,17 @@ conda run -n etl_env python -m py_compile scripts\audit_corpus.py tests\test_aud
   - не обещать production-ready OCR до подтверждённого spike.
 - Статус: planned.
 
+## Stage 12.2. Standalone image intake smoke/evaluation
+
+- Цель: зафиксировать smoke/evaluation контракт для `jpg`/`jpeg`/`png` standalone image intake без OCR.
+- Подтверждено:
+  - `jpg`/`jpeg`/`png` принимаются как standalone image input;
+  - OCR не запускается;
+  - текст не извлекается;
+  - image presence фиксируется через `image_count`, `images`, `blocks` и `processing_info.features`;
+  - `HEIC`/`HEIF`/`TIFF`/`TIF`/`BMP`/`WEBP` остаются known unsupported image-like форматами.
+- Статус: completed.
+
 ## Stage 13. XLS / tables / semi-structured input decision
 
 - Цель: принять отдельное решение по `XLS` и уточнить baseline для table extraction в полу-структурированных данных.

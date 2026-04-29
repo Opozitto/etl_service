@@ -13,6 +13,10 @@
 - Stage 10 customer scenarios and evaluation set created as a docs-only artifact.
 - Stage 11 closed as the source-backed ask response alignment.
 - Stage 12 partial: explicit unsupported image format contract added for known image-like formats outside `jpg`/`jpeg`/`png`, with user-facing wording localized to Russian.
+- Stage 12.2 completed as standalone `jpg`/`jpeg`/`png` image intake smoke/evaluation without OCR.
+- Checks:
+  - `python -m pytest -q tests\test_extractors.py -k "image or registry"` -> Stage 12.2 contract check;
+  - `python -m py_compile tests\test_extractors.py` -> OK.
 - Commit: `1a02af5` `Add source-backed ask response`.
 - Checks:
   - `python -m pytest -q tests\test_api.py` -> 4 passed
