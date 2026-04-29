@@ -1,0 +1,92 @@
+from fastapi.testclient import TestClient
+
+from app.main import app
+
+
+client = TestClient(app)
+
+
+def test_healthcheck() -> None:
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+
+
+def test_process_txt_document() -> None:
+    payload = b"1. Intro\n\nEnvironmental baseline text.\n\n- item one"
+    response = client.post(
+        "/api/v1/documents/process",
+        files={"file": ("sample.txt", payload, "text/plain")},
+    )
+
+    assert response.status_code == 200
+    data = response.json()["document"]
+    assert data["source"]["filename"] == "sample.txt"
+    assert data["metadata"]["block_count"] >= 2
+    assert data["sections"]
+    assert data["chunks"]
+
+
+def test_search_and_ask_work_for_uploaded_document() -> None:
+    payload = (
+        "1. Нормативы\n\n"
+        "Предельно допустимые выбросы определяются для предприятия.\n\n"
+        "2. Вывод\n\n"
+        "Проект нормативов предельно допустимых выбросов подготовлен."
+    ).encode("utf-8")
+
+    process_response = client.post(
+        "/api/v1/documents/process",
+        files={"file": ("norms.txt", payload, "text/plain")},
+    )
+    assert process_response.status_code == 200
+
+    search_response = client.post(
+        "/api/v1/search",
+        json={"query": "предельно допустимые выбросы", "top_k": 3},
+    )
+    assert search_response.status_code == 200
+    search_data = search_response.json()
+    assert search_data["hits"]
+    assert any(
+        "предельно" in hit["snippet"].lower() and "выброс" in hit["snippet"].lower()
+        for hit in search_data["hits"]
+    )
+
+    ask_response = client.post(
+        "/api/v1/ask",
+        json={"question": "Что сказано про предельно допустимые выбросы?", "top_k": 3, "max_sentences": 2},
+    )
+    assert ask_response.status_code == 200
+    ask_data = ask_response.json()
+    assert ask_data["hits"]
+    assert ask_data["strategy"] == "extractive-rag-baseline"
+    assert "выброс" in ask_data["answer"].lower()
+
+
+def test_corpus_stats_and_reindex_endpoints() -> None:
+    process_response = client.post(
+        "/api/v1/documents/process",
+        files={"file": ("stats.txt", b"1. Section\n\nProduction corpus text for stats.", "text/plain")},
+    )
+    assert process_response.status_code == 200
+
+    stats_response = client.get("/api/v1/corpus/stats")
+    assert stats_response.status_code == 200
+    stats_data = stats_response.json()
+    assert stats_data["document_count"] >= 1
+    assert stats_data["chunk_count"] >= 1
+    assert stats_data["manifest_record_count"] >= 1
+
+    reindex_response = client.post("/api/v1/corpus/reindex")
+    assert reindex_response.status_code == 200
+    reindex_data = reindex_response.json()
+    assert reindex_data["status"] == "reindexed"
+    assert reindex_data["document_count"] >= 1
+    assert reindex_data["chunk_count"] >= 1
+
+    manifest_response = client.get("/api/v1/corpus/manifest")
+    assert manifest_response.status_code == 200
+    manifest_data = manifest_response.json()
+    assert manifest_data
+    assert any(item["filename"] == "stats.txt" for item in manifest_data)

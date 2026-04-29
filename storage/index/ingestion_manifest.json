@@ -1,0 +1,194 @@
+{
+  "version": "1",
+  "updated_at": "2026-04-29T10:34:43.569075",
+  "records": [
+    {
+      "document_id": "e8826ee8-e96e-4eb4-9013-cbcbdcded244",
+      "filename": "norms.txt",
+      "checksum_sha256": "fbc180e9dfd493a11ba8c34177e235dc51cdb5fd0dcc83bc7fd3837e56711700",
+      "title": "1. Нормативы",
+      "extension": ".txt",
+      "extractor": "txt",
+      "status": "duplicate",
+      "processed_at": "2026-04-22T12:06:42.985635",
+      "warnings": [],
+      "source_encoding": null
+    },
+    {
+      "document_id": "97c77431-68ae-4d64-aa2f-c8d4a3c39f1a",
+      "filename": "sample.txt",
+      "checksum_sha256": "b86c065719c6245a1120f14097c5ac8d78a4c0c77779a4d62929fffaaea37c62",
+      "title": "1. Intro",
+      "extension": ".txt",
+      "extractor": "txt",
+      "status": "duplicate",
+      "processed_at": "2026-04-22T06:48:28.305684",
+      "warnings": [],
+      "source_encoding": null
+    },
+    {
+      "document_id": "f44a31ad-fedf-443a-a96b-53c03b9d1615",
+      "filename": "stats.txt",
+      "checksum_sha256": "64a65e7043e597fa4566e5665327e78319882fb741f1ccab7692080cc4b65c3d",
+      "title": "1. Section",
+      "extension": ".txt",
+      "extractor": "txt",
+      "status": "duplicate",
+      "processed_at": "2026-04-22T12:15:30.117042",
+      "warnings": [],
+      "source_encoding": null
+    },
+    {
+      "document_id": "131010fe-97fd-4367-91c2-adbcfee90131",
+      "filename": "test.docx",
+      "checksum_sha256": "6cdaf2eee600e0677c84b2b12c02fc10659b52f237261961652f4b0d2c10ce1a",
+      "title": "ПРОЕКТ НОРМАТИВОВ ПРЕДЕЛЬНО ДОПУСТИМЫХ ВЫБРОСОВ",
+      "extension": ".docx",
+      "extractor": "docx",
+      "status": "duplicate",
+      "processed_at": "2026-04-22T12:05:47.846530",
+      "warnings": [],
+      "source_encoding": null
+    },
+    {
+      "document_id": "7c3b30e7-12ac-4092-ac27-545fa9d36d43",
+      "filename": "test.pdf",
+      "checksum_sha256": "9263faf6ccc9f4df8d15b98a97c95758d9d145766c51b2be6b0a673128096e0c",
+      "title": "test",
+      "extension": ".pdf",
+      "extractor": "pdf",
+      "status": "duplicate",
+      "processed_at": "2026-04-22T12:05:59.889095",
+      "warnings": [],
+      "source_encoding": null
+    },
+    {
+      "document_id": "c1ae2cfe-31a2-4773-8cf2-a3abfba80380",
+      "filename": "test.rtf",
+      "checksum_sha256": "039b02d4ef7a86dc01166cbd7617b1ea7e2ddc489174f9078ec6c5dbb421ee48",
+      "title": "test",
+      "extension": ".rtf",
+      "extractor": "rtf",
+      "status": "duplicate",
+      "processed_at": "2026-04-22T12:05:59.961289",
+      "warnings": [],
+      "source_encoding": null
+    },
+    {
+      "document_id": "57ba3c54-0eb4-437e-bff4-b78efd825346",
+      "filename": "test.txt",
+      "checksum_sha256": "d79aef2bc9d57b370b24bb6a8e4c4dc35f1cac6aa3002e8a2e520ece64392054",
+      "title": "test",
+      "extension": ".txt",
+      "extractor": "txt",
+      "status": "duplicate",
+      "processed_at": "2026-04-22T06:46:57.032459",
+      "warnings": [],
+      "source_encoding": null
+    },
+    {
+      "document_id": "a9888aa3-820f-4ad5-af42-6d8f86ec1dc6",
+      "filename": "Карта.jpg",
+      "checksum_sha256": "65519b77c1c77c8b6d6e9a175df1a57c86cb29f46208dc908d5bafaffe30d2e2",
+      "title": "Карта",
+      "extension": ".jpg",
+      "extractor": "image",
+      "status": "duplicate",
+      "processed_at": "2026-04-28T21:22:28.686579",
+      "warnings": [
+        "OCR is disabled in baseline mode; only image presence was captured."
+      ],
+      "source_encoding": null
+    },
+    {
+      "document_id": "86bfdc32-c16e-44b1-bad3-3624122336aa",
+      "filename": "Карта.png",
+      "checksum_sha256": "c5d071d8f3c18789f531f3a7995d1afcd5941bd9fc718f3b62f3e0af70b20c0b",
+      "title": "Карта",
+      "extension": ".png",
+      "extractor": "image",
+      "status": "duplicate",
+      "processed_at": "2026-04-28T21:22:30.168631",
+      "warnings": [
+        "OCR is disabled in baseline mode; only image presence was captured."
+      ],
+      "source_encoding": null
+    },
+    {
+      "document_id": "f16f27d1-c149-41dd-9914-7f9ed8f72929",
+      "filename": "Книга 1 Био Агро Дон(scan+mix).pdf",
+      "checksum_sha256": "c9fce413390cb71a325c42b2a23c027b6eabbb7df791e6aea4eab42afc50961b",
+      "title": "Книга 1 Био Агро Дон(scan+mix)",
+      "extension": ".pdf",
+      "extractor": "pdf",
+      "status": "duplicate",
+      "processed_at": "2026-04-28T21:08:48.301870",
+      "warnings": [],
+      "source_encoding": null
+    },
+    {
+      "document_id": "77719fb9-0080-4c83-93db-d3e490ac1fe9",
+      "filename": "Книга Био-Агро-Дон(scan).pdf",
+      "checksum_sha256": "c60197afb46736eb84d1bed1938239b73c3dcad66d25944fababe36e4229db98",
+      "title": "Книга Био-Агро-Дон(scan)",
+      "extension": ".pdf",
+      "extractor": "pdf",
+      "status": "duplicate",
+      "processed_at": "2026-04-28T21:08:49.069232",
+      "warnings": [
+        "PDF text extraction produced empty text; OCR may be required."
+      ],
+      "source_encoding": null
+    },
+    {
+      "document_id": "fa251910-3239-4235-b908-693f6cee937b",
+      "filename": "Краткий справочник по написанию отд.наимен-й.doc",
+      "checksum_sha256": "9e96191ecddec629bc537eab1771307527b89cc1a786cd16d586fdc44cd5ff9f",
+      "title": "Краткий справочник по написанию отдельных наименований, слов и словосочетаний при подготовке документов",
+      "extension": ".doc",
+      "extractor": "doc",
+      "status": "duplicate",
+      "processed_at": "2026-04-28T21:22:42.337390",
+      "warnings": [
+        "Legacy DOC was converted to DOCX via local LibreOffice before extraction."
+      ],
+      "source_encoding": null
+    },
+    {
+      "document_id": "e36e876e-ee77-4241-b6e5-34afe869efe5",
+      "filename": "Том 1 Инвентаризация Эко Агро.docx",
+      "checksum_sha256": "701493334552d046a16779f1c0ee1b5e4450c0899780bf49ebeccc316dbfc93b",
+      "title": "ИНВЕНТАРИЗАЦИИ СТАЦИОНАРНЫХ ИСТОЧНИКОВ И ВЫБРОСОВ ЗАГРЯЗНЯЮЩИХ ВЕЩЕСТВ В АТМОСФЕРНЫЙ ВОЗДУХ ДЛЯ",
+      "extension": ".docx",
+      "extractor": "docx",
+      "status": "duplicate",
+      "processed_at": "2026-04-28T21:08:52.604514",
+      "warnings": [],
+      "source_encoding": null
+    },
+    {
+      "document_id": "6b5b6ff8-a6d1-4264-9f9a-83182b4084ee",
+      "filename": "Том 2 ПДВ Эко Агро.docx",
+      "checksum_sha256": "c11e5cc3fba2a0534906573754847737b714f3e029c227423b4f7395ec34391b",
+      "title": "НОРМАТИВОВ ПРЕДЕЛЬНО ДОПУСТИМЫХ",
+      "extension": ".docx",
+      "extractor": "docx",
+      "status": "duplicate",
+      "processed_at": "2026-04-28T21:08:57.520718",
+      "warnings": [],
+      "source_encoding": null
+    },
+    {
+      "document_id": "cf5b0707-38a5-4c0a-8436-f541db13b5d3",
+      "filename": "Форма 2 Плановая калькуляция затрат.xlsx",
+      "checksum_sha256": "e36f501d2191321fbf030d97f24ecdeb4fda7561526b2d78a3438c239ab3d75a",
+      "title": "ф2",
+      "extension": ".xlsx",
+      "extractor": "xlsx",
+      "status": "duplicate",
+      "processed_at": "2026-04-28T21:08:59.764128",
+      "warnings": [],
+      "source_encoding": null
+    }
+  ]
+}

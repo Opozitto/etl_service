@@ -1,0 +1,103 @@
+# =========================
+# Python cache
+# =========================
+
+__pycache__/
+*.py[cod]
+*$py.class
+
+# =========================
+# Test / lint / typecheck cache
+# =========================
+
+.pytest_cache/
+.pytest-run-temp/
+.pytest-run-temp*/
+.pytest-temp/
+.pytest-temp*/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# =========================
+# Virtual environments / local deps
+# =========================
+
+.venv/
+venv/
+env/
+ENV/
+.deps/
+etl_service.egg-info/
+*.egg-info/
+
+# =========================
+# Environment files
+# =========================
+
+.env
+.env.*
+!.env.example
+
+# =========================
+# Temporary folders / local scratch
+# =========================
+
+*.tmp
+tmp/
+temp/
+.tmp/
+tmp*/
+_tmp*/
+tmpeom5ko95/
+tmpunhj3282/
+
+# =========================
+# Logs
+# =========================
+
+*.log
+logs/
+
+# =========================
+# OS / IDE
+# =========================
+
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# =========================
+# Local helper / backup scripts
+# Not part of baseline service
+# =========================
+
+collect_code.py
+collect_file_paths.py
+collect_py_md_code.py
+
+# =========================
+# Accidental zero-byte shell artifacts
+# =========================
+
+conda
+dir
+git
+Microsoft
+None
+rmdir
+StructuredDocument
+tasklist
+tmpmgcw4co7
+_tmp_stage3_20260429
+
+# =========================
+# Important:
+# storage/ and first_test_data/ are intentionally NOT ignored.
+# This baseline commit includes demo corpus/artifacts.
+# =========================

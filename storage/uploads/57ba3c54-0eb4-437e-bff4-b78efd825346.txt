@@ -1,0 +1,20 @@
+01. Скачайте и установите Daemon Tools или Alcohol 120%;
+02. Смонтируйте образ "Diablo II Install Disk";
+03. Нажмите "Install Diablo II" -> "Full Install"
+04. Введите Ваше имя, параллельно запустите "Diablo 2 CD KeyGen" из папки "KeyGen"
+05. Сгенерированный Ключ введите в графу CD-key инсталлера
+06. Нажмите "ОК" и укажите путь для установки (инсталлер попросит создать ярлык к игре на рабочем столе - нажмите "Да")
+07. Смонтируйте образ "Diablo II Play Disc", после чего нажмите "ОК" и пойдет установка
+08. Во время установки инсталлер попросит диск "Cinamantics Disk", смонтируйте "Diablo II Cinamantics Disk" и нажмите "ОК"
+09. После этого инсталлер попросит "Install Disk", смонтируйте "Diablo II Install Disk" и нажмите "ОК"
+10. После установки Diablo II запустится Video Test, Нажмите "Run Test" ничего не меняя нажмите "ОК"
+11. Смонтируйте "Diablo II Expansion - Lord of Destruction" нажмите "Upgrade to Lord of Destruction", параллельно запустите "Diablo 2 Expansion KeyGen" из папки "KeyGen"
+12. Сгенерированный Ключ введите в графу CD-key инсталлера
+13. Нажмите "ОК" и укажите путь к уже установленной игре Diablo II (инсталлер попросит создать ярлык к игре на рабочем столе - нажмите "Да")
+14. Смонтируйте образ "Diablo II Play Disc", после чего нажмите "ОК" и пойдет установка
+15. Во время установки инсталлер попросит диск "Expansion Disc", смонтируйте Diablo II Expansion - Lord of Destruction" и нажмите "ОК" 
+16. Выберите "Upgrade to installation"
+17. Установите патч "LODPatch v1.12a" или "LODPatch v1.13c"
+18. Скопируйте "D2XMUSIC.mpq", "d2xtalk.mpq" и "D2XVIDEO.mpq" с образа диска "Diablo II Expansion - Lord of Destruction" в папку с игрой
+
+Приятной игры!

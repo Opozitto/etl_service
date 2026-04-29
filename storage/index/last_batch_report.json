@@ -1,0 +1,40 @@
+{
+  "input_dir": "D:\\Projects\\etl_service\\first_test_data",
+  "processed": 0,
+  "duplicates": 4,
+  "errors": 0,
+  "items": [
+    {
+      "file": "D:\\Projects\\etl_service\\first_test_data\\test.docx",
+      "status": "duplicate",
+      "document_id": "131010fe-97fd-4367-91c2-adbcfee90131",
+      "title": "ПРОЕКТ НОРМАТИВОВ ПРЕДЕЛЬНО ДОПУСТИМЫХ ВЫБРОСОВ",
+      "warnings": [],
+      "source_encoding": null
+    },
+    {
+      "file": "D:\\Projects\\etl_service\\first_test_data\\test.pdf",
+      "status": "duplicate",
+      "document_id": "7c3b30e7-12ac-4092-ac27-545fa9d36d43",
+      "title": "test",
+      "warnings": [],
+      "source_encoding": null
+    },
+    {
+      "file": "D:\\Projects\\etl_service\\first_test_data\\test.rtf",
+      "status": "duplicate",
+      "document_id": "c1ae2cfe-31a2-4773-8cf2-a3abfba80380",
+      "title": "test",
+      "warnings": [],
+      "source_encoding": null
+    },
+    {
+      "file": "D:\\Projects\\etl_service\\first_test_data\\test.txt",
+      "status": "duplicate",
+      "document_id": "57ba3c54-0eb4-437e-bff4-b78efd825346",
+      "title": "test",
+      "warnings": [],
+      "source_encoding": null
+    }
+  ]
+}
