@@ -205,6 +205,7 @@ conda run -n etl_env python -m py_compile scripts\audit_corpus.py tests\test_aud
 
 - Next: OCR / image intake spike.
 - Цель: сделать локальный OCR spike для `JPG`/`JPEG`/`PNG` и отдельно зафиксировать `HEIC` как decision point / limitation.
+- Standalone image intake stays limited to `jpg`/`jpeg`/`png` metadata-only; `HEIC`/`HEIF`/`TIFF`/`TIF`/`BMP`/`WEBP` are explicit unsupported image-like formats until local decoding and OCR checks are added.
 - Подзадачи:
   - провести audit / разведку до любого кода:
     - какие image formats сейчас поддерживаются;

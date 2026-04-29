@@ -2,6 +2,11 @@ from pathlib import Path
 from typing import Callable
 
 from app.pipeline.extractors.base import BaseExtractor
+from app.pipeline.errors import UnsupportedImageFormatError
+
+
+SUPPORTED_STANDALONE_IMAGE_SUFFIXES: tuple[str, ...] = (".jpg", ".jpeg", ".png")
+KNOWN_UNSUPPORTED_IMAGE_SUFFIXES: tuple[str, ...] = (".heic", ".heif", ".tif", ".tiff", ".bmp", ".webp")
 
 
 class ExtractorRegistry:
@@ -13,7 +18,7 @@ class ExtractorRegistry:
             ((".rtf",), self._build_rtf),
             ((".txt",), self._build_txt),
             ((".xlsx",), self._build_xlsx),
-            ((".png", ".jpg", ".jpeg"), self._build_image),
+            (SUPPORTED_STANDALONE_IMAGE_SUFFIXES, self._build_image),
         ]
 
     def get_for_path(self, path: Path) -> BaseExtractor:
@@ -21,6 +26,8 @@ class ExtractorRegistry:
         for extensions, factory in self._factories:
             if suffix in extensions:
                 return factory()
+        if suffix in KNOWN_UNSUPPORTED_IMAGE_SUFFIXES:
+            raise UnsupportedImageFormatError(suffix, SUPPORTED_STANDALONE_IMAGE_SUFFIXES)
         raise ValueError(f"Unsupported file type: {path.suffix}")
 
     @staticmethod

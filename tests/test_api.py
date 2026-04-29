@@ -27,6 +27,20 @@ def test_process_txt_document() -> None:
     assert data["chunks"]
 
 
+def test_process_known_unsupported_image_format_returns_clear_error() -> None:
+    response = client.post(
+        "/api/v1/documents/process",
+        files={"file": ("sample.heic", b"fake-image-payload", "image/heic")},
+    )
+
+    assert response.status_code == 400
+    detail = response.json()["detail"]
+    assert "Unsupported image format" in detail
+    assert ".heic" in detail
+    assert "Supported standalone image formats: .jpg, .jpeg, .png" in detail
+    assert "OCR is not implemented yet." in detail
+
+
 def test_search_and_ask_work_for_uploaded_document() -> None:
     payload = (
         "1. Нормативы\n\n"
