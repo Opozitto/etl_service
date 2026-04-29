@@ -2,7 +2,7 @@
 
 ## Stage 10 goal
 
-Зафиксировать customer scenarios and evaluation set для пилотного трека до того, как Stage 11–15 начнут уточнять ask / OCR / tables / summarization / integration. Это docs-level baseline, который связывает текущий local ETL/search/evaluation foundation с реальными задачами экологов-проектировщиков.
+Зафиксировать customer scenarios and evaluation set для пилотного трека до того, как Stage 11–17 начнут уточнять ask / OCR / tables / summarization / integration. Это docs-level baseline, который связывает текущий local ETL/search/evaluation foundation с реальными задачами экологов-проектировщиков.
 
 ## Primary user
 
@@ -113,7 +113,7 @@ Stage 10 должен зафиксировать не функциональну
 - Каждый MVP/pilot scenario имеет ожидаемый результат, привязанный к source-backed поведению.
 - Ничего из OCR / RAG / LLM generation не объявлено готовым, если это не подтверждено кодом.
 - Минимальный evaluation set покрывает supported now / partial / future границы.
-- Материал связывает текущий baseline Stage 7–9 с Stage 11–15.
+- Материал связывает текущий baseline Stage 7–9 с Stage 11–17.
 
 ## Minimal evaluation set
 
@@ -128,19 +128,20 @@ Stage 10 должен зафиксировать не функциональну
 | EC-05 | Calculation inputs | Найти исходные данные для расчёта | Text and numeric fragments in docs | Вернуть числа и фрагменты с references | yes | partial | Может требоваться table awareness и/или OCR |
 | EC-06 | Audit visibility | Документ без chunks должен быть замечен audit'ом | Batch corpus outputs and audit report | Появление в problem documents / audit summary | no | supported now | Связка с Stage 7–9 audit foundation |
 | EC-07 | OCR limitation | Скан или фото документа | JPG / JPEG / PNG / HEIC candidate inputs | Отметить limitation / future OCR spike | no | future | Пока не обещать готовый OCR |
-| EC-08 | Table input | XLS / XLSX table-heavy document | Spreadsheet or table-like source | XLSX baseline support, XLS explicitly unsupported | yes | partial | Table extraction works for XLSX, but this is flattened lexical retrieval, not full table reasoning |
+| EC-08 | Table input | XLS / XLSX table-heavy document | Spreadsheet or table-like source | XLS and XLSX baseline support with flattened lexical retrieval | yes | supported now | Table extraction works for XLS and XLSX, but this is flattened lexical retrieval, not full table-aware reasoning |
 | EC-09 | Summarization | Сделать краткое саммари документа | Source document plus request for summary | Future spike only | yes | future | Не объявлять готовую summarization |
 | EC-10 | Draft generation | Подготовить черновик раздела документации | Project doc context and task brief | Future spike only | yes | future | Не объявлять готовую LLM generation |
 | EC-11 | Source attribution | Указать, откуда взят ответ | Search hits and chunk references | Answer must carry explicit source references | yes | supported now | Это критерий доверия для pilot track |
 | EC-12 | Problem documents | Найти проблемные документы корпуса | Index, manifest, batch and audit reports | Audit should surface duplicates, warnings, missing chunks, and low-quality items | no | supported now | Использует Stage 7–9 reporting layer |
 
-## Connection to Stage 11–15
+## Connection to Stage 11–17
 
 - Stage 11 should prove ask / extractive QA with sources on top of the current corpus, without turning it into generation.
 - Stage 12 should test OCR / image intake and separate confirmed support from limitation, especially for scans and phone photos.
-- Stage 13 closes the XLS / tables decision and documents what is really supported for semi-structured inputs.
-- Stage 14 should evaluate summarization / draft generation as a future spike, not as a baseline claim.
-- Stage 15 should connect the confirmed pieces into a prototype integration flow, while keeping audit and eval visible.
+- Stage 13 keeps the historical XLS / tables decision in the record; Stage 14 supersedes the old unsupported-XLS state with practical baseline support.
+- Stage 15 should align customer demo readiness, ingestion-search QA, supported formats, and scenario matrices after XLS support.
+- Stage 16 should evaluate summarization / draft generation as a future spike, not as a baseline claim.
+- Stage 17 should connect the confirmed pieces into a prototype integration flow, while keeping audit and eval visible.
 
 ## Notes on the current baseline
 

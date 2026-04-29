@@ -35,7 +35,7 @@
 
 ## next
 
-- Stage 13 closed as the XLS / tables baseline decision.
+- Stage 13 closed as the historical XLS / tables baseline decision; Stage 14 later superseded the unsupported-XLS state.
 
 ## alignment
 
@@ -45,7 +45,7 @@
 
 ## risks
 
-- `.XLS` is now explicitly unsupported as a legacy spreadsheet format; `.XLSX` remains the supported baseline spreadsheet input.
+- `.XLS` is now baseline-supported through Stage 14; `.XLSX` remains supported baseline spreadsheet input.
 - OCR is not implemented.
 - `HEIC` is not confirmed.
 - LLM / RAG / generation are not implemented.
@@ -67,6 +67,9 @@
 
 
 - Stage 14 completed as practical XLS baseline support.
+- Local full pytest result: `conda run -n etl_env python -m pytest -q --basetemp=D:\Projects\etl_service\.pytest-run-temp\stage14` -> `39 passed in 14.16s`
+- Runtime artifacts after local pytest were restored and must not be committed.
+- Stage 15 next: customer demo readiness / docs and scenario alignment.
 - Checks passed in `etl_env`:
   - `python -m py_compile app\pipeline\errors.py app\pipeline\extractors\registry.py app\pipeline\extractors\xls.py app\pipeline\extractors\xlsx.py app\pipeline\transform\structure.py app\services\document_service.py app\search\index.py app\search\store.py tests\test_extractors.py tests\test_api.py`
   - `python -m pytest -q tests\test_extractors.py -k "xls or xlsx or table or image"`

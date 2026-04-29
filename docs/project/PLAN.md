@@ -21,12 +21,13 @@ conda run -n etl_env python -m scripts.demo_search --query "экология п�
 ```
 - Критерий завершения:
   - команды установки и smoke/regression подтверждены в локальном окружении.
+- Статус: completed.
 
 ## Stage 2. Проверить ETL на поддерживаемых форматах
 
 - Цель: подтвердить, что текущий ETL baseline работает на поддерживаемых форматах, уже присутствующих в репозитории.
 - Подзадачи:
-  - подтвердить `pdf`, `doc`, `docx`, `rtf`, `txt`, `xlsx`;
+  - подтвердить `pdf`, `doc`, `docx`, `rtf`, `txt`, `xlsx`, `xls`;
   - подтвердить baseline image presence handling;
   - сопоставить поведение extractor'ов с тестами и сохранёнными результатами.
 - Артефакты:
@@ -223,19 +224,25 @@ conda run -n etl_env python -m py_compile scripts\audit_corpus.py tests\test_aud
 
 ## Stage 13. XLS / tables / semi-structured input decision
 
-- Цель: закрыть baseline decision по `XLS` и таблицам без расширения scope за пределы текущего ETL/search baseline.
+- Цель: зафиксировать историческое baseline decision по `XLS` и таблицам без расширения scope за пределы текущего ETL/search baseline.
 - Подзадачи:
   - подтвердить, что `XLSX` поддерживается на текущем baseline-уровне;
   - зафиксировать, что table blocks/chunks из `XLSX` попадают в retrieval path;
-  - явно оформить старый бинарный `XLS` как unsupported known spreadsheet format;
+  - сохранить исторический контекст старого бинарного `XLS` как unsupported state на момент Stage 13;
   - не обещать полноценную table-aware reasoning / analytics.
-- Статус: completed.
-- Итоговый контракт:
-  - `.xlsx` поддерживается через текущий `XlsxExtractor`;
-  - таблицы сохраняются как `TableData`, `Block(type="table")` и chunks;
-  - табличный текст попадает в search/ask path через flattened lexical retrieval;
-  - `.xls` / `.XLS` распознаётся как known unsupported spreadsheet format с русским user-facing сообщением;
-  - `.xls` support не реализован и требует отдельного dependency/implementation решения.
+- Артефакты:
+  - `app/pipeline/extractors/*`
+  - `tests/test_extractors.py`
+  - `storage/results/*`
+- Команды проверки:
+```powershell
+conda run -n etl_env python -m pytest -q tests\test_extractors.py tests\test_structure.py
+conda run -n etl_env python -m scripts.batch_process --input-dir first_test_data
+```
+- Критерий завершения:
+  - каждый поддерживаемый формат обрабатывается без baseline-ошибок.
+- Историческая отметка:
+  - Stage 14 superseded the Stage 13 unsupported-XLS state with practical `.xls` baseline support.
 
 ## Stage 14. XLS support and spreadsheet table hardening
 
@@ -252,11 +259,29 @@ conda run -n etl_env python -m py_compile scripts\audit_corpus.py tests\test_aud
   - не менять search ranking/API contract;
   - не делать полноценную table-aware reasoning;
   - не трогать OCR.
+- Статус: completed.
+
+## Stage 15. Customer demo readiness / ingestion-search QA alignment
+
+- Цель: проверить и документировать, что можно честно показать заказчику после поддержки `xls`.
+- Подзадачи:
+  - провести read-only audit и docs/test alignment;
+  - собрать supported format matrix;
+  - собрать customer scenario support matrix;
+  - проверить demo flow candidates: `batch_process`, `audit_corpus`, `rebuild_corpus`, `demo_search`, `ask` / `search` API;
+  - сформировать next-stage recommendation.
+- Рамка этапа:
+  - не добавлять extraction features;
+  - не добавлять OCR;
+  - не добавлять summarization;
+  - не добавлять generation;
+  - не добавлять semantic/vector retrieval;
+  - не добавлять table-aware analytics.
 - Статус: planned.
 
-## Stage 15. Summarization / draft generation spike
+## Stage 16. Summarization / draft generation spike
 
-- Цель: после стабилизации ingestion/retrieval baseline проверить локальные или open-source варианты суммаризации и draft generation.
+- Цель: после readiness stage проверить локальные или open-source варианты суммаризации и draft generation.
 - Подзадачи:
   - сформировать небольшой proof-of-value scope;
   - не включать fine-tuning в roadmap как обещание;
@@ -267,15 +292,16 @@ conda run -n etl_env python -m py_compile scripts\audit_corpus.py tests\test_aud
   - не подменять source-backed extraction свободной генерацией без ссылок на источники.
 - Статус: planned.
 
-## Stage 16. Prototype integration flow
+## Stage 17. Prototype integration flow
 
-- Цель: собрать демонстрационный flow `upload` / `process` / `audit` / `search` / `eval` / `ask`.
+- Цель: собрать демонстрационный flow `upload` / `process` / `audit` / `search` / `eval` / `ask` после readiness и summarization steps.
 - Подзадачи:
   - связать подтверждённые части baseline и pilot track в один demo flow;
   - оставить audit/eval visible в прототипе;
   - не заявлять полноценный RAG или end-to-end generation до фактической реализации;
   - подготовить основу для рабочего прототипа сервиса для экологов-проектировщиков.
 - Статус: planned.
+
 ## Stage 14 update
 
 - Stage 14 is completed in code: `.xls` baseline support is implemented and verified.

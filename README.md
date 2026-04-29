@@ -5,14 +5,14 @@
 ## Что умеет baseline
 
 - принимает документы через API или пакетную CLI-обработку
-- поддерживает `pdf`, `doc`, `docx`, `rtf`, `txt`, `xlsx`
-- `xlsx` извлекает таблицы, сохраняет их в JSON и даёт табличный текст в retrieval path
-- `jpg`/`png` фиксирует как наличие изображений без OCR
+- поддерживает `pdf`, `doc`, `docx`, `rtf`, `txt`, `xlsx`, `xls`
+- `xlsx` и `xls` извлекают таблицы, сохраняют их в JSON и дают табличный текст в retrieval path
+- `jpg`/`jpeg`/`png` фиксируют как наличие изображений без OCR
 - извлекает текст, таблицы, базовые метаданные и факт наличия изображений
 - строит структурированный JSON с разделами, блоками и таблицами
 - сохраняет результаты локально в `storage/`
 - индексирует все обработанные документы и позволяет делать простой поиск по корпусу
-- `XLS` остаётся известным ограничением и не считается подтверждённым baseline-форматом; старый бинарный `.xls` сейчас явно unsupported
+- Stage 13 historically treated `XLS` as unsupported, but Stage 14 superseded that state and `.xls` is now a confirmed baseline format.
 
 ## Структура проекта
 
@@ -48,7 +48,7 @@ conda run -n etl_env uvicorn app.main:app --reload
 
 `AskResponse` включает `question`, `answer`, `sources`, `hits`, `strategy`.
 `sources` — source-backed evidence snippets, а `hits` сохранён для обратной совместимости.
-Для `xlsx`/табличных документов ответы строятся через flattened lexical retrieval по чанкам, а не через полноценную table-aware логику.
+Для `xlsx`/`xls`/табличных документов ответы строятся через flattened lexical retrieval по чанкам, а не через полноценную table-aware логику.
 Если в корпусе нет ответа, сервис возвращает `нет информации в корпусе`.
 
 ## Batch обработка директории
@@ -115,3 +115,4 @@ OCR не входит в текущий baseline. `jpg`/`jpeg`/`png` подде�
 - `.xls` is now supported at baseline level through `XlsExtractor`.
 - `.xls` and `.xlsx` share the same flattened table extraction contract for search/ask.
 - Advanced Excel semantics such as formulas, macros, styles, merged cells, and hidden-sheet behavior remain out of scope.
+- Stage 13's unsupported-XLS decision is historical only and has been superseded by Stage 14.

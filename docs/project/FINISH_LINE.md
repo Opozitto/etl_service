@@ -3,9 +3,9 @@
 ## Завершённый baseline
 
 - ETL baseline запускается end-to-end в подтверждённом локальном окружении.
-- Поддерживаемые форматы baseline продолжают работать: `pdf`, `doc`, `docx`, `rtf`, `txt`, `xlsx`, плюс baseline image presence handling.
-- `XLSX` tables извлекаются, сохраняются в JSON, chunk'аются и попадают в local retrieval path.
-- Старый бинарный `XLS` остаётся явно unsupported spreadsheet format с русским user-facing message.
+- Поддерживаемые форматы baseline продолжают работать: `pdf`, `doc`, `docx`, `rtf`, `txt`, `xlsx`, `xls`, плюс baseline image presence handling для `jpg`/`jpeg`/`png` без OCR.
+- `XLSX` и `XLS` tables извлекаются, сохраняются в JSON, chunk'аются и попадают в local retrieval path через flattened lexical retrieval.
+- Старый бинарный `XLS` теперь baseline-supported through Stage 14; advanced Excel semantics remain out of scope.
 - Standalone `jpg`/`jpeg`/`png` image intake работает metadata-only, фиксирует `images_detected=True`, `ocr_used=False` и сохраняет обычный JSON result.
 - Stage 12 закрыт: known unsupported image-like formats `HEIC`/`HEIF`/`TIFF`/`TIF`/`BMP`/`WEBP` остаются unsupported с русским user-facing message, а API smoke покрыт тестом.
 - JSON output contract остаётся стабильным для обработанных документов, corpus index и manifest.
@@ -17,7 +17,7 @@
 
 - После закрытия Stage 7–9 проект получает отдельный pilot track, привязанный к расширенному брифу заказчика.
 - Этот track не означает, что OCR, semantic retrieval, полноценный RAG, vector DB или LLM generation уже готовы.
-- Следующие этапы должны вести к source-backed QA, summarization / generation spike и prototype integration; `XLS` decision для baseline закрыт.
+- Следующие этапы должны вести к customer demo readiness, source-backed QA, summarization / generation spike и prototype integration; Stage 13 unsupported state superseded Stage 14.
 
 ## Вне текущего baseline
 
@@ -30,6 +30,6 @@
 
 ## Stage 14 note
 
-- `.xls` is now supported at baseline level via a narrow `XlsExtractor` path.
+- `.xls` is now supported at baseline level via a narrow `XlsExtractor` path; Stage 13 unsupported state is superseded.
 - `.xls`/`.xlsx` table text continues to flow into JSON, chunks, search, and ask through the flattened lexical retrieval baseline.
 - Advanced Excel semantics remain out of scope.
