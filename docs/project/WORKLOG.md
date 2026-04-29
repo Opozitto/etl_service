@@ -15,11 +15,13 @@
 - Stage 12 partial: explicit unsupported image format contract added for known image-like formats outside `jpg`/`jpeg`/`png`, with user-facing wording localized to Russian.
 - Stage 12.2 completed as standalone `jpg`/`jpeg`/`png` image intake smoke/evaluation without OCR.
 - Stage 12 closed with API smoke/evaluation for standalone image intake and documentation closure.
+- Stage 12 follow-up: added manual image intake sample files `first_test_data/Справка (таблица).jpg` and `first_test_data/Справка (таблица).png`.
+- Code/tests/OCR/dependencies were unchanged in the sample-files follow-up.
 - Commits:
   - `6997d98` `Add unsupported image format contract`
   - `83b741b` `Localize unsupported image format message`
   - `26199bd` `Add image intake smoke contract`
-  - `TBD` `Close Stage 12 image intake contract`
+  - `0a57c48` `Close Stage 12 image intake contract`
 - Checks:
   - `python -m pytest -q tests\test_extractors.py -k "image or registry"` -> Stage 12.2 contract check;
   - `python -m py_compile tests\test_extractors.py` -> OK.
@@ -62,3 +64,4 @@
 ## open questions
 
 - `не подтверждено`: whether `.XLS` should be documented separately as a legacy input beyond the current Stage 2 baseline.
+
