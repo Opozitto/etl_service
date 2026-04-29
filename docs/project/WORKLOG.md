@@ -10,10 +10,11 @@
 - Stage 8 closed as the read-only corpus quality audit.
 - Stage 9 closed as the retrieval quality mini-evaluation.
 - After Stage 9, a roadmap realignment was performed against the extended customer brief.
+- Stage 10 customer scenarios and evaluation set created as a docs-only artifact.
 
 ## next
 
-- Stage 10 — customer scenarios and evaluation set.
+- Stage 11 — ask / extractive QA proof with sources.
 
 ## alignment
 
@@ -23,7 +24,7 @@
 
 ## risks
 
-- `.XLS` files in `first_test_data` are still not confirmed as a supported baseline format.
+- `.XLS` decision is still not closed, and table support remains only partially defined.
 - OCR is not implemented.
 - `HEIC` is not confirmed.
 - LLM / RAG / generation are not implemented.
