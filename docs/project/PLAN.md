@@ -184,7 +184,7 @@ conda run -n etl_env python -m py_compile scripts\audit_corpus.py tests\test_aud
   - собрать список типовых вопросов и expected outputs;
   - определить acceptance criteria для поиска, извлечения, суммаризации и Q&A;
   - связать сценарии с доступными локальными источниками и метриками качества.
-- Статус: in progress.
+- Статус: completed.
 
 ## Stage 11. Ask / extractive QA proof with sources
 
