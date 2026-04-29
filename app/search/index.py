@@ -5,7 +5,7 @@ from collections import Counter, defaultdict
 from math import log
 from typing import Optional
 
-from app.schemas.api import AskResponse, SearchHit
+from app.schemas.api import AskResponse, AskSource, SearchHit
 from app.search.store import IndexedChunk, SearchIndexStore
 from app.storage.filesystem import FileStorage
 
@@ -156,10 +156,25 @@ class CorpusSearchEngine:
 
     def ask(self, question: str, top_k: int = 5, max_sentences: int = 4) -> AskResponse:
         hits = self.search(question, top_k=top_k)
+        sources = [
+            AskSource(
+                rank=rank,
+                score=hit.score,
+                document_id=hit.document_id,
+                filename=hit.filename,
+                title=hit.title,
+                chunk_id=hit.chunk_id,
+                section_id=hit.section_id,
+                section_title=hit.section_title,
+                snippet=hit.snippet,
+            )
+            for rank, hit in enumerate(hits, start=1)
+        ]
         if not hits:
             return AskResponse(
                 question=question,
-                answer="Подходящих фрагментов в обработанном корпусе не найдено.",
+                answer="нет информации в корпусе",
+                sources=[],
                 hits=[],
                 strategy="extractive-rag-baseline",
             )
@@ -185,6 +200,7 @@ class CorpusSearchEngine:
         return AskResponse(
             question=question,
             answer=answer,
+            sources=sources,
             hits=hits,
             strategy="extractive-rag-baseline",
         )

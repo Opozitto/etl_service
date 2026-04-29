@@ -59,9 +59,29 @@ def test_search_and_ask_work_for_uploaded_document() -> None:
     )
     assert ask_response.status_code == 200
     ask_data = ask_response.json()
+    assert ask_data["sources"]
     assert ask_data["hits"]
     assert ask_data["strategy"] == "extractive-rag-baseline"
+    assert ask_data["answer"]
     assert "выброс" in ask_data["answer"].lower()
+    first_source = ask_data["sources"][0]
+    assert first_source["rank"] == 1
+    assert first_source["document_id"]
+    assert first_source["chunk_id"]
+    assert first_source["snippet"]
+    assert first_source["score"] >= 0
+    assert "filename" in first_source
+    assert "section_title" in first_source
+
+    no_hit_response = client.post(
+        "/api/v1/ask",
+        json={"question": "qwertyuiopasdfghjklzxcvbnm", "top_k": 3, "max_sentences": 2},
+    )
+    assert no_hit_response.status_code == 200
+    no_hit_data = no_hit_response.json()
+    assert no_hit_data["answer"] == "нет информации в корпусе"
+    assert no_hit_data["sources"] == []
+    assert no_hit_data["hits"] == []
 
 
 def test_corpus_stats_and_reindex_endpoints() -> None:

@@ -44,9 +44,22 @@ class AskRequest(BaseModel):
     max_sentences: int = Field(default=4, ge=1, le=8)
 
 
+class AskSource(BaseModel):
+    rank: int
+    score: float
+    document_id: str
+    filename: str
+    title: str
+    chunk_id: str
+    section_id: Optional[str] = None
+    section_title: Optional[str] = None
+    snippet: str
+
+
 class AskResponse(BaseModel):
     question: str
     answer: str
+    sources: list[AskSource]
     hits: list[SearchHit]
     strategy: str
 
