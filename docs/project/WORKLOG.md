@@ -2,81 +2,43 @@
 
 ## done
 
-- Stage 3 закрыт.
-- Stage 4 подтверждён через `tests/test_api.py`.
-- Contract tests для JSON/output contract добавлены и локально проходят в `etl_env`.
-- Подтверждённый regression-check без активации окружения:
-  - `conda run -n etl_env python -m pytest -q`
-  - результат: `13 passed in 12.75s`
-- Подтверждённый regression-check в активированном окружении:
-  - `conda activate etl_env`
-  - `python -m pytest -q`
-  - ранее подтверждённый результат: `13 passed`
-- Stage 3 contract tests покрывают:
-  - round-trip `StructuredDocument` JSON;
-  - save/load `CorpusIndex`;
-  - save/load `CorpusManifest`;
-  - API shape для process/list/detail document;
-  - `txt` extractor fallback encoding через `tmp_path`.
-- Проверка API Stage 4:
-  - `conda run -n etl_env python -m pytest -q tests/test_api.py`
-  - результат: `4 passed in 12.89s`
-- Поток API Stage 4 подтверждён:
-  - healthcheck
-  - upload/process
-  - get/list documents
-  - search
-  - ask
-  - corpus stats
-  - corpus reindex
-  - corpus manifest
-- Retrieval proof/demo Stage 5 подтверждён:
-  - `conda run -n etl_env python -m scripts.rebuild_corpus`
-  - `conda run -n etl_env python -m scripts.demo_search --query "экология проект"`
-  - результат: `rebuild_corpus` пересобрал индекс корпуса, а `demo_search` вернул ненулевые top hits по запросу `экология проект`
-  - ask остаётся подтверждённым на уровне API через Stage 4 и `tests/test_api.py`
-- Выравнивание README/demo с baseline Stage 6 подтверждено:
-  - `README.md` выровнен с текущими заявлениями baseline
-  - команды retrieval demo используют `conda run -n etl_env`
-  - OCR задокументирован как вне текущего baseline
-  - `jpg`/`png` задокументированы только как фиксация наличия изображений
-  - `XLS` задокументирован как известное ограничение, а не как подтверждённый baseline-формат
-- Stage 7 закрыт.
-  - commit: `bbe0b90`
-  - расширен batch/evaluation report в `scripts/batch_process.py`
-  - добавлен `report_version: "stage7_batch_report_v1"`
-  - добавлен summary block
-  - добавлены item-level metrics
-  - добавлены тесты в `tests/test_batch_process.py`
-  - локальные проверки:
-    - `python -m pytest -q tests\test_batch_process.py` -> `1 passed`
-    - `python -m pytest -q tests\test_contracts.py` -> `4 passed`
-- Stage 8 закрыт.
-  - commit: `c08a66a`
-  - добавлен read-only corpus quality audit в `scripts/audit_corpus.py`
-  - добавлены тесты в `tests/test_audit_corpus.py`
-  - локальные проверки:
-    - `python -m pytest -q tests\test_audit_corpus.py` -> `2 passed`
-    - `python -m py_compile scripts\audit_corpus.py tests\test_audit_corpus.py` -> `OK`
+- Stage 3 closed.
+- Stage 4 confirmed through `tests/test_api.py`.
+- Stage 5 retrieval proof/demo confirmed.
+- Stage 6 README/demo alignment confirmed against the current baseline.
+- Stage 7 closed as the batch/evaluation reporting layer.
+- Stage 8 closed as the read-only corpus quality audit.
+- Stage 9 closed as the retrieval quality mini-evaluation.
+- After Stage 9, a roadmap realignment was performed against the extended customer brief.
 
 ## next
 
-- Stage 9 — retrieval quality mini-evaluation.
+- Stage 10 — customer scenarios and evaluation set.
+
+## alignment
+
+- Stage 7–9 are now treated as the quality/evaluation foundation for the project.
+- That foundation covers the part of the brief about quality assessment of solutions.
+- The next phase is a pilot AI-service track for ecologists/design engineers, not a claim that OCR, RAG, or LLM generation is already ready.
 
 ## risks
 
-- `.XLS` файл в `first_test_data` по-прежнему не считается подтверждённым baseline-форматом.
-- Полный `pytest` внутри Codex sandbox на Windows может падать на `PermissionError` в pytest temp/`tmp_path`, хотя локальный запуск в `etl_env` проходит.
+- `.XLS` files in `first_test_data` are still not confirmed as a supported baseline format.
+- OCR is not implemented.
+- `HEIC` is not confirmed.
+- LLM / RAG / generation are not implemented.
+- Full `pytest` inside the Codex sandbox on Windows can still hit `PermissionError` in pytest temp / `tmp_path`, even though the local `etl_env` run works.
+- Codex sandbox `PermissionError` remains an environment limitation, not a project defect.
 
 ## decisions
 
-- `python -m pytest -q` без активации `etl_env` не является валидной проверкой проекта, потому что использует base Anaconda и может падать из-за отсутствующих зависимостей, например `httpx`.
-- Источник истины для `pytest`-регрессии:
+- `python -m pytest -q` without activating `etl_env` is not a valid project check because it may use base Anaconda and miss dependencies such as `httpx`.
+- The source of truth for pytest regression remains:
   - `conda run -n etl_env python -m pytest -q`
-  - или `python -m pytest -q` только после `conda activate etl_env`
-- Ограничение Codex sandbox на Windows трактуется как локальное ограничение окружения и ACL, а не как ошибка проекта.
-- Stage 3 считается закрытым без workaround-ов в коде и тестах.
+  - or `python -m pytest -q` only after `conda activate etl_env`
+- Codex sandbox ACL limitations on Windows are treated as environment constraints, not as a reason to change code or tests.
+- Stage 3 remains closed without workaround changes in code or tests.
 
 ## open questions
 
-- `не подтверждено`: нужно ли отдельно документировать `.XLS` как legacy input вне baseline Stage 2.
+- `не подтверждено`: whether `.XLS` should be documented separately as a legacy input beyond the current Stage 2 baseline.

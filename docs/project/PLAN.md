@@ -1,6 +1,6 @@
 # PLAN
 
-Stage 1–6 are a closed baseline. Stage 7 is completed and adds the batch/evaluation reporting layer. The sections below keep the baseline history and define the next planned phases.
+Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. The sections below keep the baseline history, align it with the customer brief, and define the next planned phases.
 
 ## Stage 1. Зафиксировать smoke/regression проверки
 
@@ -157,32 +157,81 @@ conda run -n etl_env python -m py_compile scripts\audit_corpus.py tests\test_aud
   - собрать small query set и expected hits;
   - сравнить baseline retrieval quality по queries / top-k;
   - зафиксировать воспроизводимый evaluation output.
-- Статус: planned.
+- Статус: completed.
 - Рамка этапа:
   - OCR, semantic retrieval, RAG, vector DB и LLM generation по-прежнему не входят в Stage 8–9.
 
-## Stage 10. Ask / extractive QA proof
+## Customer brief alignment
 
-- Цель: показать extractive QA proof на текущем corpus без перехода к полной генеративной схеме.
+- Цель: выровнять roadmap под расширенный бриф заказчика без переписывания текущего baseline и без обещаний уже не реализованных возможностей.
+- Что уже подтверждено Stage 7–9:
+  - batch/evaluation reporting layer;
+  - read-only corpus quality audit;
+  - retrieval quality mini-evaluation;
+  - это покрывает часть брифа про «Оценка качества решений» и создаёт foundation для следующего пилотного AI-service track.
+- Что не подтверждено и не должно декларироваться как готовое:
+  - OCR;
+  - semantic retrieval и полноценный RAG;
+  - vector DB;
+  - LLM generation / answer synthesis;
+  - автоматическая генерация фрагментов документации.
+
+## Stage 10. Customer scenarios and evaluation set
+
+- Цель: зафиксировать пользовательские сценарии экологов-проектировщиков и сформировать evaluation set для пилотного AI-service track.
 - Подзадачи:
-  - оценить current `ask` behavior;
-  - зафиксировать answer provenance / source grounding;
-  - ограничить scope proof-of-value.
+  - описать типовые сценарии работы с исходными файлами клиента;
+  - собрать список типовых вопросов и expected outputs;
+  - определить acceptance criteria для поиска, извлечения, суммаризации и Q&A;
+  - связать сценарии с доступными локальными источниками и метриками качества.
 - Статус: planned.
 
-## Stage 11. XLS decision
+## Stage 11. Ask / extractive QA proof with sources
 
-- Цель: принять отдельное решение по XLS: legacy only, expand support или оставить как known limitation.
+- Цель: улучшить текущий `ask` как source-backed extractive QA без LLM generation.
 - Подзадачи:
-  - оформить decision note;
-  - согласовать влияние на docs, tests и user-facing claims.
+  - проверить текущий `ask` behavior;
+  - зафиксировать answer provenance и source grounding;
+  - ограничить scope до extractive proof, а не до генеративного ответа;
+  - уточнить, какие ответы можно давать на базе существующего корпуса.
 - Статус: planned.
 
-## Stage 12. OCR spike / optional OCR baseline
+## Stage 12. OCR / image intake spike
 
-- Цель: сделать отдельный spike по OCR, только если он нужен как будущий baseline.
+- Цель: сделать локальный OCR spike для `JPG`/`JPEG`/`PNG` и отдельно зафиксировать `HEIC` как decision point / limitation.
 - Подзадачи:
-  - оценить OCR integration options;
-  - определить, станет ли OCR baseline или останется optional;
-  - зафиксировать влияние на текущий corpus / search flow.
+  - оценить локальные OCR options без внешних proprietary API;
+  - проверить, какой минимум image intake нужен для проекта;
+  - отдельно задокументировать статус `HEIC`;
+  - не обещать production-ready OCR до подтверждённого spike.
+- Статус: planned.
+
+## Stage 13. XLS / tables / semi-structured input decision
+
+- Цель: принять отдельное решение по `XLS` и уточнить baseline для table extraction в полу-структурированных данных.
+- Подзадачи:
+  - подтвердить, остаётся ли `XLS` legacy-only ограничением или требует расширения;
+  - описать статус table extraction для `XLSX` и табличных блоков в других форматах;
+  - зафиксировать ограничения для неструктурированных и полуструктурированных данных;
+  - обновить claims в документации без опережающих обещаний.
+- Статус: planned.
+
+## Stage 14. Summarization / draft generation spike
+
+- Цель: после QA/OCR/eval проверить локальные или open-source варианты суммаризации и draft generation.
+- Подзадачи:
+  - сформировать небольшой proof-of-value scope;
+  - не включать fine-tuning в roadmap как обещание;
+  - рассматривать только локальные или open-source варианты, если они будут разрешены;
+  - привязать выводы к качеству источников и ограничениям корпуса.
+- Статус: planned.
+
+## Stage 15. Prototype integration flow
+
+- Цель: собрать демонстрационный flow `upload` / `process` / `audit` / `search` / `eval` / `ask`.
+- Подзадачи:
+  - связать подтверждённые части baseline и pilot track в один demo flow;
+  - оставить audit/eval visible в прототипе;
+  - не заявлять полноценный RAG или end-to-end generation до фактической реализации;
+  - подготовить основу для рабочего прототипа сервиса для экологов-проектировщиков.
 - Статус: planned.
