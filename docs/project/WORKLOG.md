@@ -11,10 +11,18 @@
 - Stage 9 closed as the retrieval quality mini-evaluation.
 - After Stage 9, a roadmap realignment was performed against the extended customer brief.
 - Stage 10 customer scenarios and evaluation set created as a docs-only artifact.
+- Stage 11 closed as the source-backed ask response alignment.
+- Commit: `1a02af5` `Add source-backed ask response`.
+- Checks:
+  - `python -m pytest -q tests\test_api.py` -> 4 passed
+  - `python -m pytest -q tests\test_search.py` -> 3 passed
+  - `python -m py_compile app\schemas\api.py app\search\index.py tests\test_api.py` -> OK
+- Storage changes after `test_api` were cleaned before commit.
+- `git status --short` after commit was clean.
 
 ## next
 
-- Stage 11 — ask / extractive QA proof with sources.
+- Stage 12 — OCR / image intake spike.
 
 ## alignment
 

@@ -43,6 +43,12 @@ conda run -n etl_env uvicorn app.main:app --reload
 
 Поток API подтверждён тестом `tests/test_api.py`.
 
+## `/api/v1/ask`
+
+`AskResponse` включает `question`, `answer`, `sources`, `hits`, `strategy`.
+`sources` — source-backed evidence snippets, а `hits` сохранён для обратной совместимости.
+Если в корпусе нет ответа, сервис возвращает `нет информации в корпусе`.
+
 ## Batch обработка директории
 
 ```bash

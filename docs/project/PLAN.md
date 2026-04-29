@@ -194,12 +194,25 @@ conda run -n etl_env python -m py_compile scripts\audit_corpus.py tests\test_aud
   - зафиксировать answer provenance и source grounding;
   - ограничить scope до extractive proof, а не до генеративного ответа;
   - уточнить, какие ответы можно давать на базе существующего корпуса.
-- Статус: planned.
+- Статус: completed.
+- Фактический контракт `/api/v1/ask`:
+  - `AskResponse` содержит `question`, `answer`, `sources`, `hits`, `strategy`;
+  - `sources` — source-backed evidence snippets;
+  - `hits` сохранён для обратной совместимости;
+  - no-hit answer: `нет информации в корпусе`.
 
 ## Stage 12. OCR / image intake spike
 
+- Next: OCR / image intake spike.
 - Цель: сделать локальный OCR spike для `JPG`/`JPEG`/`PNG` и отдельно зафиксировать `HEIC` как decision point / limitation.
 - Подзадачи:
+  - провести audit / разведку до любого кода:
+    - какие image formats сейчас поддерживаются;
+    - где обрабатываются `jpg`/`png`;
+    - как фиксируется image presence;
+    - есть ли локальные OCR dependencies;
+    - что делать с `HEIC`;
+    - как сделать spike без внешних APIs и без ломки baseline;
   - оценить локальные OCR options без внешних proprietary API;
   - проверить, какой минимум image intake нужен для проекта;
   - отдельно задокументировать статус `HEIC`;
