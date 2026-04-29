@@ -53,3 +53,6 @@
   `conda activate etl_env`
   `python -m pytest -q`
 - Codex может выполнять диагностику и точечные проверки, но если pytest падает только на sandbox temp/ACL, нужно остановиться и запросить локальное подтверждение у пользователя.
+- Если `rg` в Codex sandbox на Windows упирается в ACL/PermissionError, можно использовать read-only PowerShell fallback (`Get-ChildItem`, `Select-String`, `Get-Content`).
+- Такое поведение считается ограничением локального окружения, а не ошибкой проекта.
+- Не добавлять workaround-и в production code/tests из-за проблем `rg` или ACL.

@@ -51,10 +51,17 @@
   - локальные проверки:
     - `python -m pytest -q tests\test_batch_process.py` -> `1 passed`
     - `python -m pytest -q tests\test_contracts.py` -> `4 passed`
+- Stage 8 закрыт.
+  - commit: `c08a66a`
+  - добавлен read-only corpus quality audit в `scripts/audit_corpus.py`
+  - добавлены тесты в `tests/test_audit_corpus.py`
+  - локальные проверки:
+    - `python -m pytest -q tests\test_audit_corpus.py` -> `2 passed`
+    - `python -m py_compile scripts\audit_corpus.py tests\test_audit_corpus.py` -> `OK`
 
 ## next
 
-- Stage 8 — corpus quality audit.
+- Stage 9 — retrieval quality mini-evaluation.
 
 ## risks
 

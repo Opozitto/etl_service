@@ -140,7 +140,15 @@ conda run -n etl_env python -m scripts.demo_search --query "экология п�
   - оценить полноту и чистоту корпуса;
   - проверить duplicate/noise patterns и материалы с потерями метаданных;
   - зафиксировать ключевые метрики аудита.
-- Статус: planned.
+- Артефакты:
+  - `scripts/audit_corpus.py`
+  - `tests/test_audit_corpus.py`
+- Команды проверки:
+```powershell
+conda run -n etl_env python -m pytest -q tests\test_audit_corpus.py
+conda run -n etl_env python -m py_compile scripts\audit_corpus.py tests\test_audit_corpus.py
+```
+- Статус: completed.
 
 ## Stage 9. Retrieval quality mini-evaluation
 

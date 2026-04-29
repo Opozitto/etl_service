@@ -73,6 +73,17 @@ conda run -n etl_env python -m scripts.demo_search --query "экология п�
 
 Скрипт поднимает простой локальный retrieval по чанкам из всех сохранённых JSON-результатов в `storage/results`.
 
+## Corpus quality audit
+
+Для read-only аудита качества корпуса доступны команды:
+
+```bash
+conda run -n etl_env python -m scripts.audit_corpus
+conda run -n etl_env python -m scripts.audit_corpus --report-path storage/index/last_corpus_audit.json
+```
+
+Скрипт читает сохранённые JSON-результаты и при наличии corpus index / manifest, а затем печатает краткий summary без изменения `storage/results` и `storage/index`.
+
 ## Очистка дубликатов в storage
 
 ```bash
