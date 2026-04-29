@@ -30,7 +30,6 @@
   - corpus stats
   - corpus reindex
   - corpus manifest
-- Поток API Stage 4 подтверждён `tests/test_api.py`; production-код и тесты на этом шаге не менялись.
 - Retrieval proof/demo Stage 5 подтверждён:
   - `conda run -n etl_env python -m scripts.rebuild_corpus`
   - `conda run -n etl_env python -m scripts.demo_search --query "экология проект"`
@@ -42,22 +41,25 @@
   - OCR задокументирован как вне текущего baseline
   - `jpg`/`png` задокументированы только как фиксация наличия изображений
   - `XLS` задокументирован как известное ограничение, а не как подтверждённый baseline-формат
-- Финальная локальная baseline-регрессия пользователя в `etl_env` подтверждена:
-  - `python -m pytest -q`
-  - результат: `13 passed in 13.22s`
-  - `python -m scripts.rebuild_corpus`
-  - результат: `Rebuilt corpus index: documents=12 chunks=2836 updated_at=2026-04-29T10:34:49.318315`
-  - `python -m scripts.demo_search --query "экология проект"`
-  - результат: 5 top hits; первый hit: `file=test.docx score=11.6432`
+- Stage 7 закрыт.
+  - commit: `bbe0b90`
+  - расширен batch/evaluation report в `scripts/batch_process.py`
+  - добавлен `report_version: "stage7_batch_report_v1"`
+  - добавлен summary block
+  - добавлены item-level metrics
+  - добавлены тесты в `tests/test_batch_process.py`
+  - локальные проверки:
+    - `python -m pytest -q tests\test_batch_process.py` -> `1 passed`
+    - `python -m pytest -q tests\test_contracts.py` -> `4 passed`
 
 ## next
 
-- Stage 1–6 baseline подтверждён; следующий шаг — упаковка и передача результата заказчику, без кодовых изменений.
+- Stage 8 — corpus quality audit.
 
 ## risks
 
-- `.XLS` файл в `first_test_data` по-прежнему не считается подтвержденным baseline-форматом.
-- Полный `pytest` внутри Codex sandbox на Windows может падать на `PermissionError` в `pytest` temp/`tmp_path`, хотя локальный запуск в `etl_env` проходит.
+- `.XLS` файл в `first_test_data` по-прежнему не считается подтверждённым baseline-форматом.
+- Полный `pytest` внутри Codex sandbox на Windows может падать на `PermissionError` в pytest temp/`tmp_path`, хотя локальный запуск в `etl_env` проходит.
 
 ## decisions
 

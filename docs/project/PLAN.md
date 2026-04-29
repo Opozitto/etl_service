@@ -1,5 +1,7 @@
 # PLAN
 
+Stage 1–6 are a closed baseline. Stage 7 is completed and adds the batch/evaluation reporting layer. The sections below keep the baseline history and define the next planned phases.
+
 ## Stage 1. Зафиксировать smoke/regression проверки
 
 - Цель: определить минимальные проверки, которые защищают подтверждённый baseline от регрессий.
@@ -115,3 +117,64 @@ conda run -n etl_env python -m scripts.demo_search --query "экология п�
 ```
 - Критерий завершения:
   - README и demo flow отражают реальный baseline и ведут к подтверждённому результату.
+
+## Stage 7. Evaluation / batch reporting layer
+
+- Цель: зафиксировать batch/evaluation layer, который даёт summary report по пакетной обработке.
+- Подзадачи:
+  - добавить `report_version: "stage7_batch_report_v1"`;
+  - сохранить summary block для processed / duplicate / error;
+  - зафиксировать item-level metrics по каждому файлу;
+  - поддержать report output в `scripts/batch_process.py`.
+- Артефакты:
+  - `scripts/batch_process.py`
+  - `tests/test_batch_process.py`
+- Статус: completed.
+- Рамка этапа:
+  - OCR, semantic retrieval, RAG, vector DB и LLM generation не входят в Stage 7–9, если это не отдельный будущий этап.
+
+## Stage 8. Corpus quality audit
+
+- Цель: проверить качество corpus и формат данных без изменения production flow.
+- Подзадачи:
+  - оценить полноту и чистоту корпуса;
+  - проверить duplicate/noise patterns и материалы с потерями метаданных;
+  - зафиксировать ключевые метрики аудита.
+- Статус: planned.
+
+## Stage 9. Retrieval quality mini-evaluation
+
+- Цель: сделать небольшой reproducible mini-eval для local retrieval quality.
+- Подзадачи:
+  - собрать small query set и expected hits;
+  - сравнить baseline retrieval quality по queries / top-k;
+  - зафиксировать воспроизводимый evaluation output.
+- Статус: planned.
+- Рамка этапа:
+  - OCR, semantic retrieval, RAG, vector DB и LLM generation по-прежнему не входят в Stage 8–9.
+
+## Stage 10. Ask / extractive QA proof
+
+- Цель: показать extractive QA proof на текущем corpus без перехода к полной генеративной схеме.
+- Подзадачи:
+  - оценить current `ask` behavior;
+  - зафиксировать answer provenance / source grounding;
+  - ограничить scope proof-of-value.
+- Статус: planned.
+
+## Stage 11. XLS decision
+
+- Цель: принять отдельное решение по XLS: legacy only, expand support или оставить как known limitation.
+- Подзадачи:
+  - оформить decision note;
+  - согласовать влияние на docs, tests и user-facing claims.
+- Статус: planned.
+
+## Stage 12. OCR spike / optional OCR baseline
+
+- Цель: сделать отдельный spike по OCR, только если он нужен как будущий baseline.
+- Подзадачи:
+  - оценить OCR integration options;
+  - определить, станет ли OCR baseline или останется optional;
+  - зафиксировать влияние на текущий corpus / search flow.
+- Статус: planned.
