@@ -230,18 +230,44 @@ conda run -n etl_env python -m py_compile scripts\audit_corpus.py tests\test_aud
   - явно оформить старый бинарный `XLS` как unsupported known spreadsheet format;
   - не обещать полноценную table-aware reasoning / analytics.
 - Статус: completed.
+- Итоговый контракт:
+  - `.xlsx` поддерживается через текущий `XlsxExtractor`;
+  - таблицы сохраняются как `TableData`, `Block(type="table")` и chunks;
+  - табличный текст попадает в search/ask path через flattened lexical retrieval;
+  - `.xls` / `.XLS` распознаётся как known unsupported spreadsheet format с русским user-facing сообщением;
+  - `.xls` support не реализован и требует отдельного dependency/implementation решения.
 
-## Stage 14. Summarization / draft generation spike
+## Stage 14. XLS support and spreadsheet table hardening
 
-- Цель: после QA/OCR/eval проверить локальные или open-source варианты суммаризации и draft generation.
+- Цель: добавить минимальную практическую поддержку старого бинарного `.xls` и усилить baseline для spreadsheet/table input без перехода к полноценной table-aware analytics.
+- Подзадачи:
+  - выбрать минимальную open-source dependency strategy для `.xls`;
+  - добавить `XlsExtractor` или эквивалентный extractor path для `.xls`;
+  - привести `.xls` output к тому же baseline-контракту, что и `.xlsx`: heading/table raw blocks → `TableData` → `Block(type="table")` → chunks;
+  - подтвердить обработку существующего sample `first_test_data/Форма 4 Затраты на сырье.XLS`;
+  - зафиксировать поведение тестами на extractor, structure, saved JSON и search/ask path;
+  - явно описать ограничения: formulas/macros/styles/merged cells/advanced Excel semantics не являются целью этапа.
+- Рамка этапа:
+  - не добавлять pandas/openpyxl/LibreOffice без отдельного обоснования;
+  - не менять search ranking/API contract;
+  - не делать полноценную table-aware reasoning;
+  - не трогать OCR.
+- Статус: planned.
+
+## Stage 15. Summarization / draft generation spike
+
+- Цель: после стабилизации ingestion/retrieval baseline проверить локальные или open-source варианты суммаризации и draft generation.
 - Подзадачи:
   - сформировать небольшой proof-of-value scope;
   - не включать fine-tuning в roadmap как обещание;
   - рассматривать только локальные или open-source варианты, если они будут разрешены;
-  - привязать выводы к качеству источников и ограничениям корпуса.
+  - привязать выводы к качеству источников, ограничениям корпуса и source-backed evidence.
+- Рамка этапа:
+  - не заявлять полноценную генерацию проектной документации до фактической реализации и оценки качества;
+  - не подменять source-backed extraction свободной генерацией без ссылок на источники.
 - Статус: planned.
 
-## Stage 15. Prototype integration flow
+## Stage 16. Prototype integration flow
 
 - Цель: собрать демонстрационный flow `upload` / `process` / `audit` / `search` / `eval` / `ask`.
 - Подзадачи:
