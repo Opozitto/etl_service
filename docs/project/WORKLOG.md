@@ -36,6 +36,10 @@
 ## next
 
 - Stage 13 closed as the historical XLS / tables baseline decision; Stage 14 later superseded the unsupported-XLS state.
+- Stage 17 customer demo smoke runner added in code:
+  - `scripts/demo_customer_flow.py`
+  - `tests/test_demo_customer_flow.py`
+- Codex sandbox pytest on Windows still hits `PermissionError` on `tmp_path` / `pytest-of-*`; this remains an environment limitation, not a project fix.
 
 ## alignment
 
@@ -72,6 +76,9 @@
 - Local full pytest result: `conda run -n etl_env python -m pytest -q --basetemp=D:\Projects\etl_service\.pytest-run-temp\stage14` -> `39 passed in 14.16s`
 - Runtime artifacts after local pytest were restored and must not be committed.
 - Stage 15 next: customer demo readiness / docs and scenario alignment.
+- Verification in this turn:
+  - `conda run -n etl_env python -m py_compile scripts\demo_customer_flow.py tests\test_demo_customer_flow.py` -> OK
+  - `conda run -n etl_env python -m pytest -q tests\test_demo_customer_flow.py` -> blocked by sandbox `PermissionError` on `D:\Temp\pytest-of-opozi`
 - Checks passed in `etl_env`:
   - `python -m py_compile app\pipeline\errors.py app\pipeline\extractors\registry.py app\pipeline\extractors\xls.py app\pipeline\extractors\xlsx.py app\pipeline\transform\structure.py app\services\document_service.py app\search\index.py app\search\store.py tests\test_extractors.py tests\test_api.py`
   - `python -m pytest -q tests\test_extractors.py -k "xls or xlsx or table or image"`

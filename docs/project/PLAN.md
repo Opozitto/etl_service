@@ -294,10 +294,11 @@ conda run -n etl_env python -m scripts.batch_process --input-dir first_test_data
 
 ## Stage 17. Prototype integration flow
 
-- Цель: собрать демонстрационный flow `upload` / `process` / `audit` / `search` / `eval` / `ask` после readiness и summarization steps.
+- Цель: собрать reproducible customer demo flow `process` / `audit` / `rebuild` / `search` / `ask` / table scenario после readiness и summarization steps, без обещаний новых AI-capabilities.
 - Подзадачи:
-  - связать подтверждённые части baseline и pilot track в один demo flow;
+  - связать подтверждённые части baseline и pilot track в один demo smoke runner;
   - оставить audit/eval visible в прототипе;
+  - показать честный baseline: source-backed search, source-backed ask, table retrieval, audit visibility, image metadata-only limitation;
   - не заявлять полноценный RAG или end-to-end generation до фактической реализации;
   - подготовить основу для рабочего прототипа сервиса для экологов-проектировщиков.
 - Статус: planned.

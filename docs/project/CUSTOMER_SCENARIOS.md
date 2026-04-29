@@ -142,6 +142,7 @@ Stage 10 должен зафиксировать не функциональну
 - Stage 15 should align customer demo readiness, ingestion-search QA, supported formats, and scenario matrices after XLS support.
 - Stage 16 should evaluate summarization / draft generation as a future spike, not as a baseline claim.
 - Stage 17 should connect the confirmed pieces into a prototype integration flow, while keeping audit and eval visible.
+- Stage 17 demo helper may read the current corpus snapshot, optionally rebuild the index only with an explicit flag, and report the current baseline honestly.
 
 ## Notes on the current baseline
 

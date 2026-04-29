@@ -64,6 +64,21 @@ conda run -n etl_env python -m scripts.batch_process --input-dir first_test_data
 conda run -n etl_env python -m scripts.batch_process --input-dir first_test_data --report-path storage/index/last_batch_report.json
 ```
 
+## Customer demo smoke runner
+
+```bash
+conda run -n etl_env python -m scripts.demo_customer_flow
+```
+
+Optional JSON report:
+
+```bash
+conda run -n etl_env python -m scripts.demo_customer_flow --json-report-path storage/index/customer_demo_report.json
+```
+
+Default mode is read-only. The optional JSON report path is a runtime artifact, and `--refresh-index` is the only mode that may update `storage/index`.
+This demo reports the current baseline only: OCR, LLM generation, summarization, vector DB, semantic retrieval, and full RAG are not implemented.
+
 ## Пересборка индекса корпуса
 
 ```bash
