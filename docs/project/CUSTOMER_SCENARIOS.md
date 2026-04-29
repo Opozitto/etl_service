@@ -147,3 +147,8 @@ Stage 10 должен зафиксировать не функциональну
 - Stage 7–9 already provide batch reporting, corpus audit, and retrieval quality evaluation.
 - That makes source-backed search and source-backed proof the right immediate pilot direction.
 - OCR, semantic retrieval, vector DB, RAG, and LLM generation remain outside the confirmed baseline.
+
+## Stage 14 note
+
+- EC-08 now reflects practical `.xls`/`.xlsx` table baseline support.
+- The scenario set still uses flattened lexical retrieval and does not claim full table reasoning.

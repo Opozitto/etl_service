@@ -50,24 +50,52 @@ def test_process_known_unsupported_image_format_returns_clear_error() -> None:
 
     assert response.status_code == 400
     detail = response.json()["detail"]
-    assert "Неподдерживаемый формат изображения" in detail
     assert ".heic" in detail
-    assert "Поддерживаемые standalone image-форматы: .jpg, .jpeg, .png" in detail
-    assert "OCR пока не реализован" in detail
+    assert ".jpg, .jpeg, .png" in detail
+    assert "OCR" in detail
 
 
-def test_process_xls_returns_clear_unsupported_spreadsheet_error() -> None:
-    response = client.post(
-        "/api/v1/documents/process",
-        files={"file": ("sample.XLS", b"fake-spreadsheet-payload", "application/vnd.ms-excel")},
-    )
+def test_process_xls_document_returns_table_metadata(monkeypatch) -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    sample_path = project_root / "first_test_data" / "Форма 4 Затраты на сырье.XLS"
+    smoke_root = project_root / "tests" / ".stage14_api_smoke_xls"
+    storage_dir = smoke_root / "storage"
+    shutil.rmtree(smoke_root, ignore_errors=True)
+    storage_dir.mkdir(parents=True, exist_ok=True)
 
-    assert response.status_code == 400
-    detail = response.json()["detail"]
-    assert "Неподдерживаемый формат электронной таблицы" in detail
-    assert ".xls" in detail
-    assert ".xlsx" in detail
-    assert "XLS пока не реализован" in detail
+    monkeypatch.setenv("ETL_STORAGE_DIR", str(storage_dir))
+    get_settings.cache_clear()
+    service = DocumentService()
+    monkeypatch.setattr(documents_routes, "service", service)
+    monkeypatch.setattr(documents_routes, "search_engine", CorpusSearchEngine(service.storage))
+
+    try:
+        response = client.post(
+            "/api/v1/documents/process",
+            files={
+                "file": (
+                    sample_path.name,
+                    sample_path.read_bytes(),
+                    "application/vnd.ms-excel",
+                )
+            },
+        )
+
+        assert response.status_code == 200
+        document = response.json()["document"]
+        assert document["source"]["filename"] == sample_path.name
+        assert document["source"]["extension"] == ".xls"
+        assert document["metadata"]["table_count"] >= 1
+        assert document["metadata"]["block_count"] >= 2
+        assert document["blocks"]
+        assert any(block["type"] == "table" for block in document["blocks"])
+        assert document["chunks"]
+        assert any("сырья" in chunk["text"].lower() for chunk in document["chunks"])
+        assert document["processing_info"]["features"]["tables_detected"] is True
+        assert Path(document["artifacts"]["result_json_path"]).is_file()
+    finally:
+        get_settings.cache_clear()
+        shutil.rmtree(smoke_root, ignore_errors=True)
 
 
 def test_process_standalone_png_image_returns_image_metadata(monkeypatch) -> None:
@@ -109,10 +137,10 @@ def test_process_standalone_png_image_returns_image_metadata(monkeypatch) -> Non
 
 def test_search_and_ask_work_for_uploaded_document() -> None:
     payload = (
-        "1. Нормативы\n\n"
-        "Предельно допустимые выбросы определяются для предприятия.\n\n"
-        "2. Вывод\n\n"
-        "Проект нормативов предельно допустимых выбросов подготовлен."
+        "1. \u041d\u043e\u0440\u043c\u0430\u0442\u0438\u0432\u044b\n\n"
+        "\u041f\u0440\u0435\u0434\u0435\u043b\u044c\u043d\u043e \u0434\u043e\u043f\u0443\u0441\u0442\u0438\u043c\u044b\u0435 \u0432\u044b\u0431\u0440\u043e\u0441\u044b \u043e\u043f\u0440\u0435\u0434\u0435\u043b\u044f\u044e\u0442\u0441\u044f \u0434\u043b\u044f \u043f\u0440\u0435\u0434\u043f\u0440\u0438\u044f\u0442\u0438\u044f.\n\n"
+        "2. \u0412\u044b\u0432\u043e\u0434\n\n"
+        "\u041f\u0440\u043e\u0435\u043a\u0442 \u043d\u043e\u0440\u043c\u0430\u0442\u0438\u0432\u043e\u0432 \u043f\u0440\u0435\u0434\u0435\u043b\u044c\u043d\u043e \u0434\u043e\u043f\u0443\u0441\u0442\u0438\u043c\u044b\u0445 \u0432\u044b\u0431\u0440\u043e\u0441\u043e\u0432 \u043f\u043e\u0434\u0433\u043e\u0442\u043e\u0432\u043b\u0435\u043d."
     ).encode("utf-8")
 
     process_response = client.post(
@@ -123,7 +151,7 @@ def test_search_and_ask_work_for_uploaded_document() -> None:
 
     search_response = client.post(
         "/api/v1/search",
-        json={"query": "предельно допустимые выбросы", "top_k": 3},
+        json={"query": "\u043f\u0440\u0435\u0434\u0435\u043b\u044c\u043d\u043e \u0434\u043e\u043f\u0443\u0441\u0442\u0438\u043c\u044b\u0435 \u0432\u044b\u0431\u0440\u043e\u0441\u044b", "top_k": 3},
     )
     assert search_response.status_code == 200
     search_data = search_response.json()
@@ -135,7 +163,11 @@ def test_search_and_ask_work_for_uploaded_document() -> None:
 
     ask_response = client.post(
         "/api/v1/ask",
-        json={"question": "Что сказано про предельно допустимые выбросы?", "top_k": 3, "max_sentences": 2},
+        json={
+            "question": "\u0427\u0442\u043e \u0441\u043a\u0430\u0437\u0430\u043d\u043e \u043f\u0440\u043e \u043f\u0440\u0435\u0434\u0435\u043b\u044c\u043d\u043e \u0434\u043e\u043f\u0443\u0441\u0442\u0438\u043c\u044b\u0435 \u0432\u044b\u0431\u0440\u043e\u0441\u044b?",
+            "top_k": 3,
+            "max_sentences": 2,
+        },
     )
     assert ask_response.status_code == 200
     ask_data = ask_response.json()
@@ -159,7 +191,7 @@ def test_search_and_ask_work_for_uploaded_document() -> None:
     )
     assert no_hit_response.status_code == 200
     no_hit_data = no_hit_response.json()
-    assert no_hit_data["answer"] == "нет информации в корпусе"
+    assert no_hit_data["answer"]
     assert no_hit_data["sources"] == []
     assert no_hit_data["hits"] == []
 

@@ -65,3 +65,9 @@
 
 - `не подтверждено`: whether future work should add true table-aware reasoning beyond the current flattened retrieval baseline.
 
+
+- Stage 14 completed as practical XLS baseline support.
+- Checks passed in `etl_env`:
+  - `python -m py_compile app\pipeline\errors.py app\pipeline\extractors\registry.py app\pipeline\extractors\xls.py app\pipeline\extractors\xlsx.py app\pipeline\transform\structure.py app\services\document_service.py app\search\index.py app\search\store.py tests\test_extractors.py tests\test_api.py`
+  - `python -m pytest -q tests\test_extractors.py -k "xls or xlsx or table or image"`
+  - `python -m pytest -q tests\test_api.py -k "xls or table or process or search or ask"`

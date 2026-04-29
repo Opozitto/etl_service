@@ -276,3 +276,8 @@ conda run -n etl_env python -m py_compile scripts\audit_corpus.py tests\test_aud
   - не заявлять полноценный RAG или end-to-end generation до фактической реализации;
   - подготовить основу для рабочего прототипа сервиса для экологов-проектировщиков.
 - Статус: planned.
+## Stage 14 update
+
+- Stage 14 is completed in code: `.xls` baseline support is implemented and verified.
+- The practical baseline contract now includes `.xls`/`.XLS` alongside `.xlsx` for table extraction, chunking, and retrieval.
+- Advanced Excel semantics remain out of scope.

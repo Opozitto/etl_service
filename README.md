@@ -109,3 +109,9 @@ OCR не входит в текущий baseline. `jpg`/`jpeg`/`png` подде�
 ## Поддержка DOC
 
 Для старых файлов `DOC` baseline использует локальный `LibreOffice` (`soffice`) и конвертирует документ в `DOCX` перед извлечением. Внешние API не используются.
+
+## Stage 14 note
+
+- `.xls` is now supported at baseline level through `XlsExtractor`.
+- `.xls` and `.xlsx` share the same flattened table extraction contract for search/ask.
+- Advanced Excel semantics such as formulas, macros, styles, merged cells, and hidden-sheet behavior remain out of scope.

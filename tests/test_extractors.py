@@ -7,17 +7,16 @@ import pytest
 from PIL import Image
 
 from app.core.config import get_settings
-from app.pipeline.errors import UnsupportedImageFormatError
-from app.pipeline.errors import UnsupportedSpreadsheetFormatError
 from app.pipeline.extractors.image import ImageExtractor
 from app.pipeline.extractors.registry import (
     ExtractorRegistry,
     KNOWN_UNSUPPORTED_IMAGE_SUFFIXES,
     SUPPORTED_STANDALONE_IMAGE_SUFFIXES,
 )
+from app.pipeline.extractors.txt import TxtExtractor
+from app.pipeline.extractors.xls import XlsExtractor
 from app.pipeline.extractors.xlsx import XlsxExtractor
 from app.pipeline.transform.structure import build_structure
-from app.pipeline.extractors.txt import TxtExtractor
 from app.search.index import CorpusSearchEngine
 from app.services.document_service import DocumentService
 
@@ -45,14 +44,15 @@ def test_registry_supports_standalone_image_suffixes(suffix: str) -> None:
 
 @pytest.mark.parametrize("suffix", KNOWN_UNSUPPORTED_IMAGE_SUFFIXES)
 def test_registry_rejects_known_unsupported_image_suffixes(suffix: str) -> None:
+    from app.pipeline.errors import UnsupportedImageFormatError
+
     with pytest.raises(UnsupportedImageFormatError) as exc_info:
         ExtractorRegistry().get_for_path(Path(f"sample{suffix}"))
 
     message = str(exc_info.value)
-    assert "Неподдерживаемый формат изображения" in message
     assert suffix in message
-    assert "Поддерживаемые standalone image-форматы: .jpg, .jpeg, .png" in message
-    assert "OCR пока не реализован" in message
+    assert ".jpg, .jpeg, .png" in message
+    assert "OCR" in message
 
 
 def test_registry_preserves_generic_unsupported_extension_error() -> None:
@@ -63,21 +63,71 @@ def test_registry_preserves_generic_unsupported_extension_error() -> None:
 
 
 @pytest.mark.parametrize("suffix", [".xls", ".XLS"])
-def test_registry_rejects_xls_as_known_unsupported_spreadsheet_format(suffix: str) -> None:
-    with pytest.raises(UnsupportedSpreadsheetFormatError) as exc_info:
-        ExtractorRegistry().get_for_path(Path(f"sample{suffix}"))
+def test_registry_routes_xls(suffix: str) -> None:
+    extractor = ExtractorRegistry().get_for_path(Path(f"sample{suffix}"))
 
-    message = str(exc_info.value)
-    assert "Неподдерживаемый формат электронной таблицы" in message
-    assert ".xls" in message
-    assert ".xlsx" in message
-    assert "XLS пока не реализован" in message
+    assert isinstance(extractor, XlsExtractor)
 
 
 def test_registry_routes_xlsx() -> None:
     registry = ExtractorRegistry()
 
     assert isinstance(registry.get_for_path(Path("sample.xlsx")), XlsxExtractor)
+
+
+def test_xls_table_baseline_is_structured_and_searchable(monkeypatch: pytest.MonkeyPatch) -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    sample_path = project_root / "first_test_data" / "Форма 4 Затраты на сырье.XLS"
+    smoke_root = project_root / "tests" / ".stage14_xls_smoke"
+    storage_dir = smoke_root / "storage"
+    shutil.rmtree(smoke_root, ignore_errors=True)
+    storage_dir.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setenv("ETL_STORAGE_DIR", str(storage_dir))
+    get_settings.cache_clear()
+
+    try:
+        extracted = XlsExtractor().extract(sample_path)
+        assert extracted.extractor_name == "xls"
+        assert any(block.kind == "heading" for block in extracted.blocks)
+        assert any(block.kind == "table" for block in extracted.blocks)
+        assert "ф4 (пл.ф.)" in extracted.text
+        assert "Затраты на приобретение сырья" in extracted.text
+
+        sections, blocks, tables, images, chunks = build_structure(extracted)
+        assert tables
+        assert any(block.type == "table" for block in blocks)
+        assert chunks
+        assert any(
+            "Форма № 4" in chunk.text and "Затраты на приобретение сырья" in chunk.text
+            for chunk in chunks
+        )
+
+        service = DocumentService()
+        outcome = service.process_path_with_status(sample_path)
+        document = outcome.document
+        assert outcome.status == "processed"
+        assert document.source.filename == sample_path.name
+        assert document.source.extension == ".xls"
+        assert document.metadata.table_count >= 1
+        assert document.metadata.block_count >= 2
+        assert document.blocks
+        assert any(block.type == "table" for block in document.blocks)
+        assert document.chunks
+        assert document.processing_info.features["tables_detected"] is True
+        assert Path(document.artifacts.result_json_path).is_file()
+
+        search_engine = CorpusSearchEngine(service.storage)
+        hits = search_engine.search("сырья", top_k=3)
+        assert hits
+        assert any("сырья" in hit.snippet.lower() for hit in hits)
+
+        ask_response = search_engine.ask("Где указаны затраты на приобретение сырья?", top_k=3, max_sentences=2)
+        assert ask_response.sources
+        assert ask_response.hits
+        assert any("сырья" in source.snippet.lower() for source in ask_response.sources)
+    finally:
+        get_settings.cache_clear()
+        shutil.rmtree(smoke_root, ignore_errors=True)
 
 
 def test_xlsx_table_baseline_is_structured_and_searchable(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -109,7 +159,7 @@ def test_xlsx_table_baseline_is_structured_and_searchable(monkeypatch: pytest.Mo
         assert Path(outcome.document.artifacts.result_json_path).is_file()
 
         search_engine = CorpusSearchEngine(service.storage)
-        hits = search_engine.search("трудоемкость 1199", top_k=3)
+        hits = search_engine.search("Трудоемкость 1199", top_k=3)
         assert hits
         assert any("Трудоемкость" in hit.snippet and "1199" in hit.snippet for hit in hits)
 

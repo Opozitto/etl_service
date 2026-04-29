@@ -27,3 +27,9 @@
 - OCR как подтверждённая production capability.
 - Сложный observability stack.
 - Новые product surfaces вне текущего ETL/search service.
+
+## Stage 14 note
+
+- `.xls` is now supported at baseline level via a narrow `XlsExtractor` path.
+- `.xls`/`.xlsx` table text continues to flow into JSON, chunks, search, and ask through the flattened lexical retrieval baseline.
+- Advanced Excel semantics remain out of scope.
