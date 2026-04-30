@@ -63,10 +63,13 @@
 - Stage 27 parameterizes `FileStorage` / `DocumentService` just enough to allow workspace-local processing without writing production `storage/index`, `storage/results`, or `storage/uploads`.
 - Stage 27 hotfix keeps synthetic QA TSV tests on normal UTF-8 Russian headers, adds `--encoding` / `--delimiter` pass-through, and respects explicit `--workspace-report-path` in processing/eval mode.
 - Stage 27 does not change `/api/v1/ask`, production search ranking, OCR/scanned PDF OCR, RAG/LLM/generation, embeddings/vector DB, or semantic retrieval.
+- Stage 28 completed as read-only QA failure taxonomy / customer-readable diagnostics on top of existing QA eval, external audit, and workspace reports.
+- Stage 28 adds `app.evaluation.qa_failure_taxonomy` and CLI `scripts.diagnose_qa_failures` with stable taxonomy version `stage28_qa_failure_taxonomy_v1`.
+- Stage 28 writes JSON diagnostics only with explicit `--output-path` and keeps console output short: analyzed questions, failures/limitations, category counts, and recommended next actions.
+- Stage 28 is diagnostic only: no production search/ranking changes, no `/api/v1/ask` contract changes, no ingestion changes, no OCR/RAG/LLM/table analytics, and no external/runtime artifact commits.
 
 ## next
 
-- Stage 28 QA failure taxonomy / customer-readable diagnostics.
 - Stage 29 QA evaluator retrieval-loop speed/cache, optional and only if speed remains a blocker after external workspace/failure diagnostics.
 - Final polish checkpoint starts only by explicit user command: "стоп, следующий шаг делаем финал".
 
@@ -125,6 +128,13 @@
 - `conda run -n etl_env python -m py_compile scripts\audit_external_qa_dataset.py tests\test_audit_external_qa_dataset.py` -> OK.
 - `conda run -n etl_env python -m pytest -q tests/test_audit_external_qa_dataset.py::test_table_like_heuristic_is_conservative` -> 1 passed.
 - `conda run -n etl_env python -m pytest -q tests/test_audit_external_qa_dataset.py --basetemp=D:\Projects\etl_service\.pytest-run-temp\stage26_codex` -> blocked by Codex sandbox `PermissionError` on `basetemp` cleanup.
+- `conda run -n etl_env python -m py_compile app\evaluation\qa_failure_taxonomy.py scripts\diagnose_qa_failures.py tests\test_qa_failure_taxonomy.py` -> OK.
+- `conda run -n etl_env python -m pytest -q tests\test_qa_failure_taxonomy.py -k "not cli_does_not_write"` -> 10 passed, 1 deselected.
+- `conda run -n etl_env python -m py_compile scripts\evaluate_qa_dataset.py scripts\audit_external_qa_dataset.py scripts\evaluate_external_qa_workspace.py tests\test_qa_dataset_evaluation.py tests\test_audit_external_qa_dataset.py tests\test_external_qa_workspace.py` -> OK.
+- `conda run -n etl_env python -m pytest -q tests\test_qa_dataset_evaluation.py::test_table_question_heuristic_identifies_domain_questions tests\test_audit_external_qa_dataset.py::test_table_like_heuristic_is_conservative` -> 2 passed.
+- `conda run -n etl_env python -m scripts.diagnose_qa_failures --qa-report-path D:\Projects\etl_service\.pytest-run-temp\stage28_cli_manual\qa_report.json` -> OK, console summary only, no JSON output path written.
+- `conda run -n etl_env python -m pytest -q tests\test_qa_failure_taxonomy.py tests\test_qa_dataset_evaluation.py tests\test_audit_external_qa_dataset.py tests\test_external_qa_workspace.py` -> 12 tests passed before Codex sandbox `PermissionError` on `D:\Temp\pytest-of-opozi` tmp_path setup.
+- `conda run -n etl_env python -m pytest -q tests\test_qa_failure_taxonomy.py::test_cli_does_not_write_output_without_explicit_output_path --basetemp=D:\Projects\etl_service\.pytest-run-temp\stage28_cli_single` -> blocked by Codex sandbox `PermissionError` during pytest basetemp cleanup.
 
 ## open questions
 

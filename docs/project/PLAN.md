@@ -535,8 +535,25 @@ conda run -n etl_env python -m scripts.evaluate_qa_dataset --qa-path "D:\Project
 
 ## Stage 28. QA failure taxonomy / customer-readable diagnostics
 
-- Статус: planned.
+- Статус: completed.
 - Цель: классифицировать провалы QA/retrieval eval и сделать диагностику понятной для customer-facing анализа без обещания неподтверждённых AI capabilities.
+- Scope:
+  - read-only module `app.evaluation.qa_failure_taxonomy`;
+  - CLI `scripts.diagnose_qa_failures`;
+  - stable `taxonomy_version: "stage28_qa_failure_taxonomy_v1"`;
+  - входной Stage 24/25 QA eval JSON обязателен;
+  - Stage 26 external audit report и Stage 27 workspace manifest опциональны;
+  - JSON diagnostics пишется только по явному `--output-path`;
+  - console summary показывает количество вопросов, failures/limitations, counts by category и честные next actions;
+  - классификация консервативна: если в старом report не хватает полей, item уходит в `unknown_or_needs_manual_review`.
+- Out of scope:
+  - production search/ranking changes;
+  - `/api/v1/ask` contract changes;
+  - ingestion pipeline changes;
+  - OCR/scanned PDF OCR;
+  - LLM/RAG/generation, embeddings/vector DB, semantic retrieval;
+  - table analytics/calculations;
+  - commit of external dataset or runtime reports/artifacts.
 
 ## Stage 29. QA evaluator retrieval-loop speed/cache
 
