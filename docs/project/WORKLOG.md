@@ -71,10 +71,14 @@
 - Stage 29.0 records that current chunks are acceptable for lexical search, but weak/partial as self-contained RAG handoff units.
 - The next priority is customer/developer-readable chunk inspection/export, followed by chunk quality audit, chunk contract hardening, table chunk context, and source location/citation hardening.
 - The old retrieval-loop speed/cache stage moved later as optional Stage 33, only if speed becomes a blocker after chunk inspection/export and quality audit.
+- Stage 29.1 completed as read-only RAG-ready chunk inspection/export v1.
+- Stage 29.1 adds `app.evaluation.rag_chunk_export` and CLI `scripts.export_rag_chunks` over existing processed `StructuredDocument` JSON from `--results-dir`.
+- Stage 29.1 exports compact chunk records with document/source metadata, section title/path, derived page range, table id where reliable, conservative `content_type`, `quality_flags`, and handoff notes.
+- Stage 29.1 writes JSON only by explicit `--output-path`; without it the CLI prints a short console summary only.
+- Stage 29.1 does not change ingestion pipeline, production search ranking, `/api/v1/ask`, OCR/scanned PDF OCR, RAG/LLM, embeddings/vector DB, reranking, table analytics, production storage, or external `Example_data`.
 
 ## next
 
-- Stage 29.1 RAG-ready chunk inspection/export v1.
 - Stage 29.2 Chunk quality audit v1.
 - Stage 30 RAG chunk contract hardening v1.
 - Stage 31 Table chunk context v1.
@@ -146,6 +150,12 @@
 - `conda run -n etl_env python -m scripts.diagnose_qa_failures --qa-report-path D:\Projects\etl_service\.pytest-run-temp\stage28_cli_manual\qa_report.json` -> OK, console summary only, no JSON output path written.
 - `conda run -n etl_env python -m pytest -q tests\test_qa_failure_taxonomy.py tests\test_qa_dataset_evaluation.py tests\test_audit_external_qa_dataset.py tests\test_external_qa_workspace.py` -> 12 tests passed before Codex sandbox `PermissionError` on `D:\Temp\pytest-of-opozi` tmp_path setup.
 - `conda run -n etl_env python -m pytest -q tests\test_qa_failure_taxonomy.py::test_cli_does_not_write_output_without_explicit_output_path --basetemp=D:\Projects\etl_service\.pytest-run-temp\stage28_cli_single` -> blocked by Codex sandbox `PermissionError` during pytest basetemp cleanup.
+- `conda run -n etl_env python -m py_compile app\evaluation\rag_chunk_export.py scripts\export_rag_chunks.py tests\test_rag_chunk_export.py` -> OK.
+- `conda run -n etl_env python -m pytest -q tests\test_rag_chunk_export.py` -> 5 tests passed before two `tmp_path` CLI tests hit Codex sandbox `PermissionError` on `D:\Temp\pytest-of-opozi`.
+- `conda run -n etl_env python -m pytest -q tests\test_rag_chunk_export.py --basetemp=D:\Projects\etl_service\.pytest-run-temp\stage29_1_rag_chunks` -> tests executed, but pytest sessionfinish hit Codex sandbox `PermissionError` on basetemp cleanup.
+- `conda run -n etl_env python -m pytest -q tests\test_rag_chunk_export.py::test_section_path_derivation tests\test_rag_chunk_export.py::test_page_start_and_page_end_derivation_from_blocks tests\test_rag_chunk_export.py::test_content_type_derivation_from_block_types_and_table_like_chunks tests\test_rag_chunk_export.py::test_quality_flags_for_short_missing_page_and_missing_section tests\test_rag_chunk_export.py::test_include_text_false_true_behavior` -> 5 passed.
+- `conda run -n etl_env python -m scripts.export_rag_chunks --max-documents 1 --max-chunks-per-document 2` -> OK, console summary only, no JSON output path written.
+- `conda run -n etl_env python -m scripts.export_rag_chunks --max-documents 1 --max-chunks-per-document 1 --include-text --output-path .runtime_eval\stage29_1_codex_include_text_smoke.json` -> OK; generated runtime smoke report was inspected and removed.
 
 ## open questions
 

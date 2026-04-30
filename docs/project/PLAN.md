@@ -571,8 +571,14 @@ conda run -n etl_env python -m scripts.evaluate_qa_dataset --qa-path "D:\Project
 
 ## Stage 29.1. RAG-ready chunk inspection/export v1
 
-- Статус: planned.
+- Статус: completed.
 - Цель: дать customer/developer-readable inspection/export текущих chunks, чтобы видеть текст, source context и ограничения handoff units.
+- Подтвержденный scope:
+  - read-only CLI `scripts.export_rag_chunks`;
+  - чтение существующих processed `StructuredDocument` JSON из `--results-dir`, default `storage/results`;
+  - JSON report только по явному `--output-path`;
+  - compact chunk export с document/source/section/page/table context where available;
+  - conservative `content_type` и `quality_flags` без OCR/table analytics/LLM.
 - Scope boundary: read-only diagnostics/export; без изменения ingestion, search ranking, `/api/v1/ask`, storage baseline или external dataset.
 
 ## Stage 29.2. Chunk quality audit v1
