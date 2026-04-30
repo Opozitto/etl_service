@@ -289,7 +289,7 @@ def test_demo_customer_flow_builds_read_only_report(tmp_path: Path, monkeypatch,
     assert "Проба контекста строки:" in captured.out
     assert "Демо-запросы:" in captured.out
     assert "Ограничения:" in captured.out
-    assert "OCR не реализован." in captured.out
+    assert "Optional local OCR baseline для standalone jpg/jpeg/png доступен при наличии локального OCR engine." in captured.out
     assert "Генерация LLM не реализована." in captured.out
     assert "затраты на сырье: hit" in captured.out
     assert "Поиск по источникам" in captured.out

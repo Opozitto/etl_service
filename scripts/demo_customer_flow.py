@@ -327,11 +327,11 @@ def print_demo_report(report: dict) -> None:
         "S3": "Только поиск и сниппеты; сгенерированные требования остаются вне scope.",
         "S4": "Поиск строк и значений в таблицах остаётся лексическим поиском с контекстом строки, а не аналитикой.",
         "S5": "Аудит корпуса показывает проблемные документы, отсутствующие чанки, предупреждения и расхождение индекса.",
-        "S6": "jpg/jpeg/png keep metadata-only fallback and OCR-candidate reporting; optional local OCR can be used when a local engine is available, while HEIC/HEIF/TIFF/TIF/BMP/WEBP stay unsupported and scanned PDFs are not OCR-enabled.",
+        "S6": "jpg/jpeg/png сохраняют metadata-only fallback и OCR-candidate reporting; optional local OCR baseline доступен при наличии локального engine, а HEIC/HEIF/TIFF/TIF/BMP/WEBP остаются неподдерживаемыми и scanned PDFs не OCR-enabled.",
         "S7": "В baseline не реализованы суммаризация и генерация черновиков.",
     }
     limit_display = {
-        "optional local OCR baseline for standalone jpg/jpeg/png when a local engine is available.": "Optional local OCR baseline for standalone jpg/jpeg/png is available when a local engine is present.",
+        "optional local OCR baseline for standalone jpg/jpeg/png when a local engine is available.": "Optional local OCR baseline для standalone jpg/jpeg/png доступен при наличии локального OCR engine.",
         "scanned PDF OCR is not implemented.": "OCR для scanned PDF не реализован.",
         "LLM generation is not implemented.": "Генерация LLM не реализована.",
         "summarization is not implemented.": "Суммаризация не реализована.",

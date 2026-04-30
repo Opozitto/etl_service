@@ -43,11 +43,15 @@ def as_int(value: object) -> int | None:
 def detect_ocr_candidate(document: dict) -> tuple[bool, str | None, list[str]]:
     source = document.get("source") or {}
     processing_info = document.get("processing_info") or {}
+    features = processing_info.get("features") or {}
+    if not isinstance(features, dict):
+        features = {}
     filename = source.get("filename") or ""
     extension = (source.get("extension") or Path(filename).suffix.lower()).lower()
     text_char_count = processing_info.get("text_char_count")
     text_block_count = processing_info.get("text_block_count")
     chunk_count = len(document.get("chunks") or [])
+    ocr_used = bool(features.get("ocr_used"))
 
     ocr_candidate = processing_info.get("ocr_candidate")
     ocr_reason = processing_info.get("ocr_reason")
@@ -58,10 +62,10 @@ def detect_ocr_candidate(document: dict) -> tuple[bool, str | None, list[str]]:
             reason = OCR_PDF_REASON if extension == ".pdf" else OCR_IMAGE_REASON
         return True, reason, [reason]
 
-    if extension in OCR_STANDALONE_IMAGE_SUFFIXES:
+    if extension in OCR_STANDALONE_IMAGE_SUFFIXES and not ocr_used:
         return True, OCR_IMAGE_REASON, [OCR_IMAGE_REASON]
 
-    if extension == ".pdf":
+    if extension == ".pdf" and not ocr_used:
         signals: list[str] = []
         if text_char_count in (None, 0) or not (isinstance(text_char_count, int) and text_char_count > 0):
             signals.append("no_text_extracted")
