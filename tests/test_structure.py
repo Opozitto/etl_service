@@ -22,3 +22,43 @@ def test_build_structure_detects_headings_and_tables() -> None:
     assert len(images) == 0
     assert chunks
 
+
+def test_text_chunk_carries_direct_section_and_page_context() -> None:
+    extracted = ExtractedDocument(
+        extractor_name="test",
+        text="1. Ecology\nBaseline text",
+        blocks=[
+            RawBlock(kind="paragraph", text="1. Ecology", page_num=2),
+            RawBlock(kind="paragraph", text="Baseline text for source backed handoff.", page_num=3),
+        ],
+        page_count=3,
+    )
+
+    _sections, _blocks, _tables, _images, chunks = build_structure(extracted)
+    chunk = next(item for item in chunks if "Baseline text" in item.text)
+
+    assert chunk.content_type == "text"
+    assert chunk.section_title == "1. Ecology"
+    assert chunk.section_path == ["Document", "1. Ecology"]
+    assert chunk.page_start == 2
+    assert chunk.page_end == 3
+    assert chunk.table_id is None
+
+
+def test_table_row_chunk_carries_table_id_only_when_linked_to_table() -> None:
+    extracted = ExtractedDocument(
+        extractor_name="test",
+        text="1. Tables\nA B",
+        blocks=[
+            RawBlock(kind="paragraph", text="1. Tables", page_num=1),
+            RawBlock(kind="table", data=[["Pollutant", "Value"], ["NOx", "10"]], text="Pollutant | Value", page_num=4),
+        ],
+        page_count=4,
+    )
+
+    _sections, _blocks, tables, _images, chunks = build_structure(extracted)
+    table_row_chunk = next(item for item in chunks if item.content_type == "table_row")
+
+    assert tables[0].table_id == table_row_chunk.table_id
+    assert table_row_chunk.page_start == 4
+    assert table_row_chunk.page_end == 4

@@ -84,6 +84,14 @@ def _chunk_text(item: dict[str, Any]) -> str:
     return normalize_text(item.get("text") if "text" in item else item.get("text_preview"))
 
 
+def _filename(item: dict[str, Any]) -> str:
+    return str(item.get("filename") or item.get("source_filename") or "")
+
+
+def _content_type(item: dict[str, Any]) -> str:
+    return str(item.get("content_type") or "unknown")
+
+
 def _is_heading_only_or_low_context(text: str, content_type: str, short_threshold: int) -> bool:
     if not text:
         return False
@@ -101,7 +109,7 @@ def _table_like_without_rich_context(item: dict[str, Any]) -> bool:
     flags = set(item.get("quality_flags") or [])
     if "table_like_text" not in flags:
         return False
-    if item.get("table_id") and item.get("content_type") in {"table", "table_row"}:
+    if item.get("table_id") and _content_type(item) in {"table", "table_row"}:
         return False
     return True
 
@@ -130,9 +138,9 @@ def _issue_codes_for_item(
         issues.append("missing_page")
     if _table_like_without_rich_context(item):
         issues.append("table_like_text_without_rich_context")
-    if "unknown_content_type" in flags or item.get("content_type") == "unknown":
+    if "unknown_content_type" in flags or _content_type(item) == "unknown":
         issues.append("unknown_content_type")
-    if _is_heading_only_or_low_context(text, str(item.get("content_type") or ""), short_threshold):
+    if _is_heading_only_or_low_context(text, _content_type(item), short_threshold):
         issues.append("heading_only_or_low_context")
     if text in duplicate_texts:
         issues.append("duplicate_or_repeated_text")
@@ -146,10 +154,11 @@ def _sample_from_item(item: dict[str, Any], issue_code: str, text_preview_chars:
     return {
         "issue_code": issue_code,
         "document_id": item.get("document_id") or "",
-        "filename": item.get("filename") or "",
+        "filename": _filename(item),
+        "source_filename": item.get("source_filename") or item.get("filename") or "",
         "chunk_id": item.get("chunk_id") or "",
         "order": item.get("order"),
-        "content_type": item.get("content_type") or "unknown",
+        "content_type": _content_type(item),
         "text_preview": _chunk_text(item)[:text_preview_chars],
         "quality_flags": sorted(item.get("quality_flags") or []),
         "handoff_notes": list(item.get("handoff_notes") or []),
@@ -188,13 +197,13 @@ def build_quality_audit_from_items(
 
     issue_counts: Counter[str] = Counter()
     severity_counts: Counter[str] = Counter()
-    content_type_counts = Counter(str(item.get("content_type") or "unknown") for item in items)
+    content_type_counts = Counter(_content_type(item) for item in items)
     document_map: dict[tuple[str, str], dict[str, Any]] = {}
     per_issue_samples: dict[str, list[dict[str, Any]]] = defaultdict(list)
 
     for item in items:
         document_id = str(item.get("document_id") or "")
-        filename = str(item.get("filename") or "")
+        filename = _filename(item)
         key = (document_id, filename)
         if key not in document_map:
             document_map[key] = {

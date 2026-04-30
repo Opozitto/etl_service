@@ -88,6 +88,25 @@ def section_path(section_id: str | None, sections_by_id: dict[str, dict[str, Any
     return list(reversed(path))
 
 
+def _chunk_section_path(chunk: dict[str, Any], section_id: str | None, sections_by_id: dict[str, dict[str, Any]]) -> list[str]:
+    direct = chunk.get("section_path")
+    if isinstance(direct, list):
+        values = [normalize_text(item) for item in direct if normalize_text(item)]
+        if values:
+            return values
+    return section_path(section_id, sections_by_id)
+
+
+def _chunk_int(chunk: dict[str, Any], field: str) -> int | None:
+    value = chunk.get(field)
+    return value if isinstance(value, int) else None
+
+
+def _chunk_text_field(chunk: dict[str, Any], field: str) -> str | None:
+    value = normalize_text(chunk.get(field))
+    return value or None
+
+
 def _block_page_values(block: dict[str, Any]) -> list[int]:
     values: list[int] = []
     for field in PAGE_FIELDS:
@@ -230,9 +249,15 @@ def export_document_chunks(
         linked_blocks = [blocks_by_id[block_id] for block_id in source_block_ids if block_id in blocks_by_id]
         section = sections_by_id.get(section_id or "")
         section_present = section is not None
-        page_start, page_end = page_range(linked_blocks)
-        table_id = table_id_from_blocks(linked_blocks, tables)
-        content_type = derive_content_type(chunk, linked_blocks, table_id)
+        derived_page_start, derived_page_end = page_range(linked_blocks)
+        page_start = _chunk_int(chunk, "page_start")
+        page_end = _chunk_int(chunk, "page_end")
+        if page_start is None:
+            page_start = derived_page_start
+        if page_end is None:
+            page_end = derived_page_end
+        table_id = _chunk_text_field(chunk, "table_id") or table_id_from_blocks(linked_blocks, tables)
+        content_type = _chunk_text_field(chunk, "content_type") or derive_content_type(chunk, linked_blocks, table_id)
         flags = derive_quality_flags(
             chunk=chunk,
             section_present=section_present,
@@ -244,14 +269,16 @@ def export_document_chunks(
         text = str(chunk.get("text") or "")
         item = {
             "document_id": normalize_text(chunk.get("document_id")) or normalize_text(metadata.get("document_id")),
-            "filename": normalize_text(source.get("filename")),
+            "filename": _chunk_text_field(chunk, "source_filename") or normalize_text(source.get("filename")),
+            "source_filename": _chunk_text_field(chunk, "source_filename") or normalize_text(source.get("filename")),
+            "source_type": _chunk_text_field(chunk, "source_type") or normalize_text(source.get("extension")).lstrip("."),
             "title": normalize_text(metadata.get("title")),
             "chunk_id": normalize_text(chunk.get("chunk_id")),
             "order": chunk.get("order"),
             "content_type": content_type,
             "section_id": section_id,
-            "section_title": normalize_text(section.get("title")) if section else None,
-            "section_path": section_path(section_id, sections_by_id),
+            "section_title": _chunk_text_field(chunk, "section_title") or (normalize_text(section.get("title")) if section else None),
+            "section_path": _chunk_section_path(chunk, section_id, sections_by_id),
             "page_start": page_start,
             "page_end": page_end,
             "source_block_ids": source_block_ids,

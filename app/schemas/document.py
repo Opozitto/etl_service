@@ -83,6 +83,14 @@ class Chunk(BaseModel):
     document_id: str
     section_id: Optional[str] = None
     block_ids: list[str] = Field(default_factory=list)
+    content_type: Optional[str] = None
+    source_type: Optional[str] = None
+    section_title: Optional[str] = None
+    section_path: list[str] = Field(default_factory=list)
+    page_start: Optional[int] = None
+    page_end: Optional[int] = None
+    source_filename: Optional[str] = None
+    table_id: Optional[str] = None
     text: str
     order: int
     token_estimate: int

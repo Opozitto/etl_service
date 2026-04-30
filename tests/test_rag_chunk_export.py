@@ -212,3 +212,54 @@ def test_include_text_false_true_behavior() -> None:
     assert "text" not in without_text
     assert "text" in with_text
     assert with_text["text"] == document["chunks"][0]["text"]
+
+
+def test_export_prefers_direct_stage30_chunk_fields() -> None:
+    module = _load_export_module()
+    document = _document(
+        chunks=[
+            {
+                "chunk_id": "chk-direct",
+                "document_id": "doc-1",
+                "section_id": "sec-2",
+                "block_ids": ["blk-1"],
+                "content_type": "table_row",
+                "source_type": "pdf",
+                "section_title": "Direct Section",
+                "section_path": ["Direct Root", "Direct Section"],
+                "page_start": 7,
+                "page_end": 8,
+                "source_filename": "direct.pdf",
+                "table_id": "tbl-direct",
+                "text": "Строка 2. Direct value",
+                "order": 1,
+                "token_estimate": 5,
+            }
+        ]
+    )
+
+    item = module.export_document_chunks(document)[0]
+
+    assert item["filename"] == "direct.pdf"
+    assert item["source_filename"] == "direct.pdf"
+    assert item["source_type"] == "pdf"
+    assert item["content_type"] == "table_row"
+    assert item["section_title"] == "Direct Section"
+    assert item["section_path"] == ["Direct Root", "Direct Section"]
+    assert item["page_start"] == 7
+    assert item["page_end"] == 8
+    assert item["table_id"] == "tbl-direct"
+
+
+def test_export_fallback_still_works_for_old_chunks_without_stage30_fields() -> None:
+    module = _load_export_module()
+
+    item = module.export_document_chunks(_document())[0]
+
+    assert item["filename"] == "test.pdf"
+    assert item["source_filename"] == "test.pdf"
+    assert item["source_type"] == "pdf"
+    assert item["section_title"] == "1.1 Detail"
+    assert item["section_path"] == ["Document", "1. Main", "1.1 Detail"]
+    assert item["page_start"] == 2
+    assert item["page_end"] == 3

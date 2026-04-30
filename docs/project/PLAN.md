@@ -1,6 +1,6 @@
 # PLAN
 
-Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock. Stage 20–25 are completed OCR/readiness/extraction/table/QA-evaluation layers. Stage 26–29.2 are completed external QA/chunk visibility diagnostics and audit stages. Stage 30 is planned as RAG chunk contract hardening v1 for future source-backed handoff, not as full RAG.
+Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock. Stage 20–25 are completed OCR/readiness/extraction/table/QA-evaluation layers. Stage 26–30 are completed external QA/chunk visibility, audit, and chunk contract hardening stages. Stage 30 hardens chunk/source context for future source-backed handoff, not full RAG.
 
 ## Stage 1. Зафиксировать smoke/regression проверки
 
@@ -595,9 +595,15 @@ conda run -n etl_env python -m scripts.evaluate_qa_dataset --qa-path "D:\Project
 
 ## Stage 30. RAG chunk contract hardening v1
 
-- Статус: planned.
+- Статус: completed.
 - Цель: уточнить и укрепить production contract для существующего `chunk` payload/source context, чтобы будущий source-backed RAG handoff мог опираться на более устойчивые handoff units, не объявляя RAG готовым.
-- Граница scope: hardening существующего chunk/source contract; без full RAG/LLM generation, semantic retrieval, embeddings или vector DB.
+- Подтвержденный scope:
+  - `Chunk` получил backward-compatible optional поля для `content_type`, `source_type`, `section_title`, `section_path`, `page_start`, `page_end`, `source_filename`, `table_id`;
+  - structure заполняет прямой section/page/content/table context там, где он уже детерминированно известен;
+  - document service проставляет source visibility (`source_filename`, `source_type`) при новом processing;
+  - Stage 29.1 export предпочитает новые прямые chunk fields, но сохраняет fallback для старых processed JSON;
+  - Stage 29.2 audit принимает новые export/chunk-like records и сохраняет compatibility со старым shape.
+- Граница scope: hardening существующего chunk/source contract; без full RAG/LLM generation, semantic retrieval, embeddings, vector DB, reranking, OCR или table analytics.
 
 ## Stage 31. Table chunk context v1
 

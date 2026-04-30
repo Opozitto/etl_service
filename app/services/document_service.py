@@ -133,6 +133,10 @@ class DocumentService:
             checksum_sha256=checksum,
             saved_path=str(saved_source),
         )
+        source_type = source.extension.lstrip(".") or extractor.name
+        for chunk in chunks:
+            chunk.source_filename = source.filename
+            chunk.source_type = source_type
         document = StructuredDocument(
             metadata=metadata,
             source=source,

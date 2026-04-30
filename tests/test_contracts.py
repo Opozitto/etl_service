@@ -74,6 +74,14 @@ EXPECTED_CHUNK_KEYS = {
     "document_id",
     "section_id",
     "block_ids",
+    "content_type",
+    "source_type",
+    "section_title",
+    "section_path",
+    "page_start",
+    "page_end",
+    "source_filename",
+    "table_id",
     "text",
     "order",
     "token_estimate",
@@ -264,6 +272,29 @@ def test_processed_document_contract_round_trip() -> None:
 
     restored = StructuredDocument.model_validate(payload)
     assert restored.model_dump(mode="json") == payload
+
+
+def test_chunk_contract_is_backward_compatible_with_old_payload() -> None:
+    payload = {
+        "chunk_id": "chk-old",
+        "document_id": "doc-old",
+        "section_id": "sec-1",
+        "block_ids": ["blk-1"],
+        "text": "Old chunk payload",
+        "order": 1,
+        "token_estimate": 3,
+    }
+
+    chunk = Chunk.model_validate(payload)
+
+    assert chunk.content_type is None
+    assert chunk.source_type is None
+    assert chunk.section_title is None
+    assert chunk.section_path == []
+    assert chunk.page_start is None
+    assert chunk.page_end is None
+    assert chunk.source_filename is None
+    assert chunk.table_id is None
 
 
 def test_corpus_index_contract_round_trip(tmp_path: Path, monkeypatch) -> None:

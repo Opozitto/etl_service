@@ -220,3 +220,21 @@ def test_report_recommendations_and_limitations_are_present() -> None:
     assert any("Stage 31" in recommendation for recommendation in report["recommendations"])
     assert any("Stage 32" in recommendation for recommendation in report["recommendations"])
     assert any("No OCR" in limitation for limitation in report["limitations"])
+
+
+def test_audit_accepts_stage30_source_filename_records() -> None:
+    module = _load_quality_module()
+
+    report = module.build_quality_audit_from_items(
+        [
+            _item(
+                filename="",
+                source_filename="stage30.pdf",
+                source_type="pdf",
+                section_path=["Document", "Section"],
+            )
+        ]
+    )
+
+    assert report["documents"][0]["filename"] == "stage30.pdf"
+    assert report["summary"]["content_type_counts"]["text"] == 1

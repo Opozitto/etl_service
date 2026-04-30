@@ -84,10 +84,15 @@
 - Stage 29.3 completed as docs-only governance alignment after chunk export/audit.
 - Stage 29.3 records that chunks are now visible through read-only export and auditable through read-only quality diagnostics, but the underlying chunk/source contract still needs hardening.
 - Stage 29.3 sets Stage 30 as a production-contract step for future source-backed RAG handoff, not as another diagnostic script and not as full RAG.
+- Stage 30 completed as RAG chunk contract hardening v1 for future source-backed handoff readiness.
+- Stage 30 adds backward-compatible optional `Chunk` fields: `content_type`, `source_type`, `section_title`, `section_path`, `page_start`, `page_end`, `source_filename`, and `table_id`.
+- Stage 30 fills direct chunk context only where deterministic context already exists: section/title/path, linked block page range, conservative content type, reliable table id for table-linked chunks, and source filename/type during processing.
+- Stage 30 updates Stage 29.1 export to prefer direct chunk fields while preserving fallback for old processed JSON without those fields.
+- Stage 30 updates Stage 29.2 audit compatibility for new source filename records and old export-like records.
+- Stage 30 does not add full RAG, LLM generation, semantic retrieval, embeddings/vector DB, reranking, OCR/scanned PDF OCR, table analytics, or production storage migration.
 
 ## next
 
-- Stage 30 RAG chunk contract hardening v1.
 - Stage 31 Table chunk context v1.
 - Stage 32 Source location/citation hardening.
 - Stage 33 QA evaluator retrieval-loop speed/cache, optional/later and only if speed becomes a blocker after chunk inspection/export and quality audit.
@@ -108,7 +113,7 @@
 - Stage 26 keeps external QA dataset audit separate from processing/eval so Stage 27 can operate only on diagnosed inputs in a temporary workspace.
 - Stage 27 keeps external processing/eval isolated in `.runtime_eval` or another explicit temporary workspace; production storage remains the baseline corpus, not an evaluation scratch area.
 - Stage 29.0 realigns the next work after RAG chunk audit: inspection/export and quality audit come before speed/cache.
-- Stage 29.1/29.2 close the visibility/export/audit layer for chunks; Stage 30 should harden payload/source context so chunks become stronger handoff units without claiming embeddings, vector DB, semantic retrieval, LLM generation, or full RAG.
+- Stage 29.1/29.2 close the visibility/export/audit layer for chunks; Stage 30 hardens payload/source context so chunks become stronger handoff units without claiming embeddings, vector DB, semantic retrieval, LLM generation, or full RAG.
 
 ## risks
 
@@ -118,8 +123,8 @@
 - OCR is now optional local baseline for standalone images, and candidate reporting remains in place for metadata-only fallback / conservative PDF readiness cases.
 - `HEIC` / `HEIF` / `TIFF` / `TIF` / `BMP` / `WEBP` remain unsupported.
 - LLM / RAG / generation are not implemented.
-- Current chunks are useful for lexical search and now visible/auditable, but remain weak/partial as hardened self-contained RAG handoff units.
-- The underlying chunk contract still needs production hardening before it can be treated as a reliable source-backed handoff layer.
+- Current chunks are useful for lexical search and now carry stronger source/section/page/content context for future handoff, but this is still not a full RAG implementation.
+- The remaining chunk-context risk is table-specific readability and richer source location/citation hardening, planned for Stage 31/32.
 - QA evaluator `--skip-answer-overlap` is intentionally a faster smoke mode; use full/default mode when answer-overlap trend comparison is needed.
 - Stage 26 matching is deterministic and conservative; ambiguous or missing expected documents require review before Stage 27 processing/eval.
 - Stage 27 can process ambiguous candidates only with explicit `--ambiguous-policy all`; because Stage 26 found all expected docs ambiguous on the real dataset, bounded smoke runs with `--max-documents` remain the safer first step.
@@ -171,6 +176,11 @@
 - `conda run -n etl_env python -m scripts.audit_rag_chunks --max-documents 1 --max-chunks-per-document 2` -> OK, console summary only, no JSON output path written.
 - `conda run -n etl_env python -m scripts.audit_rag_chunks --max-documents 1 --max-chunks-per-document 1 --include-samples --output-path .runtime_eval\stage29_2_codex_smoke.json` -> OK; generated runtime smoke report was inspected and removed.
 - `conda run -n etl_env python -m pytest -q tests\test_rag_chunk_export.py::test_section_path_derivation tests\test_rag_chunk_export.py::test_page_start_and_page_end_derivation_from_blocks tests\test_rag_chunk_export.py::test_content_type_derivation_from_block_types_and_table_like_chunks tests\test_rag_chunk_export.py::test_quality_flags_for_short_missing_page_and_missing_section tests\test_rag_chunk_export.py::test_include_text_false_true_behavior` -> 5 passed.
+- `conda run -n etl_env python -m py_compile app\schemas\document.py app\pipeline\transform\structure.py app\services\document_service.py app\evaluation\rag_chunk_export.py app\evaluation\rag_chunk_quality.py tests\test_contracts.py tests\test_structure.py tests\test_rag_chunk_export.py tests\test_rag_chunk_quality.py` -> OK.
+- `conda run -n etl_env python -m pytest -q tests\test_structure.py tests\test_search.py tests\test_rag_chunk_export.py::test_section_path_derivation tests\test_rag_chunk_export.py::test_page_start_and_page_end_derivation_from_blocks tests\test_rag_chunk_export.py::test_content_type_derivation_from_block_types_and_table_like_chunks tests\test_rag_chunk_export.py::test_export_prefers_direct_stage30_chunk_fields tests\test_rag_chunk_export.py::test_export_fallback_still_works_for_old_chunks_without_stage30_fields tests\test_rag_chunk_quality.py::test_audit_builds_from_synthetic_export_records tests\test_rag_chunk_quality.py::test_issue_flags_are_counted_correctly tests\test_rag_chunk_quality.py::test_audit_accepts_stage30_source_filename_records tests\test_contracts.py::test_processed_document_contract_round_trip tests\test_contracts.py::test_chunk_contract_is_backward_compatible_with_old_payload` -> 16 passed.
+- `conda run -n etl_env python -m scripts.export_rag_chunks --max-documents 1 --max-chunks-per-document 2` -> OK, console summary only, no JSON output path written.
+- `conda run -n etl_env python -m scripts.audit_rag_chunks --max-documents 1 --max-chunks-per-document 2` -> OK, console summary only, no JSON output path written.
+- `conda run -n etl_env python -m pytest -q tests\test_contracts.py::test_documents_api_shape` -> blocked by Codex sandbox `PermissionError` on `D:\Temp\pytest-of-opozi` tmp_path setup.
 
 ## open questions
 

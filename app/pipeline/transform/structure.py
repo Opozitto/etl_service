@@ -150,6 +150,7 @@ def build_structure(
             _attach_block_to_section(sections, current_section_id, block.block_id, raw.page_num)
 
     chunk_order = 0
+    section_paths = _section_paths_by_id(sections)
     for section in sections:
         section_blocks = [block for block in blocks if block.section_id == section.section_id and block.text]
         if not section_blocks:
@@ -157,6 +158,7 @@ def build_structure(
         section_chunks = _build_section_chunks(
             section=section,
             section_blocks=section_blocks,
+            section_path=section_paths.get(section.section_id, []),
             chunk_counter=chunk_counter,
             start_order=chunk_order,
         )
@@ -171,6 +173,7 @@ def build_structure(
         row_chunks = _build_table_row_chunks(
             table=table,
             section=table_section,
+            section_path=section_paths.get(table_section.section_id, []),
             table_block_id=table_block_id,
             chunk_counter=chunk_counter,
             start_order=chunk_order,
@@ -200,6 +203,7 @@ def _attach_block_to_section(
 def _build_section_chunks(
     section: Section,
     section_blocks: list[Block],
+    section_path: list[str],
     chunk_counter,
     start_order: int,
     max_chars: int = 1200,
@@ -218,12 +222,22 @@ def _build_section_chunks(
             current_parts = []
             current_block_ids = []
             return
+        unique_block_ids = list(dict.fromkeys(current_block_ids))
+        chunk_blocks = [block for block in section_blocks if block.block_id in set(unique_block_ids)]
+        page_start, page_end = _page_range_from_blocks(chunk_blocks)
+        table_id = _table_id_from_blocks(chunk_blocks)
         chunks.append(
             Chunk(
                 chunk_id=f"chk-{next(chunk_counter)}",
                 document_id="",
                 section_id=section.section_id,
-                block_ids=list(dict.fromkeys(current_block_ids)),
+                block_ids=unique_block_ids,
+                content_type=_content_type_from_blocks(chunk_blocks),
+                section_title=section.title,
+                section_path=section_path,
+                page_start=page_start,
+                page_end=page_end,
+                table_id=table_id,
                 text=chunk_text,
                 order=order,
                 token_estimate=estimate_tokens(chunk_text),
@@ -271,6 +285,7 @@ def _build_section_chunks(
 def _build_table_row_chunks(
     table: TableData,
     section: Section,
+    section_path: list[str],
     table_block_id: str,
     chunk_counter,
     start_order: int,
@@ -296,6 +311,12 @@ def _build_table_row_chunks(
                 document_id="",
                 section_id=section.section_id,
                 block_ids=[table_block_id],
+                content_type="table_row",
+                section_title=section.title,
+                section_path=section_path,
+                page_start=table.page_num,
+                page_end=table.page_num,
+                table_id=table.table_id,
                 text=row_text,
                 order=order,
                 token_estimate=estimate_tokens(row_text),
@@ -346,6 +367,54 @@ def _table_sheet_name(blocks: list[Block], table_block_id: str) -> str:
         if block.block_id == table_block_id:
             return normalize_text(str(block.metadata.get("sheet_name", "")))
     return ""
+
+
+def _section_paths_by_id(sections: list[Section]) -> dict[str, list[str]]:
+    sections_by_id = {section.section_id: section for section in sections}
+    paths: dict[str, list[str]] = {}
+    for section in sections:
+        current_id: str | None = section.section_id
+        seen: set[str] = set()
+        path: list[str] = []
+        while current_id and current_id not in seen:
+            seen.add(current_id)
+            current = sections_by_id.get(current_id)
+            if current is None:
+                break
+            if current.title:
+                path.append(current.title)
+            current_id = current.parent_id
+        paths[section.section_id] = list(reversed(path))
+    return paths
+
+
+def _page_range_from_blocks(blocks: list[Block]) -> tuple[int | None, int | None]:
+    pages = [block.page_num for block in blocks if block.page_num is not None]
+    if not pages:
+        return None, None
+    return min(pages), max(pages)
+
+
+def _table_id_from_blocks(blocks: list[Block]) -> str | None:
+    table_ids = {
+        normalize_text(str(block.metadata.get("table_id", "")))
+        for block in blocks
+        if isinstance(block.metadata, dict) and normalize_text(str(block.metadata.get("table_id", "")))
+    }
+    if len(table_ids) == 1:
+        return next(iter(table_ids))
+    return None
+
+
+def _content_type_from_blocks(blocks: list[Block]) -> str:
+    block_types = {block.type for block in blocks}
+    if block_types == {"table"}:
+        return "table"
+    if block_types == {"image"}:
+        return "image"
+    if block_types.intersection({"paragraph", "heading", "list_item", "text", "table", "image"}):
+        return "text"
+    return "unknown"
 
 
 def _split_block_for_chunking(text: str) -> list[str]:
