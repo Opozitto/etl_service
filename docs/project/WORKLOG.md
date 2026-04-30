@@ -35,52 +35,36 @@
 
 ## next
 
-- Stage 13 closed as the historical XLS / tables baseline decision; Stage 14 later superseded the unsupported-XLS state.
-- Stage 17 customer demo smoke runner added in code:
-  - `scripts/demo_customer_flow.py`
-  - `tests/test_demo_customer_flow.py`
-- Stage 17.1 polish: customer demo output is now Russian/read-only oriented, with a separate table row-context probe in the demo report.
-- Codex sandbox pytest on Windows still hits `PermissionError` on `tmp_path` / `pytest-of-*`; this remains an environment limitation, not a project fix.
+- Stage 19A: retrieval evaluation v2 / table-aware evaluation set.
+- Stage 19B: OCR intake spike for `jpg` / `png` scans.
+- Stage 19C: summarization / draft generation spike.
+- Stage 19D: prototype API demo packaging.
 
 ## alignment
 
-- Stage 7–9 are now treated as the quality/evaluation foundation for the project.
-- That foundation covers the part of the brief about quality assessment of solutions.
-- The next phase is a pilot AI-service track for ecologists/design engineers, not a claim that OCR, RAG, or LLM generation is already ready.
+- Stage 7–9 теперь считаются quality/evaluation foundation проекта.
+- Эта основа покрывает часть брифа про оценку качества решений.
+- Следующая фаза — pilot AI-service track для экологов-проектировщиков, а не заявление о том, что OCR, RAG или LLM generation уже готовы.
 
 ## risks
 
-- `.XLS` is now baseline-supported through Stage 14; `.XLSX` remains supported baseline spreadsheet input.
-- Spreadsheet retrieval is still lexical; the quality gain comes from row-level chunks, not from table-aware analytics.
-- OCR is not implemented.
-- `HEIC` is not confirmed.
-- LLM / RAG / generation are not implemented.
-- Full `pytest` inside the Codex sandbox on Windows can still hit `PermissionError` in pytest temp / `tmp_path`, even though the local `etl_env` run works.
-- Codex sandbox `PermissionError` remains an environment limitation, not a project defect.
+- `.XLS` и `.XLSX` поддерживаются как baseline spreadsheet inputs.
+- Spreadsheet retrieval остаётся lexical; улучшение даёт row-level context, а не table-aware analytics.
+- OCR не реализован.
+- `HEIC` / `HEIF` / `TIFF` / `TIF` / `BMP` / `WEBP` остаются неподдерживаемыми.
+- LLM / RAG / generation не реализованы.
+- Полный `pytest` внутри Codex sandbox на Windows всё ещё может упираться в `PermissionError` в pytest temp / `tmp_path`, хотя локальный `etl_env` запуск работает.
+- `PermissionError` в Codex sandbox остаётся ограничением окружения, а не дефектом проекта.
 
 ## decisions
 
-- `python -m pytest -q` without activating `etl_env` is not a valid project check because it may use base Anaconda and miss dependencies such as `httpx`.
-- The source of truth for pytest regression remains:
+- `python -m pytest -q` без активации `etl_env` не считается валидной проверкой проекта, потому что может использовать base Anaconda и не видеть зависимости вроде `httpx`.
+- Источник истины для pytest-регрессии остаётся таким:
   - `conda run -n etl_env python -m pytest -q`
-  - or `python -m pytest -q` only after `conda activate etl_env`
-- Codex sandbox ACL limitations on Windows are treated as environment constraints, not as a reason to change code or tests.
-- Stage 3 remains closed without workaround changes in code or tests.
+  - или `python -m pytest -q` только после `conda activate etl_env`
+- Ограничения Codex sandbox по ACL на Windows считаются ограничением окружения, а не поводом менять код или тесты.
+- Stage 3 остаётся закрытым без workaround-изменений в коде или тестах.
 
 ## open questions
 
-- `не подтверждено`: whether future work should add true table-aware reasoning beyond the current flattened retrieval baseline.
-
-
-- Stage 14 completed as practical XLS baseline support.
-- Stage 16 table retrieval quality improvement completed for spreadsheet row-level lexical chunks with column/value context.
-- Local full pytest result: `conda run -n etl_env python -m pytest -q --basetemp=D:\Projects\etl_service\.pytest-run-temp\stage14` -> `39 passed in 14.16s`
-- Runtime artifacts after local pytest were restored and must not be committed.
-- Stage 15 next: customer demo readiness / docs and scenario alignment.
-- Verification in this turn:
-  - `conda run -n etl_env python -m py_compile scripts\demo_customer_flow.py tests\test_demo_customer_flow.py` -> OK
-  - `conda run -n etl_env python -m pytest -q tests\test_demo_customer_flow.py` -> blocked by sandbox `PermissionError` on `D:\Temp\pytest-of-opozi`
-- Checks passed in `etl_env`:
-  - `python -m py_compile app\pipeline\errors.py app\pipeline\extractors\registry.py app\pipeline\extractors\xls.py app\pipeline\extractors\xlsx.py app\pipeline\transform\structure.py app\services\document_service.py app\search\index.py app\search\store.py tests\test_extractors.py tests\test_api.py`
-  - `python -m pytest -q tests\test_extractors.py -k "xls or xlsx or table or image"`
-  - `python -m pytest -q tests\test_api.py -k "xls or table or process or search or ask"`
+- `не подтверждено`: нужен ли future work для true table-aware reasoning beyond the current flattened retrieval baseline.

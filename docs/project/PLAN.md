@@ -1,6 +1,6 @@
 # PLAN
 
-Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. The sections below keep the baseline history, align it with the customer brief, and define the next planned phases.
+Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is the current governance / roadmap audit step.
 
 ## Stage 1. Зафиксировать smoke/regression проверки
 
@@ -277,7 +277,7 @@ conda run -n etl_env python -m scripts.batch_process --input-dir first_test_data
   - не добавлять generation;
   - не добавлять semantic/vector retrieval;
   - не добавлять table-aware analytics.
-- Статус: planned.
+- Статус: completed.
 
 ## Stage 16. Summarization / draft generation spike
 
@@ -290,7 +290,7 @@ conda run -n etl_env python -m scripts.batch_process --input-dir first_test_data
 - Рамка этапа:
   - не заявлять полноценную генерацию проектной документации до фактической реализации и оценки качества;
   - не подменять source-backed extraction свободной генерацией без ссылок на источники.
-- Статус: planned.
+- Статус: completed.
 
 ## Stage 17. Prototype integration flow
 
@@ -301,11 +301,29 @@ conda run -n etl_env python -m scripts.batch_process --input-dir first_test_data
   - показать честный baseline: source-backed search, source-backed ask, table retrieval, audit visibility, image metadata-only limitation;
   - не заявлять полноценный RAG или end-to-end generation до фактической реализации;
   - подготовить основу для рабочего прототипа сервиса для экологов-проектировщиков.
-- Статус: planned.
+- Статус: completed.
 
-## Stage 14 update
+## Stage 17.1. Customer demo output polish
 
-- Stage 14 is completed in code: `.xls` baseline support is implemented and verified.
-- The practical baseline contract now includes `.xls`/`.XLS` alongside `.xlsx` for table extraction, chunking, and retrieval.
-- Table retrieval is still lexical, but row-level chunks now carry sheet/table/row/column-value context for better row/value matching.
-- Advanced Excel semantics remain out of scope.
+- Customer demo smoke runner output is localized to Russian and kept read-only by default.
+- The demo report remains customer-facing and honest about current limitations.
+- The table scenario probe is constrained to spreadsheet evidence and does not use non-spreadsheet files as proof of row-level table context.
+- Stage 17.1 does not change API, search ranking, or retrieval semantics.
+
+## Stage 18. Governance / roadmap audit
+
+- Цель: сверить README, worklog, scenarios и finish-line notes с фактическим baseline после Stage 14–17.1.
+- Подзадачи:
+  - привести управляющие документы к одному актуальному описанию baseline;
+  - убрать противоречия между историческими стадиями и текущим состоянием;
+  - оставить понятный выбор следующих этапов без обещания уже не реализованных возможностей.
+- Статус: current.
+
+## Будущие варианты
+
+Возможные следующие этапы, пока не реализованные:
+
+- Stage 19A: retrieval evaluation v2 / table-aware evaluation set.
+- Stage 19B: OCR intake spike для `jpg` / `png` scans.
+- Stage 19C: summarization / draft generation spike.
+- Stage 19D: prototype API demo packaging.

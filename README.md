@@ -12,7 +12,7 @@
 - строит структурированный JSON с разделами, блоками и таблицами
 - сохраняет результаты локально в `storage/`
 - индексирует все обработанные документы и позволяет делать простой поиск по корпусу
-- Stage 13 historically treated `XLS` as unsupported, but Stage 14 superseded that state and `.xls` is now a confirmed baseline format.
+- Исторически Stage 13 считал `XLS` неподдерживаемым, но Stage 14 уже заменил это состояние: `.xls` теперь является подтверждённым baseline-форматом.
 
 ## Структура проекта
 
@@ -47,9 +47,9 @@ conda run -n etl_env uvicorn app.main:app --reload
 ## `/api/v1/ask`
 
 `AskResponse` включает `question`, `answer`, `sources`, `hits`, `strategy`.
-`sources` — source-backed evidence snippets, а `hits` сохранён для обратной совместимости.
-Для `xlsx`/`xls`/табличных документов ответы строятся через flattened lexical retrieval по чанкам, а не через полноценную table-aware логику.
-Для `xlsx`/`xls` table chunks теперь получают row-level context с sheet/table/row/column-value текстом, что улучшает lexical retrieval по строкам таблиц без изменения API contract.
+`sources` — это source-backed evidence snippets, а `hits` сохранён для обратной совместимости.
+Для `xlsx`/`xls` и табличных документов ответы строятся через flattened lexical retrieval по чанкам, а не через полноценную table-aware логику.
+Для `xlsx`/`xls` table chunks теперь получают row-level context с `sheet` / `table` / `row` / `column-value` текстом, что улучшает lexical retrieval по строкам таблиц без изменения API contract.
 Если в корпусе нет ответа, сервис возвращает `нет информации в корпусе`.
 
 ## Batch обработка директории
@@ -70,15 +70,15 @@ conda run -n etl_env python -m scripts.batch_process --input-dir first_test_data
 conda run -n etl_env python -m scripts.demo_customer_flow
 ```
 
-Optional JSON report:
+Опциональный JSON-отчёт:
 
 ```bash
 conda run -n etl_env python -m scripts.demo_customer_flow --json-report-path storage/index/customer_demo_report.json
 ```
 
-Default mode is read-only. The optional JSON report path is a runtime artifact, and `--refresh-index` is the only mode that may update `storage/index`.
-This demo reports the current baseline only: OCR, LLM generation, summarization, vector DB, semantic retrieval, and full RAG are not implemented.
-Вывод демо-проверки теперь русскоязычный и ориентирован на read-only просмотр текущего состояния корпуса; для более явного row-level table context при необходимости можно запустить `--refresh-index`.
+Режим по умолчанию read-only. Путь для опционального JSON-отчёта является runtime artifact, а `--refresh-index` — единственный режим, который может обновить `storage/index`.
+Этот demo показывает только текущий baseline: OCR, LLM generation, summarization, vector DB, semantic retrieval и full RAG не реализованы.
+Вывод демо-проверки русскоязычный и ориентирован на read-only просмотр текущего состояния корпуса; для более явного row-level table context при необходимости можно запустить `--refresh-index`.
 
 ## Пересборка индекса корпуса
 
@@ -127,9 +127,9 @@ OCR не входит в текущий baseline. `jpg`/`jpeg`/`png` подде�
 
 Для старых файлов `DOC` baseline использует локальный `LibreOffice` (`soffice`) и конвертирует документ в `DOCX` перед извлечением. Внешние API не используются.
 
-## Stage 14 note
+## Примечание Stage 14
 
-- `.xls` is now supported at baseline level through `XlsExtractor`.
-- `.xls` and `.xlsx` share the same flattened table extraction contract for search/ask, with additional row-level lexical chunks for better row/value retrieval.
-- Advanced Excel semantics such as formulas, macros, styles, merged cells, and hidden-sheet behavior remain out of scope.
-- Stage 13's unsupported-XLS decision is historical only and has been superseded by Stage 14.
+- `.xls` теперь поддерживается на baseline-уровне через `XlsExtractor`.
+- `.xls` и `.xlsx` используют один и тот же flattened table extraction contract для search/ask, а дополнительные row-level lexical chunks улучшают поиск по строкам и значениям.
+- Advanced Excel semantics вроде formulas, macros, styles, merged cells и hidden-sheet behavior остаются вне scope.
+- Решение Stage 13 о неподдержке `XLS` остаётся только исторической отметкой и уже заменено Stage 14.

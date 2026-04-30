@@ -1,35 +1,42 @@
 # FINISH_LINE
 
-## Завершённый baseline
+## Текущий baseline
 
 - ETL baseline запускается end-to-end в подтверждённом локальном окружении.
-- Поддерживаемые форматы baseline продолжают работать: `pdf`, `doc`, `docx`, `rtf`, `txt`, `xlsx`, `xls`, плюс baseline image presence handling для `jpg`/`jpeg`/`png` без OCR.
-- `XLSX` и `XLS` tables извлекаются, сохраняются в JSON, chunk'аются и попадают в local retrieval path через flattened lexical retrieval.
-- Старый бинарный `XLS` теперь baseline-supported through Stage 14; advanced Excel semantics remain out of scope.
-- Standalone `jpg`/`jpeg`/`png` image intake работает metadata-only, фиксирует `images_detected=True`, `ocr_used=False` и сохраняет обычный JSON result.
-- Stage 12 закрыт: known unsupported image-like formats `HEIC`/`HEIF`/`TIFF`/`TIF`/`BMP`/`WEBP` остаются unsupported с русским user-facing message, а API smoke покрыт тестом.
-- JSON output contract остаётся стабильным для обработанных документов, corpus index и manifest.
-- API flow продолжает работать для upload/process, fetch/list documents, corpus stats, corpus reindex, search и ask.
-- Минимальное retrieval proof остаётся доступным и возвращает top hits из локального demo corpus.
-- Реализация остаётся в рамках текущего local filesystem storage/index подхода.
+- Поддерживаемые форматы документов: `pdf`, `doc`, `docx`, `rtf`, `txt`, `xlsx`, `xls`.
+- Standalone `jpg` / `jpeg` / `png` принимаются только в metadata-only режиме без OCR.
+- `HEIC` / `HEIF` / `TIFF` / `TIF` / `BMP` / `WEBP` остаются неподдерживаемыми image-like форматами.
+- `XLS` и `XLSX` извлекаются в JSON, попадают в chunks/search/ask и используют flattened lexical retrieval.
+- Row-level chunks для таблиц добавляют sheet/table/row/column-value textual context, но это всё ещё lexical retrieval, а не table-aware analytics.
+- Customer demo smoke runner доступен как read-only CLI helper и честно показывает текущие ограничения baseline.
 
-## Pilot AI-service track
+## Что подтверждено, а что нет
 
-- После закрытия Stage 7–9 проект получает отдельный pilot track, привязанный к расширенному брифу заказчика.
-- Этот track не означает, что OCR, semantic retrieval, полноценный RAG, vector DB или LLM generation уже готовы.
-- Следующие этапы должны вести к customer demo readiness, source-backed QA, summarization / generation spike и prototype integration; Stage 13 unsupported state superseded Stage 14.
+- Подтверждено:
+  - source-backed search;
+  - source-backed ask / extractive QA;
+  - corpus audit visibility;
+  - corpus rebuild;
+  - spreadsheet table retrieval с row-level context.
+- Не подтверждено:
+  - OCR;
+  - LLM generation;
+  - summarization / draft generation;
+  - semantic retrieval;
+  - vector DB;
+  - full RAG;
+  - table-aware analytics;
+  - external proprietary APIs.
 
-## Вне текущего baseline
+## Следующий выбор
 
-- Полноценный RAG-продукт.
-- Vector database или внешний search backend.
-- LLM generation или answer synthesis как уже готовая функция.
-- OCR как подтверждённая production capability.
-- Сложный observability stack.
-- Новые product surfaces вне текущего ETL/search service.
+Ниже не реализованные варианты следующего этапа:
 
-## Stage 14 note
+- Stage 19A: retrieval evaluation v2 / table-aware evaluation set.
+- Stage 19B: OCR intake spike for `jpg` / `png` scans.
+- Stage 19C: summarization / draft generation spike.
+- Stage 19D: prototype API demo packaging.
 
-- `.xls` is now supported at baseline level via a narrow `XlsExtractor` path; Stage 13 unsupported state is superseded.
-- `.xls`/`.xlsx` table text continues to flow into JSON, chunks, search, and ask through the flattened lexical retrieval baseline.
-- Advanced Excel semantics remain out of scope.
+## Note
+
+- Stage 18 completed the governance / roadmap audit and aligned the project docs with the current code baseline.

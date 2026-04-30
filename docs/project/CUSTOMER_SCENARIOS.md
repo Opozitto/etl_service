@@ -1,22 +1,22 @@
 # CUSTOMER SCENARIOS
 
-## Stage 10 goal
+## Цель Stage 10
 
 Зафиксировать customer scenarios and evaluation set для пилотного трека до того, как Stage 11–17 начнут уточнять ask / OCR / tables / summarization / integration. Это docs-level baseline, который связывает текущий local ETL/search/evaluation foundation с реальными задачами экологов-проектировщиков.
 
-## Primary user
+## Основной пользователь
 
 Основной пользователь: эколог-проектировщик.
 
 Он работает с исходными файлами клиента, нормативной базой, проектной документацией, шаблонами и методическими материалами. Для него критичны source-backed поиск, extractive QA, извлечение требований и данных для расчётов, а также контроль качества корпуса.
 
-## MVP / pilot scenarios
+## MVP / pilot-сценарии
 
 ### S1. Source-backed search
 
 Пользователь ищет фрагменты или разделы в документах клиента или нормативной базе.
 
-Expected output:
+Ожидаемый результат:
 
 - список найденных documents / chunks;
 - `file` / `document_id`;
@@ -28,7 +28,7 @@ Expected output:
 
 Пользователь задаёт вопрос по загруженным документам.
 
-Expected output:
+Ожидаемый результат:
 
 - короткий ответ строго по найденным источникам;
 - ссылки на `file` / `document_id` / `chunk` / `section`;
@@ -38,7 +38,7 @@ Expected output:
 
 Пользователь просит найти требования или нормативные условия.
 
-Expected output:
+Ожидаемый результат:
 
 - найденные требования как extractive snippets;
 - source references;
@@ -48,7 +48,7 @@ Expected output:
 
 Пользователь ищет данные для расчётов или обоснований.
 
-Expected output:
+Ожидаемый результат:
 
 - найденные численные и текстовые фрагменты;
 - source references;
@@ -58,7 +58,7 @@ Expected output:
 
 Пользователь или разработчик проверяет пригодность корпуса.
 
-Expected output:
+Ожидаемый результат:
 
 - batch report;
 - corpus audit;
@@ -69,7 +69,7 @@ Expected output:
 
 Скан или фото документа.
 
-Expected output на текущем этапе:
+Ожидаемый результат на текущем этапе:
 
 - limitation / future OCR spike;
 - не обещать готовый OCR.
@@ -83,7 +83,7 @@ Expected output на текущем этапе:
 - future spike;
 - не обещать LLM generation как готовое.
 
-## Out of scope for Stage 10
+## Вне scope Stage 10
 
 Пока вне scope:
 
@@ -97,7 +97,7 @@ Expected output на текущем этапе:
 - обещание XLS/XLSX table intelligence beyond current baseline;
 - внешние proprietary API.
 
-## Expected outputs
+## Ожидаемые результаты
 
 Stage 10 должен зафиксировать не функциональную реализацию, а контракт пилотного трека:
 
@@ -107,7 +107,7 @@ Stage 10 должен зафиксировать не функциональну
 - минимальный evaluation set;
 - связь с будущими этапами.
 
-## Acceptance criteria
+## Критерии приёмки
 
 - Сценарии сформулированы для эколога-проектировщика, а не абстрактного пользователя.
 - Каждый MVP/pilot scenario имеет ожидаемый результат, привязанный к source-backed поведению.
@@ -115,7 +115,7 @@ Stage 10 должен зафиксировать не функциональну
 - Минимальный evaluation set покрывает supported now / partial / future границы.
 - Материал связывает текущий baseline Stage 7–9 с Stage 11–17.
 
-## Minimal evaluation set
+## Минимальный evaluation set
 
 Ниже минимальный набор evaluation cases для Stage 10. Он фиксирует, какие вопросы должны проходить через current foundation, а какие должны быть честно ограничены.
 
@@ -128,30 +128,30 @@ Stage 10 должен зафиксировать не функциональну
 | EC-05 | Calculation inputs | Найти исходные данные для расчёта | Text and numeric fragments in docs | Вернуть числа и фрагменты с references | yes | partial | Может требоваться table awareness и/или OCR |
 | EC-06 | Audit visibility | Документ без chunks должен быть замечен audit'ом | Batch corpus outputs and audit report | Появление в problem documents / audit summary | no | supported now | Связка с Stage 7–9 audit foundation |
 | EC-07 | OCR limitation | Скан или фото документа | JPG / JPEG / PNG / HEIC candidate inputs | Отметить limitation / future OCR spike | no | future | Пока не обещать готовый OCR |
-| EC-08 | Table input | XLS / XLSX table-heavy document | Spreadsheet or table-like source | XLS and XLSX baseline support with flattened lexical retrieval | yes | supported now | Table extraction works for XLS and XLSX, and row-level chunks now add sheet/table/row/column-value context; this is still flattened lexical retrieval, not full table-aware reasoning |
+| EC-08 | Table input | XLS / XLSX table-heavy document | Spreadsheet or table-like source | XLS и XLSX поддерживаются на baseline-уровне с flattened lexical retrieval | yes | supported now | Table extraction работает для XLS и XLSX, а row-level chunks добавляют sheet/table/row/column-value context; это всё ещё flattened lexical retrieval, а не полноценная table-aware analytics |
 | EC-09 | Summarization | Сделать краткое саммари документа | Source document plus request for summary | Future spike only | yes | future | Не объявлять готовую summarization |
 | EC-10 | Draft generation | Подготовить черновик раздела документации | Project doc context and task brief | Future spike only | yes | future | Не объявлять готовую LLM generation |
 | EC-11 | Source attribution | Указать, откуда взят ответ | Search hits and chunk references | Answer must carry explicit source references | yes | supported now | Это критерий доверия для pilot track |
 | EC-12 | Problem documents | Найти проблемные документы корпуса | Index, manifest, batch and audit reports | Audit should surface duplicates, warnings, missing chunks, and low-quality items | no | supported now | Использует Stage 7–9 reporting layer |
 
-## Connection to Stage 11–17
+## Связь со Stage 11–17
 
-- Stage 11 should prove ask / extractive QA with sources on top of the current corpus, without turning it into generation.
-- Stage 12 should test OCR / image intake and separate confirmed support from limitation, especially for scans and phone photos.
-- Stage 13 keeps the historical XLS / tables decision in the record; Stage 14 supersedes the old unsupported-XLS state with practical baseline support.
-- Stage 15 should align customer demo readiness, ingestion-search QA, supported formats, and scenario matrices after XLS support.
-- Stage 16 should evaluate summarization / draft generation as a future spike, not as a baseline claim.
-- Stage 17 should connect the confirmed pieces into a prototype integration flow, while keeping audit and eval visible.
-- Stage 17 demo helper may read the current corpus snapshot, optionally rebuild the index only with an explicit flag, and report the current baseline honestly.
+- Stage 11 должен доказать ask / extractive QA с источниками поверх текущего корпуса, без превращения этого в generation.
+- Stage 12 должен протестировать OCR / image intake и отделить подтверждённую поддержку от ограничений, особенно для сканов и фото с телефона.
+- Stage 13 сохраняет историческое решение по XLS / tables; Stage 14 superseded старое состояние unsupported-XLS практической baseline-поддержкой.
+- Stage 15 должен выровнять customer demo readiness, ingestion-search QA, поддерживаемые форматы и scenario matrix после поддержки XLS.
+- Stage 16 должен оценивать summarization / draft generation как будущий spike, а не как baseline claim.
+- Stage 17 должен связать подтверждённые части в prototype integration flow, сохраняя видимыми audit и eval.
+- Stage 17 demo helper может читать текущий snapshot корпуса, пересобирать индекс только по явному флагу и честно показывать текущий baseline.
 
-## Notes on the current baseline
+## Примечания к текущему baseline
 
-- Stage 7–9 already provide batch reporting, corpus audit, and retrieval quality evaluation.
-- That makes source-backed search and source-backed proof the right immediate pilot direction.
-- OCR, semantic retrieval, vector DB, RAG, and LLM generation remain outside the confirmed baseline.
+- Stage 7–9 уже дают batch reporting, corpus audit и retrieval quality evaluation.
+- Это делает source-backed search и source-backed proof правильным ближайшим пилотным направлением.
+- OCR, semantic retrieval, vector DB, RAG и LLM generation остаются вне подтверждённого baseline.
 
-## Stage 14 note
+## Примечание Stage 14
 
-- EC-08 now reflects practical `.xls`/`.xlsx` table baseline support.
-  - The scenario set still uses flattened lexical retrieval and does not claim full table reasoning.
-  - Row-level spreadsheet chunks improve source-backed table row/value retrieval without table-aware analytics.
+- EC-08 теперь отражает практическую поддержку `.xls` / `.xlsx` на baseline-уровне.
+  - Набор сценариев по-прежнему использует flattened lexical retrieval и не заявляет полноценное table reasoning.
+  - Row-level spreadsheet chunks улучшают source-backed table row/value retrieval без table-aware analytics.
