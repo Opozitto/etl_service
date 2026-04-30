@@ -583,8 +583,14 @@ conda run -n etl_env python -m scripts.evaluate_qa_dataset --qa-path "D:\Project
 
 ## Stage 29.2. Chunk quality audit v1
 
-- Статус: planned.
+- Статус: completed.
 - Цель: оценить chunk completeness/self-containedness/source-context gaps после inspection/export v1.
+- Подтвержденный scope:
+  - read-only модуль `app.evaluation.rag_chunk_quality`;
+  - CLI `scripts.audit_rag_chunks` поверх existing processed JSON / Stage 29.1 export records;
+  - JSON report только по явному `--output-path`, console summary без записи файла по default;
+  - deterministic issue taxonomy для short/long/missing section/page/table-like/unknown/empty/low-context/duplicate/image-or-OCR-limited signals;
+  - per-document aggregation, bounded samples, roadmap-linked recommendations для Stage 30/31/32.
 - Scope boundary: deterministic audit/report only; без LLM/RAG generation, embeddings/vector DB, OCR, reranking или table analytics.
 
 ## Stage 30. RAG chunk contract hardening v1

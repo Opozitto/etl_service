@@ -76,10 +76,14 @@
 - Stage 29.1 exports compact chunk records with document/source metadata, section title/path, derived page range, table id where reliable, conservative `content_type`, `quality_flags`, and handoff notes.
 - Stage 29.1 writes JSON only by explicit `--output-path`; without it the CLI prints a short console summary only.
 - Stage 29.1 does not change ingestion pipeline, production search ranking, `/api/v1/ask`, OCR/scanned PDF OCR, RAG/LLM, embeddings/vector DB, reranking, table analytics, production storage, or external `Example_data`.
+- Stage 29.2 completed as read-only chunk quality audit v1.
+- Stage 29.2 adds `app.evaluation.rag_chunk_quality` and CLI `scripts.audit_rag_chunks` on top of existing processed JSON / Stage 29.1 export records.
+- Stage 29.2 reports deterministic issue counts, severity counts, content type counts, text length stats, per-document issue concentration, bounded samples, limitations, and Stage 30/31/32 recommendations.
+- Stage 29.2 writes JSON only by explicit `--output-path`; without it the CLI prints a Russian/mixed technical console summary only.
+- Stage 29.2 does not change ingestion pipeline, production search ranking, `/api/v1/ask`, OCR/scanned PDF OCR, RAG/LLM, embeddings/vector DB, reranking, table analytics, production storage, or external `Example_data`.
 
 ## next
 
-- Stage 29.2 Chunk quality audit v1.
 - Stage 30 RAG chunk contract hardening v1.
 - Stage 31 Table chunk context v1.
 - Stage 32 Source location/citation hardening.
@@ -156,6 +160,12 @@
 - `conda run -n etl_env python -m pytest -q tests\test_rag_chunk_export.py::test_section_path_derivation tests\test_rag_chunk_export.py::test_page_start_and_page_end_derivation_from_blocks tests\test_rag_chunk_export.py::test_content_type_derivation_from_block_types_and_table_like_chunks tests\test_rag_chunk_export.py::test_quality_flags_for_short_missing_page_and_missing_section tests\test_rag_chunk_export.py::test_include_text_false_true_behavior` -> 5 passed.
 - `conda run -n etl_env python -m scripts.export_rag_chunks --max-documents 1 --max-chunks-per-document 2` -> OK, console summary only, no JSON output path written.
 - `conda run -n etl_env python -m scripts.export_rag_chunks --max-documents 1 --max-chunks-per-document 1 --include-text --output-path .runtime_eval\stage29_1_codex_include_text_smoke.json` -> OK; generated runtime smoke report was inspected and removed.
+- `conda run -n etl_env python -m py_compile app\evaluation\rag_chunk_quality.py scripts\audit_rag_chunks.py tests\test_rag_chunk_quality.py` -> OK.
+- `conda run -n etl_env python -m pytest -q tests\test_rag_chunk_quality.py::test_audit_builds_from_synthetic_export_records tests\test_rag_chunk_quality.py::test_issue_flags_are_counted_correctly tests\test_rag_chunk_quality.py::test_severity_aggregation_works tests\test_rag_chunk_quality.py::test_per_document_issue_counts_work tests\test_rag_chunk_quality.py::test_samples_are_limited_per_issue tests\test_rag_chunk_quality.py::test_report_recommendations_and_limitations_are_present` -> 6 passed.
+- `conda run -n etl_env python -m pytest -q tests\test_rag_chunk_quality.py --basetemp=D:\Projects\etl_service\.pytest-run-temp\stage29_2_rag_quality` -> tests executed, but pytest sessionfinish hit Codex sandbox `PermissionError` on basetemp cleanup.
+- `conda run -n etl_env python -m scripts.audit_rag_chunks --max-documents 1 --max-chunks-per-document 2` -> OK, console summary only, no JSON output path written.
+- `conda run -n etl_env python -m scripts.audit_rag_chunks --max-documents 1 --max-chunks-per-document 1 --include-samples --output-path .runtime_eval\stage29_2_codex_smoke.json` -> OK; generated runtime smoke report was inspected and removed.
+- `conda run -n etl_env python -m pytest -q tests\test_rag_chunk_export.py::test_section_path_derivation tests\test_rag_chunk_export.py::test_page_start_and_page_end_derivation_from_blocks tests\test_rag_chunk_export.py::test_content_type_derivation_from_block_types_and_table_like_chunks tests\test_rag_chunk_export.py::test_quality_flags_for_short_missing_page_and_missing_section tests\test_rag_chunk_export.py::test_include_text_false_true_behavior` -> 5 passed.
 
 ## open questions
 
