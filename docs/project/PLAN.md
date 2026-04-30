@@ -1,6 +1,6 @@
 # PLAN
 
-Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock, Stage 20 is the optional local OCR baseline for standalone images, Stage 21 is the completed read-only OCR smoke evaluation layer, Stage 22 is the completed requirements extraction v1 layer, and Stage 23 is the current table evidence evaluation layer.
+Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock, Stage 20 is the optional local OCR baseline for standalone images, Stage 21 is the completed read-only OCR smoke evaluation layer, Stage 22 is the completed requirements extraction v1 layer, Stage 23 is the completed table evidence evaluation layer, and Stage 24 is the completed read-only QA/retrieval readiness evaluation layer.
 
 ## Stage 1. Зафиксировать smoke/regression проверки
 
@@ -428,9 +428,29 @@ conda run -n etl_env python -m scripts.batch_process --input-dir first_test_data
   - `tests/test_table_evidence.py`
 - Статус: completed.
 
+## Stage 24. Golden QA / retrieval evaluation harness
+
+- Цель: добавить read-only оценку готовности retrieval/QA по внешнему CSV dataset с вопросами, эталонными ответами и ожидаемыми документами-источниками.
+- Подтверждённый scope:
+  - CLI `scripts.evaluate_qa_dataset`;
+  - CSV-first reader без новых dependencies;
+  - чтение внешнего `Example_data/test_with_answers.csv` только по явному `--qa-path`;
+  - чтение уже обработанных `StructuredDocument` JSON из `--results-dir`;
+  - in-memory retrieval evaluation без записи в `storage/index`, `storage/results`, `storage/uploads`;
+  - summary metrics для hit@1/@3/@5, source hit rate, answer/evidence token overlap, table-like question subset;
+  - JSON report только по явному `--json-report-path`, рекомендуемый runtime каталог `.runtime_eval/`.
+- Вне scope:
+  - LLM/RAG generation;
+  - embeddings/vector DB/semantic retrieval;
+  - изменение production search ranking, `/ask` contract или ingestion pipeline;
+  - scanned PDF OCR, OCR strategy changes;
+  - SQL/table analytics;
+  - коммит внешнего QA dataset или generated reports.
+- Статус: completed.
+
 ## Будущие варианты
 
 Возможные следующие этапы, пока не реализованные:
 
 1. Stage 19.2 Customer demo finalization / final polish checkpoint.
-2. Stage 24 Summarization / draft generation spike, only if source-backed foundation remains stable.
+2. Future summarization / draft generation spike, only if source-backed foundation remains stable and separately requested.

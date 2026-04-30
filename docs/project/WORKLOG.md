@@ -39,11 +39,15 @@
 - Stage 21 adds a read-only OCR smoke evaluation script for readiness checks on image samples.
 - Stage 22 adds deterministic source-backed requirements extraction v1: reusable service module, read-only CLI, minimal corpus API endpoint, tests, and docs.
 - Stage 23 adds deterministic source-backed table evidence evaluation: reusable table evidence module, read-only CLI, minimal corpus API endpoint, tests, and docs.
+- Stage 24 adds read-only QA/retrieval readiness evaluation for an external CSV QA dataset.
+- Stage 24 reads the user's external `Example_data/test_with_answers.csv` by path only; the dataset is not training data and is not committed or copied into the repository.
+- Stage 24 is CSV-first and uses processed `StructuredDocument` JSON from `storage/results` or an explicit `--results-dir`.
+- Stage 24 does not add LLM, RAG generation, embeddings/vector DB, external API, API endpoint, ingestion changes, OCR changes, or production search ranking changes.
 
 ## next
 
 - Stage 19.2 Customer demo finalization / final polish checkpoint.
-- Stage 24 Summarization / draft generation spike, only if source-backed foundation remains stable.
+- Future summarization / draft generation remains out of scope until explicitly requested.
 
 ## alignment
 
@@ -54,6 +58,7 @@
 - Stage 19.1 adds OCR candidate reporting / readiness visibility, and Stage 20 adds the optional local OCR baseline for standalone images.
 - Stage 22 requirements extraction is candidate extraction only: no generation, no legal/compliance guarantee, and no search ranking change.
 - Stage 23 table evidence evaluation is read-only table/candidate preview only: no SQL/table analytics, no automatic calculations, and no search ranking or `/ask` contract change.
+- Stage 24 QA/retrieval evaluation is readiness diagnostics only: it measures retrieval/source visibility and token overlap, not final generative answer quality.
 
 ## risks
 
