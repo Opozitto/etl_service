@@ -251,6 +251,42 @@ def test_export_prefers_direct_stage30_chunk_fields() -> None:
     assert item["table_id"] == "tbl-direct"
 
 
+def test_export_includes_direct_stage31_table_fields() -> None:
+    module = _load_export_module()
+    document = _document(
+        chunks=[
+            {
+                "chunk_id": "chk-table-rich",
+                "document_id": "doc-1",
+                "section_id": "sec-2",
+                "block_ids": ["tbl-block"],
+                "content_type": "table_row",
+                "table_id": "tbl-1",
+                "table_title": "Расчет выбросов",
+                "table_headers": ["Код", "Вещество"],
+                "table_row_index": 2,
+                "table_column_values": {"Код": "0301", "Вещество": "Азота диоксид"},
+                "table_context": "Таблица tbl-1: Расчет выбросов",
+                "row_count": 2,
+                "column_count": 2,
+                "text": "Таблица tbl-1: Расчет выбросов. Строка 2 из 2. Колонки: Код: 0301; Вещество: Азота диоксид",
+                "order": 1,
+                "token_estimate": 12,
+            }
+        ]
+    )
+
+    item = module.export_document_chunks(document)[0]
+
+    assert item["table_title"] == "Расчет выбросов"
+    assert item["table_headers"] == ["Код", "Вещество"]
+    assert item["table_row_index"] == 2
+    assert item["table_column_values"] == {"Код": "0301", "Вещество": "Азота диоксид"}
+    assert item["table_context"] == "Таблица tbl-1: Расчет выбросов"
+    assert item["row_count"] == 2
+    assert item["column_count"] == 2
+
+
 def test_export_fallback_still_works_for_old_chunks_without_stage30_fields() -> None:
     module = _load_export_module()
 
@@ -263,3 +299,43 @@ def test_export_fallback_still_works_for_old_chunks_without_stage30_fields() -> 
     assert item["section_path"] == ["Document", "1. Main", "1.1 Detail"]
     assert item["page_start"] == 2
     assert item["page_end"] == 3
+    assert item["table_title"] is None
+    assert item["table_headers"] == []
+    assert item["table_column_values"] == {}
+
+
+def test_export_fallback_still_works_for_old_table_chunks_without_stage31_fields() -> None:
+    module = _load_export_module()
+    document = _document(
+        tables=[
+            {
+                "table_id": "tbl-1",
+                "order": 1,
+                "section_id": "sec-2",
+                "page_num": 3,
+                "n_rows": 2,
+                "n_cols": 2,
+                "rows": [["Код", "Вещество"], ["0301", "Азота диоксид"]],
+            }
+        ],
+        chunks=[
+            {
+                "chunk_id": "chk-old-table",
+                "document_id": "doc-1",
+                "section_id": "sec-2",
+                "block_ids": ["tbl-block"],
+                "text": "Строка 2. Код: 0301; Вещество: Азота диоксид",
+                "order": 1,
+                "token_estimate": 8,
+            }
+        ],
+    )
+
+    item = module.export_document_chunks(document)[0]
+
+    assert item["table_id"] == "tbl-1"
+    assert item["content_type"] == "table_row"
+    assert item["table_headers"] == ["Код", "Вещество"]
+    assert item["row_count"] == 2
+    assert item["column_count"] == 2
+    assert item["table_column_values"] == {}

@@ -90,10 +90,15 @@
 - Stage 30 updates Stage 29.1 export to prefer direct chunk fields while preserving fallback for old processed JSON without those fields.
 - Stage 30 updates Stage 29.2 audit compatibility for new source filename records and old export-like records.
 - Stage 30 does not add full RAG, LLM generation, semantic retrieval, embeddings/vector DB, reranking, OCR/scanned PDF OCR, table analytics, or production storage migration.
+- Stage 31 completed as Table chunk context v1 for future source-backed handoff readiness.
+- Stage 31 adds backward-compatible optional `Chunk` table fields: `table_title`, `table_headers`, `table_row_index`, `table_column_values`, `table_context`, `row_count`, and `column_count`.
+- Stage 31 enriches row-level table chunk text with deterministic table/section/row context and header-to-value pairs where headers are available.
+- Stage 31 keeps chunks without headers lexical and readable without inventing `table_headers` values.
+- Stage 31 updates Stage 29.1 export to surface direct/fallback table fields and Stage 29.2 audit to treat rich table context as sufficient handoff context.
+- Stage 31 does not add SQL-like table QA, table analytics/calculations, full RAG/LLM generation, embeddings/vector DB, semantic retrieval, reranking, OCR/scanned PDF OCR, production storage migration, or search ranking changes.
 
 ## next
 
-- Stage 31 Table chunk context v1.
 - Stage 32 Source location/citation hardening.
 - Stage 33 QA evaluator retrieval-loop speed/cache, optional/later and only if speed becomes a blocker after chunk inspection/export and quality audit.
 - Final polish checkpoint starts only by explicit user command: "стоп, следующий шаг делаем финал".
@@ -113,7 +118,7 @@
 - Stage 26 keeps external QA dataset audit separate from processing/eval so Stage 27 can operate only on diagnosed inputs in a temporary workspace.
 - Stage 27 keeps external processing/eval isolated in `.runtime_eval` or another explicit temporary workspace; production storage remains the baseline corpus, not an evaluation scratch area.
 - Stage 29.0 realigns the next work after RAG chunk audit: inspection/export and quality audit come before speed/cache.
-- Stage 29.1/29.2 close the visibility/export/audit layer for chunks; Stage 30 hardens payload/source context so chunks become stronger handoff units without claiming embeddings, vector DB, semantic retrieval, LLM generation, or full RAG.
+- Stage 29.1/29.2 close the visibility/export/audit layer for chunks; Stage 30 hardens payload/source context and Stage 31 improves table chunk context so chunks become stronger handoff units without claiming embeddings, vector DB, semantic retrieval, LLM generation, table analytics, or full RAG.
 
 ## risks
 
@@ -123,8 +128,8 @@
 - OCR is now optional local baseline for standalone images, and candidate reporting remains in place for metadata-only fallback / conservative PDF readiness cases.
 - `HEIC` / `HEIF` / `TIFF` / `TIF` / `BMP` / `WEBP` remain unsupported.
 - LLM / RAG / generation are not implemented.
-- Current chunks are useful for lexical search and now carry stronger source/section/page/content context for future handoff, but this is still not a full RAG implementation.
-- The remaining chunk-context risk is table-specific readability and richer source location/citation hardening, planned for Stage 31/32.
+- Current chunks are useful for lexical search and now carry stronger source/section/page/content/table context for future handoff, but this is still not a full RAG implementation.
+- The remaining chunk-context risk is richer source location/citation hardening, planned for Stage 32.
 - QA evaluator `--skip-answer-overlap` is intentionally a faster smoke mode; use full/default mode when answer-overlap trend comparison is needed.
 - Stage 26 matching is deterministic and conservative; ambiguous or missing expected documents require review before Stage 27 processing/eval.
 - Stage 27 can process ambiguous candidates only with explicit `--ambiguous-policy all`; because Stage 26 found all expected docs ambiguous on the real dataset, bounded smoke runs with `--max-documents` remain the safer first step.
@@ -181,6 +186,10 @@
 - `conda run -n etl_env python -m scripts.export_rag_chunks --max-documents 1 --max-chunks-per-document 2` -> OK, console summary only, no JSON output path written.
 - `conda run -n etl_env python -m scripts.audit_rag_chunks --max-documents 1 --max-chunks-per-document 2` -> OK, console summary only, no JSON output path written.
 - `conda run -n etl_env python -m pytest -q tests\test_contracts.py::test_documents_api_shape` -> blocked by Codex sandbox `PermissionError` on `D:\Temp\pytest-of-opozi` tmp_path setup.
+- `conda run -n etl_env python -m py_compile app\schemas\document.py app\pipeline\transform\structure.py app\evaluation\rag_chunk_export.py app\evaluation\rag_chunk_quality.py tests\test_contracts.py tests\test_structure.py tests\test_rag_chunk_export.py tests\test_rag_chunk_quality.py` -> OK.
+- `conda run -n etl_env python -m pytest -q tests\test_structure.py tests\test_search.py tests\test_contracts.py::test_processed_document_contract_round_trip tests\test_contracts.py::test_chunk_contract_is_backward_compatible_with_old_payload tests\test_rag_chunk_export.py::test_content_type_derivation_from_block_types_and_table_like_chunks tests\test_rag_chunk_export.py::test_export_prefers_direct_stage30_chunk_fields tests\test_rag_chunk_export.py::test_export_includes_direct_stage31_table_fields tests\test_rag_chunk_export.py::test_export_fallback_still_works_for_old_chunks_without_stage30_fields tests\test_rag_chunk_export.py::test_export_fallback_still_works_for_old_table_chunks_without_stage31_fields tests\test_rag_chunk_quality.py::test_issue_flags_are_counted_correctly tests\test_rag_chunk_quality.py::test_rich_stage31_table_context_is_not_flagged_as_poor_table_context` -> 17 passed.
+- `conda run -n etl_env python -m pytest -q tests\test_api.py::test_process_xls_document_returns_table_metadata` -> 1 passed.
+- `git diff --check` -> OK; only Windows line-ending warnings were printed.
 
 ## open questions
 

@@ -302,7 +302,15 @@ def _build_table_row_chunks(
     data_rows = rows[1:] if len(rows) > 1 else rows
 
     for row_index, row in enumerate(data_rows, start=2 if len(rows) > 1 else 1):
-        row_text = _format_table_row_text(table_title, sheet_name, row_index, headers, row)
+        column_values = _table_column_values(headers, row)
+        table_context = _format_table_context(table.table_id, table_title, sheet_name, section_path)
+        row_text = _format_table_row_text(
+            table_context=table_context,
+            row_index=row_index,
+            row_count=table.n_rows,
+            headers=headers,
+            row=row,
+        )
         if not row_text:
             continue
         chunks.append(
@@ -317,6 +325,13 @@ def _build_table_row_chunks(
                 page_start=table.page_num,
                 page_end=table.page_num,
                 table_id=table.table_id,
+                table_title=table_title or sheet_name or None,
+                table_headers=[normalize_text(header) for header in headers if normalize_text(header)],
+                table_row_index=row_index,
+                table_column_values=column_values,
+                table_context=table_context or None,
+                row_count=table.n_rows,
+                column_count=table.n_cols,
                 text=row_text,
                 order=order,
                 token_estimate=estimate_tokens(row_text),
@@ -327,33 +342,64 @@ def _build_table_row_chunks(
 
 
 def _format_table_row_text(
-    table_title: str,
-    sheet_name: str,
+    table_context: str,
     row_index: int,
+    row_count: int,
     headers: list[str],
     row: list[str],
 ) -> str:
     context_parts: list[str] = []
-    if table_title:
-        context_parts.append(f"Таблица: {table_title}")
-    if sheet_name and sheet_name != table_title:
-        context_parts.append(f"Лист: {sheet_name}")
+    if table_context:
+        context_parts.append(table_context)
 
     value_parts: list[str] = []
+    unlabeled_values: list[str] = []
     for column_index, value in enumerate(row):
         value_text = normalize_text(value)
         if not value_text:
             continue
         header_text = normalize_text(headers[column_index]) if column_index < len(headers) else ""
-        label = header_text or f"Колонка {column_index + 1}"
-        value_parts.append(f"{label}: {value_text}")
+        if header_text:
+            value_parts.append(f"{header_text}: {value_text}")
+        else:
+            unlabeled_values.append(value_text)
 
-    if not value_parts:
+    if not value_parts and not unlabeled_values:
         return ""
 
-    context_parts.append(f"Строка {row_index}.")
-    context_parts.append("; ".join(value_parts))
+    if row_count:
+        context_parts.append(f"Строка {row_index} из {row_count}.")
+    else:
+        context_parts.append(f"Строка {row_index}.")
+    if value_parts:
+        context_parts.append("Колонки: " + "; ".join(value_parts))
+    if unlabeled_values:
+        context_parts.append("Значения строки: " + "; ".join(unlabeled_values))
     return normalize_text(" ".join(context_parts))
+
+
+def _table_column_values(headers: list[str], row: list[str]) -> dict[str, str]:
+    values: dict[str, str] = {}
+    for column_index, header in enumerate(headers):
+        header_text = normalize_text(header)
+        value_text = normalize_text(row[column_index]) if column_index < len(row) else ""
+        if header_text and value_text:
+            values[header_text] = value_text
+    return values
+
+
+def _format_table_context(table_id: str, table_title: str, sheet_name: str, section_path: list[str]) -> str:
+    parts: list[str] = []
+    title = table_title or sheet_name
+    if title:
+        parts.append(f"Таблица {table_id}: {title}")
+    else:
+        parts.append(f"Таблица: {table_id}")
+    if section_path:
+        parts.append("Раздел: " + " > ".join(section_path))
+    if sheet_name and sheet_name != title:
+        parts.append(f"Лист: {sheet_name}")
+    return normalize_text(". ".join(parts))
 
 
 def _table_title(section: Section) -> str:

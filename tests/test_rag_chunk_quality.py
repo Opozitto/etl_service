@@ -238,3 +238,27 @@ def test_audit_accepts_stage30_source_filename_records() -> None:
 
     assert report["documents"][0]["filename"] == "stage30.pdf"
     assert report["summary"]["content_type_counts"]["text"] == 1
+
+
+def test_rich_stage31_table_context_is_not_flagged_as_poor_table_context() -> None:
+    module = _load_quality_module()
+
+    report = module.build_quality_audit_from_items(
+        [
+            _item(
+                chunk_id="rich-table",
+                content_type="table_row",
+                table_id=None,
+                table_context="Таблица tbl-1: Расчет выбросов",
+                table_headers=["Код", "Вещество"],
+                table_column_values={"Код": "0301", "Вещество": "Азота диоксид"},
+                text="Таблица tbl-1: Расчет выбросов. Строка 2 из 2. Колонки: Код: 0301; Вещество: Азота диоксид",
+                text_preview="Таблица tbl-1: Расчет выбросов. Строка 2 из 2. Колонки: Код: 0301; Вещество: Азота диоксид",
+                quality_flags=["table_like_text"],
+            )
+        ],
+        short_threshold=10,
+    )
+
+    assert "table_like_text_without_rich_context" not in report["summary"]["issue_counts"]
+    assert report["summary"]["table_like_chunk_count"] == 1

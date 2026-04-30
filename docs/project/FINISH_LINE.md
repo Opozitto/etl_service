@@ -22,6 +22,7 @@
 - RAG-ready chunk inspection/export is available as a read-only visibility layer over existing processed JSON; it exposes chunk text/preview, document/source context, conservative `content_type`, `quality_flags`, and limitations for future handoff review.
 - Chunk quality audit is available as a read-only diagnostic layer for chunk completeness/self-containedness/source-context gaps; it reports deterministic issues and recommendations, but does not make the system a RAG implementation.
 - Chunk contract hardening v1 is completed: newly processed chunks can carry direct optional source/section/page/content/table context for future source-backed handoff while old processed JSON remains readable.
+- Table chunk context v1 is completed: newly processed row-level table chunks can carry deterministic table title/context, headers, row index, header-to-value pairs, and table shape where available; this improves source-backed handoff readability but is not table analytics.
 
 ## Best shippable baseline
 
@@ -36,6 +37,7 @@
 - read-only RAG-ready chunk inspection/export for visibility and handoff diagnostics.
 - read-only chunk quality audit for handoff-readiness diagnostics.
 - backward-compatible chunk/source context hardening for future source-backed handoff.
+- readable table chunk context for future source-backed handoff without SQL-like QA or calculations.
 
 ## What is confirmed, and what is not
 
@@ -53,6 +55,7 @@
   - read-only RAG-ready chunk inspection/export.
   - read-only chunk quality audit.
   - backward-compatible chunk contract hardening v1 for source-backed handoff readiness.
+  - backward-compatible table chunk context v1 for source-backed handoff readability.
 - Not confirmed:
   - scanned PDF OCR;
   - LLM generation;
@@ -72,19 +75,18 @@
 
 ## Next choice
 
-Next recommended: Stage 31 Table chunk context v1.
+Next recommended: Stage 32 Source location/citation hardening.
 
 Follow-up sequence:
 
-- Stage 32 Source location/citation hardening.
 - Stage 33 QA evaluator retrieval-loop speed/cache, optional/later and only if speed becomes a blocker after chunk inspection/export and quality audit.
 - Final polish checkpoint starts only by explicit user command: "стоп, следующий шаг делаем финал".
 
 This preserves the delivery-first rule: every stage should be demo-ready / shippable, future stages can be dropped without breaking the current baseline, large architecture rewrites stay out of scope, and future AI capabilities remain source-backed / evaluation-visible.
 
-Stage 29.1 and Stage 29.2 closed visibility/export/audit for chunks. Stage 30 completed the first production-contract hardening step for chunk payload/source context so future source-backed RAG handoff can rely on stronger units, without claiming full RAG readiness.
+Stage 29.1 and Stage 29.2 closed visibility/export/audit for chunks. Stage 30 completed the first production-contract hardening step for chunk payload/source context, and Stage 31 improved table chunk readability for future source-backed handoff, without claiming full RAG readiness or table analytics.
 
-Current chunks are acceptable for lexical search and now stronger as source-backed handoff units. The next priority is table chunk context and source location/citation hardening, not another diagnostic script and not speed/cache.
+Current chunks are acceptable for lexical search and now stronger as source-backed handoff units. The next priority is source location/citation hardening, not another diagnostic script and not speed/cache.
 
 Do not present LLM/RAG, scanned PDF OCR, OCR for scanned PDFs, or table analytics as ready.
 

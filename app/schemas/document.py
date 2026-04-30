@@ -91,6 +91,13 @@ class Chunk(BaseModel):
     page_end: Optional[int] = None
     source_filename: Optional[str] = None
     table_id: Optional[str] = None
+    table_title: Optional[str] = None
+    table_headers: list[str] = Field(default_factory=list)
+    table_row_index: Optional[int] = None
+    table_column_values: dict[str, str] = Field(default_factory=dict)
+    table_context: Optional[str] = None
+    row_count: Optional[int] = None
+    column_count: Optional[int] = None
     text: str
     order: int
     token_estimate: int

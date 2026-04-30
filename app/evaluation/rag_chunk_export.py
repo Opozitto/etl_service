@@ -107,6 +107,24 @@ def _chunk_text_field(chunk: dict[str, Any], field: str) -> str | None:
     return value or None
 
 
+def _chunk_list_field(chunk: dict[str, Any], field: str) -> list[str]:
+    value = chunk.get(field)
+    if not isinstance(value, list):
+        return []
+    return [normalize_text(item) for item in value if normalize_text(item)]
+
+
+def _chunk_dict_field(chunk: dict[str, Any], field: str) -> dict[str, str]:
+    value = chunk.get(field)
+    if not isinstance(value, dict):
+        return {}
+    return {
+        normalize_text(key): normalize_text(item)
+        for key, item in value.items()
+        if normalize_text(key) and normalize_text(item)
+    }
+
+
 def _block_page_values(block: dict[str, Any]) -> list[int]:
     values: list[int] = []
     for field in PAGE_FIELDS:
@@ -144,6 +162,60 @@ def table_id_from_blocks(blocks: list[dict[str, Any]], tables: list[dict[str, An
             return candidate
     if len(table_ids) == 1 and any(block.get("type") == "table" for block in blocks):
         return next(iter(table_ids))
+    return None
+
+
+def _table_by_id(tables: list[dict[str, Any]], table_id: str | None) -> dict[str, Any] | None:
+    if not table_id:
+        return None
+    for table in tables:
+        if normalize_text(table.get("table_id")) == table_id:
+            return table
+    return None
+
+
+def _table_rows(table: dict[str, Any] | None) -> list[list[str]]:
+    if not table:
+        return []
+    rows = table.get("rows")
+    if not isinstance(rows, list):
+        return []
+    cleaned_rows: list[list[str]] = []
+    for row in rows:
+        if not isinstance(row, list):
+            continue
+        values = [normalize_text(cell) for cell in row]
+        if any(values):
+            cleaned_rows.append(values)
+    return cleaned_rows
+
+
+def _table_headers_from_table(table: dict[str, Any] | None) -> list[str]:
+    rows = _table_rows(table)
+    if len(rows) <= 1:
+        return []
+    headers = [normalize_text(cell) for cell in rows[0]]
+    return [header for header in headers if header]
+
+
+def _table_title_from_context(
+    chunk: dict[str, Any],
+    section: dict[str, Any] | None,
+    blocks: list[dict[str, Any]],
+) -> str | None:
+    direct = _chunk_text_field(chunk, "table_title")
+    if direct:
+        return direct
+    for block in blocks:
+        metadata = block.get("metadata")
+        if isinstance(metadata, dict):
+            sheet_name = normalize_text(metadata.get("sheet_name"))
+            if sheet_name:
+                return sheet_name
+    if section:
+        title = normalize_text(section.get("title"))
+        if title and title != "Document":
+            return title
     return None
 
 
@@ -258,6 +330,16 @@ def export_document_chunks(
             page_end = derived_page_end
         table_id = _chunk_text_field(chunk, "table_id") or table_id_from_blocks(linked_blocks, tables)
         content_type = _chunk_text_field(chunk, "content_type") or derive_content_type(chunk, linked_blocks, table_id)
+        is_table_item = content_type in {"table", "table_row"} or table_id is not None
+        linked_table = _table_by_id(tables, table_id) if is_table_item else None
+        table_headers = _chunk_list_field(chunk, "table_headers") or _table_headers_from_table(linked_table)
+        table_column_values = _chunk_dict_field(chunk, "table_column_values") if is_table_item else {}
+        row_count = _chunk_int(chunk, "row_count") if is_table_item else None
+        column_count = _chunk_int(chunk, "column_count") if is_table_item else None
+        if is_table_item and row_count is None and linked_table:
+            row_count = linked_table.get("n_rows") if isinstance(linked_table.get("n_rows"), int) else None
+        if is_table_item and column_count is None and linked_table:
+            column_count = linked_table.get("n_cols") if isinstance(linked_table.get("n_cols"), int) else None
         flags = derive_quality_flags(
             chunk=chunk,
             section_present=section_present,
@@ -283,6 +365,13 @@ def export_document_chunks(
             "page_end": page_end,
             "source_block_ids": source_block_ids,
             "table_id": table_id,
+            "table_title": _table_title_from_context(chunk, section, linked_blocks) if is_table_item else None,
+            "table_headers": table_headers,
+            "table_row_index": _chunk_int(chunk, "table_row_index") if is_table_item else None,
+            "table_column_values": table_column_values,
+            "table_context": _chunk_text_field(chunk, "table_context") if is_table_item else None,
+            "row_count": row_count,
+            "column_count": column_count,
             "text_preview": normalize_text(text)[: max(0, text_preview_chars)],
             "quality_flags": flags,
             "handoff_notes": handoff_notes(flags, content_type, table_id),

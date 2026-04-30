@@ -1,6 +1,6 @@
 # PLAN
 
-Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock. Stage 20–25 are completed OCR/readiness/extraction/table/QA-evaluation layers. Stage 26–30 are completed external QA/chunk visibility, audit, and chunk contract hardening stages. Stage 30 hardens chunk/source context for future source-backed handoff, not full RAG.
+Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock. Stage 20–25 are completed OCR/readiness/extraction/table/QA-evaluation layers. Stage 26–31 are completed external QA/chunk visibility, audit, chunk contract hardening, and table chunk context stages. Stage 31 improves table chunk readability for future source-backed handoff, not full RAG or table analytics.
 
 ## Stage 1. Зафиксировать smoke/regression проверки
 
@@ -607,9 +607,15 @@ conda run -n etl_env python -m scripts.evaluate_qa_dataset --qa-path "D:\Project
 
 ## Stage 31. Table chunk context v1
 
-- Статус: planned.
+- Статус: completed.
 - Цель: улучшить читаемость table chunk context как handoff unit, сохранив lexical retrieval baseline.
-- Граница scope: context hardening only; без SQL/table analytics, automatic calculations или ranking rewrite.
+- Подтвержденный scope:
+  - `Chunk` получил backward-compatible optional table-поля для readable handoff context: `table_title`, `table_headers`, `table_row_index`, `table_column_values`, `table_context`, `row_count`, `column_count`;
+  - row-level table chunks получают детерминированный контекст таблицы/раздела/строки и header-to-value пары там, где headers уже доступны в extracted table rows;
+  - chunks без headers сохраняют lexical row values без выдуманных header fields;
+  - Stage 29.1 export показывает новые table-specific поля, но сохраняет fallback для старых processed JSON;
+  - Stage 29.2 audit считает richer table context достаточным для table-like handoff diagnostics.
+- Граница scope: context hardening only; без SQL/table analytics, automatic calculations, full RAG/LLM, embeddings/vector DB или ranking rewrite.
 
 ## Stage 32. Source location/citation hardening
 

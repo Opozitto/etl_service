@@ -62,3 +62,63 @@ def test_table_row_chunk_carries_table_id_only_when_linked_to_table() -> None:
     assert tables[0].table_id == table_row_chunk.table_id
     assert table_row_chunk.page_start == 4
     assert table_row_chunk.page_end == 4
+
+
+def test_table_row_chunk_carries_readable_context_headers_and_row_values() -> None:
+    extracted = ExtractedDocument(
+        extractor_name="test",
+        text="1. Расчет выбросов\nTable",
+        blocks=[
+            RawBlock(kind="paragraph", text="1. Расчет выбросов", page_num=1),
+            RawBlock(
+                kind="table",
+                data=[
+                    ["Код", "Загрязняющее вещество", "Выброс г/с"],
+                    ["0301", "Азота диоксид", "0.12"],
+                ],
+                text="Код | Загрязняющее вещество | Выброс г/с\n0301 | Азота диоксид | 0.12",
+                page_num=5,
+                metadata={"sheet_name": "Лист1"},
+            ),
+        ],
+        page_count=5,
+    )
+
+    _sections, _blocks, _tables, _images, chunks = build_structure(extracted)
+    table_row_chunk = next(item for item in chunks if item.content_type == "table_row")
+
+    assert table_row_chunk.table_title == "1. Расчет выбросов"
+    assert table_row_chunk.table_headers == ["Код", "Загрязняющее вещество", "Выброс г/с"]
+    assert table_row_chunk.table_row_index == 2
+    assert table_row_chunk.table_column_values == {
+        "Код": "0301",
+        "Загрязняющее вещество": "Азота диоксид",
+        "Выброс г/с": "0.12",
+    }
+    assert table_row_chunk.row_count == 2
+    assert table_row_chunk.column_count == 3
+    assert "Таблица tbl-" in table_row_chunk.text
+    assert "Раздел: Document > 1. Расчет выбросов" in table_row_chunk.text
+    assert "Колонки: Код: 0301" in table_row_chunk.text
+    assert "Азота диоксид" in table_row_chunk.text
+    assert "0.12" in table_row_chunk.text
+
+
+def test_table_row_chunk_without_headers_keeps_lexical_values_without_inventing_headers() -> None:
+    extracted = ExtractedDocument(
+        extractor_name="test",
+        text="Table",
+        blocks=[
+            RawBlock(kind="table", data=[["NOx", "10"]], text="NOx | 10", page_num=2),
+        ],
+        page_count=2,
+    )
+
+    _sections, _blocks, _tables, _images, chunks = build_structure(extracted)
+    table_row_chunk = next(item for item in chunks if item.content_type == "table_row")
+
+    assert table_row_chunk.table_headers == []
+    assert table_row_chunk.table_column_values == {}
+    assert "Значения строки: NOx; 10" in table_row_chunk.text
+    assert "NOx" in table_row_chunk.text
+    assert "10" in table_row_chunk.text

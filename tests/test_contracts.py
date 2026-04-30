@@ -82,6 +82,13 @@ EXPECTED_CHUNK_KEYS = {
     "page_end",
     "source_filename",
     "table_id",
+    "table_title",
+    "table_headers",
+    "table_row_index",
+    "table_column_values",
+    "table_context",
+    "row_count",
+    "column_count",
     "text",
     "order",
     "token_estimate",
@@ -295,6 +302,13 @@ def test_chunk_contract_is_backward_compatible_with_old_payload() -> None:
     assert chunk.page_end is None
     assert chunk.source_filename is None
     assert chunk.table_id is None
+    assert chunk.table_title is None
+    assert chunk.table_headers == []
+    assert chunk.table_row_index is None
+    assert chunk.table_column_values == {}
+    assert chunk.table_context is None
+    assert chunk.row_count is None
+    assert chunk.column_count is None
 
 
 def test_corpus_index_contract_round_trip(tmp_path: Path, monkeypatch) -> None:

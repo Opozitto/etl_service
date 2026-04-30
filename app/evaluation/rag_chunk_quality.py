@@ -109,9 +109,22 @@ def _table_like_without_rich_context(item: dict[str, Any]) -> bool:
     flags = set(item.get("quality_flags") or [])
     if "table_like_text" not in flags:
         return False
-    if item.get("table_id") and _content_type(item) in {"table", "table_row"}:
+    if _has_rich_table_context(item):
         return False
     return True
+
+
+def _has_rich_table_context(item: dict[str, Any]) -> bool:
+    content_type = _content_type(item)
+    if content_type not in {"table", "table_row"}:
+        return False
+    if item.get("table_id"):
+        return True
+    if item.get("table_context"):
+        return True
+    if item.get("table_headers") and item.get("table_column_values"):
+        return True
+    return False
 
 
 def _issue_codes_for_item(
