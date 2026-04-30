@@ -1,6 +1,6 @@
 # PLAN
 
-Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is the current governance / roadmap audit step.
+Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the current delivery-first roadmap lock.
 
 ## Stage 1. Зафиксировать smoke/regression проверки
 
@@ -317,13 +317,29 @@ conda run -n etl_env python -m scripts.batch_process --input-dir first_test_data
   - привести управляющие документы к одному актуальному описанию baseline;
   - убрать противоречия между историческими стадиями и текущим состоянием;
   - оставить понятный выбор следующих этапов без обещания уже не реализованных возможностей.
+- Статус: completed.
+
+## Stage 19.0. Delivery-first roadmap lock
+
+- Цель: зафиксировать roadmap так, чтобы каждый следующий stage оставлял проект demo-ready / shippable и мог быть отброшен без поломки текущего baseline.
+- Принцип stage-by-stage delivery:
+  - каждый следующий stage имеет самостоятельную ценность;
+  - future stages не должны быть обязательным условием для уже готового baseline;
+  - не начинать большие архитектурные переписывания без отдельного решения;
+  - все future AI capabilities идут через source-backed / evaluation-visible контур;
+  - OCR / RAG / LLM generation не объявляются готовыми, пока это не подтверждено кодом.
+- Cutline rule:
+  - после Stage 19.0, 19.1, 19.2, 20 и далее должна быть понятная точка остановки и короткий путь к сдаче.
 - Статус: current.
 
 ## Будущие варианты
 
 Возможные следующие этапы, пока не реализованные:
 
-- Stage 19A: retrieval evaluation v2 / table-aware evaluation set.
-- Stage 19B: OCR intake spike для `jpg` / `png` scans.
-- Stage 19C: summarization / draft generation spike.
-- Stage 19D: prototype API demo packaging.
+1. Stage 19.1 OCR candidate reporting / OCR-readiness, without production OCR.
+2. Stage 19.2 Customer demo finalization / final polish checkpoint.
+3. Stage 20 Local OCR baseline for jpg/png, only if time allows.
+4. Stage 21 OCR quality evaluation, only after OCR baseline.
+5. Stage 22 Requirements extraction v1, source-backed, no generation.
+6. Stage 23 Table-aware evaluation / calculation inputs v2.
+7. Stage 24 Summarization / draft generation spike, only if source-backed foundation remains stable.

@@ -1,24 +1,39 @@
 # FINISH_LINE
 
-## Текущий baseline
+## Delivery-first finish strategy
 
-- ETL baseline запускается end-to-end в подтверждённом локальном окружении.
-- Поддерживаемые форматы документов: `pdf`, `doc`, `docx`, `rtf`, `txt`, `xlsx`, `xls`.
-- Standalone `jpg` / `jpeg` / `png` принимаются только в metadata-only режиме без OCR.
-- `HEIC` / `HEIF` / `TIFF` / `TIF` / `BMP` / `WEBP` остаются неподдерживаемыми image-like форматами.
-- `XLS` и `XLSX` извлекаются в JSON, попадают в chunks/search/ask и используют flattened lexical retrieval.
-- Row-level chunks для таблиц добавляют sheet/table/row/column-value textual context, но это всё ещё lexical retrieval, а не table-aware analytics.
-- Customer demo smoke runner доступен как read-only CLI helper и честно показывает текущие ограничения baseline.
+- The roadmap now stays delivery-first: every next stage should leave the project demo-ready / shippable on its own.
+- Future stages may be dropped without breaking the current baseline.
+- Any future AI capability should remain source-backed and evaluation-visible.
+- Large architecture rewrites stay out of scope unless there is a separate decision.
 
-## Что подтверждено, а что нет
+## Current baseline
 
-- Подтверждено:
+- ETL baseline runs end-to-end in the confirmed local environment.
+- Supported document formats: `pdf`, `doc`, `docx`, `rtf`, `txt`, `xlsx`, `xls`.
+- Standalone `jpg` / `jpeg` / `png` are accepted only in metadata-only mode without OCR.
+- `HEIC` / `HEIF` / `TIFF` / `TIF` / `BMP` / `WEBP` remain unsupported image-like formats.
+- `XLS` and `XLSX` are extracted into JSON, flow into chunks/search/ask, and use flattened lexical retrieval.
+- Row-level chunks for tables add `sheet` / `table` / `row` / `column-value` context, but this is still lexical retrieval, not table-aware analytics.
+- Customer demo smoke runner is available as a read-only CLI helper and honestly shows the current baseline limitations.
+
+## Best shippable baseline
+
+- supported formats: `pdf`, `doc`, `docx`, `rtf`, `txt`, `xlsx`, `xls`.
+- source-backed search/ask with explicit evidence.
+- spreadsheet table retrieval with row-level lexical context.
+- audit/demo runner for corpus visibility and customer flow.
+- image intake metadata-only without OCR.
+
+## What is confirmed, and what is not
+
+- Confirmed:
   - source-backed search;
   - source-backed ask / extractive QA;
   - corpus audit visibility;
   - corpus rebuild;
-  - spreadsheet table retrieval с row-level context.
-- Не подтверждено:
+  - spreadsheet table retrieval with row-level context.
+- Not confirmed:
   - OCR;
   - LLM generation;
   - summarization / draft generation;
@@ -28,14 +43,16 @@
   - table-aware analytics;
   - external proprietary APIs.
 
-## Следующий выбор
+## If time stops now
 
-Ниже не реализованные варианты следующего этапа:
+- run `pytest`;
+- run `demo_customer_flow`;
+- check README limitations;
+- make sure storage artifacts are not committed.
 
-- Stage 19A: retrieval evaluation v2 / table-aware evaluation set.
-- Stage 19B: OCR intake spike for `jpg` / `png` scans.
-- Stage 19C: summarization / draft generation spike.
-- Stage 19D: prototype API demo packaging.
+## Next choice
+
+Next recommended: Stage 19.1 OCR candidate reporting, not production OCR.
 
 ## Note
 
