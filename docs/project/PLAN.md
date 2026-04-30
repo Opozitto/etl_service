@@ -478,7 +478,7 @@ conda run -n etl_env python -m scripts.evaluate_qa_dataset --qa-path "D:\Project
 
 ## Stage 26. External QA dataset coverage audit
 
-- Статус: planned.
+- Статус: completed.
 - Цель: read-only аудит покрытия внешнего QA dataset до обработки внешних документов.
 - Scope:
   - read-only анализ внешнего `Example_data`;
@@ -491,6 +491,13 @@ conda run -n etl_env python -m scripts.evaluate_qa_dataset --qa-path "D:\Project
   - table-like/numeric question counts;
   - JSON report only to `.runtime_eval/` by explicit flag;
   - no ingestion, no production storage writes, no commit of external data.
+- Артефакты:
+  - `scripts.audit_external_qa_dataset`;
+  - `tests/test_audit_external_qa_dataset.py`;
+  - bounded JSON report по явному `--json-report-path`.
+- Подготовка к Stage 27:
+  - audit отделяет matched/missing/ambiguous expected documents;
+  - Stage 27 должен использовать временный workspace и не писать в `storage/index`, `storage/results`, `storage/uploads`.
 - Out of scope:
   - processing full external dataset;
   - changing search ranking;

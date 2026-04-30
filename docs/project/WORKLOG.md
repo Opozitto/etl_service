@@ -52,10 +52,13 @@
 - Stage 25.1 baseline before docs-only update: HEAD `15447be` `Polish QA evaluator diagnostics and fast mode`.
 - Stage 25.1 records the new sequence: first external QA dataset coverage audit, then temporary workspace processing/eval, then QA failure taxonomy, then retrieval-loop speed/cache only if needed.
 - Stage 25.1 does not change code, tests, external data, runtime artifacts, or production behavior.
+- Stage 26 completed as a read-only external QA dataset coverage audit.
+- Stage 26 adds `scripts.audit_external_qa_dataset` for QA CSV/TSV coverage, expected document matching, missing/ambiguous sources, duplicate filenames/stems, supported/unsupported formats, and table-like question counts.
+- Stage 26 uses external `Example_data` only by explicit path; it does not ingest documents, does not copy/commit the external dataset, and writes JSON only by explicit `--json-report-path`.
+- Stage 26 does not change ingestion pipeline, production storage, search ranking, `/api/v1/ask`, OCR, RAG/LLM, or generation.
 
 ## next
 
-- Stage 26 External QA dataset coverage audit.
 - Stage 27 External QA temporary workspace processing/eval.
 - Stage 28 QA failure taxonomy / customer-readable diagnostics.
 - Stage 29 QA evaluator retrieval-loop speed/cache, optional and only if speed remains a blocker after external workspace/failure diagnostics.
@@ -73,6 +76,7 @@
 - Stage 24 QA/retrieval evaluation is readiness diagnostics only: it measures retrieval/source visibility and token overlap, not final generative answer quality.
 - Stage 25 QA evaluator fast/summary modes are operational diagnostics only; they do not indicate a retrieval quality improvement by themselves.
 - Stage 25.1 aligns the roadmap after QA evaluator diagnostics: coverage first, temporary eval workspace second, failure taxonomy third, speed/cache last if still necessary.
+- Stage 26 keeps external QA dataset audit separate from processing/eval so Stage 27 can operate only on diagnosed inputs in a temporary workspace.
 
 ## risks
 
@@ -83,6 +87,7 @@
 - `HEIC` / `HEIF` / `TIFF` / `TIF` / `BMP` / `WEBP` remain unsupported.
 - LLM / RAG / generation are not implemented.
 - QA evaluator `--skip-answer-overlap` is intentionally a faster smoke mode; use full/default mode when answer-overlap trend comparison is needed.
+- Stage 26 matching is deterministic and conservative; ambiguous or missing expected documents require review before Stage 27 processing/eval.
 - The main current risk is not a lack of ideas, but scope creep into OCR / RAG / LLM work before the foundation is stable.
 - Full `pytest` inside the Codex sandbox on Windows can still hit `PermissionError` in pytest temp / `tmp_path`, even though the local `etl_env` run works.
 - `PermissionError` in the Codex sandbox remains an environment limitation, not a project defect.
@@ -109,6 +114,9 @@
 - `conda run -n etl_env python -m pytest -q tests/test_qa_dataset_evaluation.py -x --tb=short` -> blocked before the first `tmp_path` test by `PermissionError: [WinError 5] Отказано в доступе: 'D:\Temp\pytest-of-opozi'`.
 - `conda run -n etl_env python -m pytest -q tests/test_qa_dataset_evaluation.py::test_table_question_heuristic_identifies_domain_questions` -> 1 passed.
 - Manual Stage 25 evaluator smoke through `build_report(..., skip_answer_overlap=True, report_detail_level='summary', failures_limit=0, missing_source_limit=0, top_hits_limit=0)` -> OK.
+- `conda run -n etl_env python -m py_compile scripts\audit_external_qa_dataset.py tests\test_audit_external_qa_dataset.py` -> OK.
+- `conda run -n etl_env python -m pytest -q tests/test_audit_external_qa_dataset.py::test_table_like_heuristic_is_conservative` -> 1 passed.
+- `conda run -n etl_env python -m pytest -q tests/test_audit_external_qa_dataset.py --basetemp=D:\Projects\etl_service\.pytest-run-temp\stage26_codex` -> blocked by Codex sandbox `PermissionError` on `basetemp` cleanup.
 
 ## open questions
 
