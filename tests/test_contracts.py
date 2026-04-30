@@ -84,6 +84,8 @@ EXPECTED_PROCESSING_KEYS = {
     "transform_version",
     "warnings",
     "features",
+    "ocr_candidate",
+    "ocr_reason",
     "source_encoding",
     "text_char_count",
     "text_block_count",
@@ -257,6 +259,8 @@ def test_processed_document_contract_round_trip() -> None:
     assert set(payload["blocks"][0]) == EXPECTED_BLOCK_KEYS
     assert set(payload["chunks"][0]) == EXPECTED_CHUNK_KEYS
     assert set(payload["processing_info"]) == EXPECTED_PROCESSING_KEYS
+    assert payload["processing_info"]["ocr_candidate"] is False
+    assert payload["processing_info"]["ocr_reason"] is None
 
     restored = StructuredDocument.model_validate(payload)
     assert restored.model_dump(mode="json") == payload
@@ -370,6 +374,8 @@ def test_documents_api_shape(tmp_path: Path, monkeypatch) -> None:
         assert detail["metadata"]["document_id"] == document_id
         assert detail["source"]["filename"] == "api.txt"
         assert set(detail["processing_info"]) == EXPECTED_PROCESSING_KEYS
+        assert detail["processing_info"]["ocr_candidate"] is False
+        assert detail["processing_info"]["ocr_reason"] is None
         assert Path(detail["artifacts"]["result_json_path"]).parent == storage.results_dir
         assert Path(detail["artifacts"]["source_file_path"]).parent == storage.uploads_dir
 
