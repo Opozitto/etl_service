@@ -36,9 +36,16 @@ class ProcessOutcome:
 
 
 class DocumentService:
-    def __init__(self, ocr_adapter: LocalOCRAdapter | None = None) -> None:
+    def __init__(
+        self,
+        ocr_adapter: LocalOCRAdapter | None = None,
+        storage: FileStorage | None = None,
+        storage_root: Path | None = None,
+    ) -> None:
+        if storage is not None and storage_root is not None:
+            raise ValueError("Use either storage or storage_root, not both")
         self.registry = ExtractorRegistry()
-        self.storage = FileStorage()
+        self.storage = storage or FileStorage(storage_root=storage_root)
         self.index_store = SearchIndexStore(self.storage)
         self.manifest_store = CorpusManifestStore(self.storage)
         self.ocr_adapter = ocr_adapter or LocalOCRAdapter()

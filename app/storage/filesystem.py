@@ -14,9 +14,12 @@ from app.schemas.document import StructuredDocument
 
 
 class FileStorage:
-    def __init__(self) -> None:
+    def __init__(self, base_dir: Path | None = None, storage_root: Path | None = None) -> None:
+        if base_dir is not None and storage_root is not None:
+            raise ValueError("Use either base_dir or storage_root, not both")
         self.settings = get_settings()
-        self.base_dir = self.settings.resolved_storage_dir
+        requested_base_dir = storage_root if storage_root is not None else base_dir
+        self.base_dir = requested_base_dir.resolve() if requested_base_dir is not None else self.settings.resolved_storage_dir
         self.uploads_dir = self.base_dir / self.settings.uploads_dir_name
         self.results_dir = self.base_dir / self.settings.results_dir_name
         self.index_dir = self.base_dir / self.settings.index_dir_name

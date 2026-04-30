@@ -56,10 +56,16 @@
 - Stage 26 adds `scripts.audit_external_qa_dataset` for QA CSV/TSV coverage, expected document matching, missing/ambiguous sources, duplicate filenames/stems, supported/unsupported formats, and table-like question counts.
 - Stage 26 uses external `Example_data` only by explicit path; it does not ingest documents, does not copy/commit the external dataset, and writes JSON only by explicit `--json-report-path`.
 - Stage 26 does not change ingestion pipeline, production storage, search ranking, `/api/v1/ask`, OCR, RAG/LLM, or generation.
+- Stage 27 completed as a safe temporary workspace processing/eval workflow for external QA dataset follow-up.
+- Stage 27 adds `scripts.evaluate_external_qa_workspace` with safe/dry-run default, explicit `--process`, explicit `--run-eval`, `--source-scope expected|all-supported`, `--ambiguous-policy skip|all`, `--max-documents`, workspace/QA report paths, and workspace cleanup.
+- Stage 27 writes processing artifacts only under the requested workspace (`uploads/`, `results/`, `index/`, `reports/`, `workspace_manifest.json`) and runs the existing QA evaluator against workspace results.
+- Stage 27 defaults to skipping ambiguous expected document references from Stage 26 instead of choosing a first match.
+- Stage 27 parameterizes `FileStorage` / `DocumentService` just enough to allow workspace-local processing without writing production `storage/index`, `storage/results`, or `storage/uploads`.
+- Stage 27 hotfix keeps synthetic QA TSV tests on normal UTF-8 Russian headers, adds `--encoding` / `--delimiter` pass-through, and respects explicit `--workspace-report-path` in processing/eval mode.
+- Stage 27 does not change `/api/v1/ask`, production search ranking, OCR/scanned PDF OCR, RAG/LLM/generation, embeddings/vector DB, or semantic retrieval.
 
 ## next
 
-- Stage 27 External QA temporary workspace processing/eval.
 - Stage 28 QA failure taxonomy / customer-readable diagnostics.
 - Stage 29 QA evaluator retrieval-loop speed/cache, optional and only if speed remains a blocker after external workspace/failure diagnostics.
 - Final polish checkpoint starts only by explicit user command: "стоп, следующий шаг делаем финал".
@@ -77,6 +83,7 @@
 - Stage 25 QA evaluator fast/summary modes are operational diagnostics only; they do not indicate a retrieval quality improvement by themselves.
 - Stage 25.1 aligns the roadmap after QA evaluator diagnostics: coverage first, temporary eval workspace second, failure taxonomy third, speed/cache last if still necessary.
 - Stage 26 keeps external QA dataset audit separate from processing/eval so Stage 27 can operate only on diagnosed inputs in a temporary workspace.
+- Stage 27 keeps external processing/eval isolated in `.runtime_eval` or another explicit temporary workspace; production storage remains the baseline corpus, not an evaluation scratch area.
 
 ## risks
 
@@ -88,6 +95,7 @@
 - LLM / RAG / generation are not implemented.
 - QA evaluator `--skip-answer-overlap` is intentionally a faster smoke mode; use full/default mode when answer-overlap trend comparison is needed.
 - Stage 26 matching is deterministic and conservative; ambiguous or missing expected documents require review before Stage 27 processing/eval.
+- Stage 27 can process ambiguous candidates only with explicit `--ambiguous-policy all`; because Stage 26 found all expected docs ambiguous on the real dataset, bounded smoke runs with `--max-documents` remain the safer first step.
 - The main current risk is not a lack of ideas, but scope creep into OCR / RAG / LLM work before the foundation is stable.
 - Full `pytest` inside the Codex sandbox on Windows can still hit `PermissionError` in pytest temp / `tmp_path`, even though the local `etl_env` run works.
 - `PermissionError` in the Codex sandbox remains an environment limitation, not a project defect.

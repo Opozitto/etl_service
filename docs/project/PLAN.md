@@ -508,12 +508,30 @@ conda run -n etl_env python -m scripts.evaluate_qa_dataset --qa-path "D:\Project
 
 ## Stage 27. External QA temporary workspace processing/eval
 
-- Статус: planned.
+- Статус: completed.
+- Цель: добавить safe temporary workspace workflow для внешнего QA dataset после Stage 26 audit.
 - Scope:
-  - process matched external documents only by explicit command;
-  - write to `.runtime_eval` workspace;
-  - run QA evaluator against temporary results;
-  - do not pollute `storage/index`, `storage/results`, `storage/uploads`.
+  - CLI `scripts.evaluate_external_qa_workspace`;
+  - default safe/dry-run behavior, если `--process` и `--run-eval` не указаны;
+  - processing только по явному `--process`;
+  - QA eval только по явному `--run-eval`;
+  - `--source-scope expected|all-supported`, default `expected`;
+  - `--ambiguous-policy skip|all`, default `skip`, без unsafe first-match fallback;
+  - `--max-documents` для bounded smoke runs;
+  - `--encoding` и `--delimiter` для явного чтения QA CSV/TSV, с UTF-8-safe default для обычных русских headers;
+  - explicit `--workspace-report-path` используется как путь manifest/report и в processing/eval mode;
+  - temporary workspace structure under `--workspace-dir`: `uploads/`, `results/`, `index/`, `reports/`, `workspace_manifest.json`;
+  - QA evaluator запускается against `workspace/results`, не against production `storage/results`;
+  - external dataset и `.runtime_eval/` не добавляются в repo.
+- Подтверждённый safety contract:
+  - production `storage/index`, `storage/results`, `storage/uploads` не должны загрязняться Stage 27 workflow;
+  - ambiguous expected docs из Stage 26 по default не обрабатываются, а попадают в skipped examples;
+  - `all-supported` и `ambiguous-policy all` требуют явных флагов и могут быть ограничены `--max-documents`.
+- Out of scope:
+  - external dataset commit/copy into repo;
+  - production search ranking, `/api/v1/ask`, OCR strategy, scanned PDF OCR;
+  - LLM/RAG generation, embeddings/vector DB, semantic retrieval;
+  - aggressive fuzzy document selection.
 
 ## Stage 28. QA failure taxonomy / customer-readable diagnostics
 
