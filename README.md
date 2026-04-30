@@ -78,6 +78,7 @@ conda run -n etl_env python -m scripts.demo_customer_flow --json-report-path sto
 
 Default mode is read-only. The optional JSON report path is a runtime artifact, and `--refresh-index` is the only mode that may update `storage/index`.
 This demo reports the current baseline only: OCR, LLM generation, summarization, vector DB, semantic retrieval, and full RAG are not implemented.
+Вывод демо-проверки теперь русскоязычный и ориентирован на read-only просмотр текущего состояния корпуса; для более явного row-level table context при необходимости можно запустить `--refresh-index`.
 
 ## Пересборка индекса корпуса
 

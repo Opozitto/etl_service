@@ -39,6 +39,7 @@
 - Stage 17 customer demo smoke runner added in code:
   - `scripts/demo_customer_flow.py`
   - `tests/test_demo_customer_flow.py`
+- Stage 17.1 polish: customer demo output is now Russian/read-only oriented, with a separate table row-context probe in the demo report.
 - Codex sandbox pytest on Windows still hits `PermissionError` on `tmp_path` / `pytest-of-*`; this remains an environment limitation, not a project fix.
 
 ## alignment

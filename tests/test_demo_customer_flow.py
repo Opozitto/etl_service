@@ -113,6 +113,8 @@ def _index_payload() -> dict:
             "пдв": 1,
             "сырье": 1,
             "калькуляц": 1,
+            "лист": 1,
+            "строк": 1,
         },
         "entries": [
             {
@@ -136,10 +138,10 @@ def _index_payload() -> dict:
                 "chunk_id": "doc-2-chk",
                 "section_id": "doc-2-sec",
                 "section_title": "Section",
-                "text": "Форма 2 Плановая калькуляция затрат. Приобретение сырья и материалов.",
-                "tokens": ["Форма", "2", "Плановая", "калькуляция", "затрат", "Приобретение", "сырья", "и", "материалов"],
-                "normalized_tokens": ["форма", "2", "плановая", "калькуляц", "затрат", "приобретение", "сырье", "материалов"],
-                "token_count": 9,
+                "text": "Лист 1. Строка 0101. Форма 2 Плановая калькуляция затрат. Приобретение сырья и материалов.",
+                "tokens": ["Лист", "1", "Строка", "0101", "Форма", "2", "Плановая", "калькуляция", "затрат", "Приобретение", "сырья", "и", "материалов"],
+                "normalized_tokens": ["лист", "1", "строк", "0101", "форма", "2", "плановая", "калькуляц", "затрат", "приобретение", "сырье", "материалов"],
+                "token_count": 13,
             },
         ],
     }
@@ -189,7 +191,7 @@ def test_demo_customer_flow_builds_read_only_report(tmp_path: Path, monkeypatch,
     get_settings.cache_clear()
 
     text_one = "Экология проект. Предельно допустимые выбросы ПДВ."
-    text_two = "Форма 2 Плановая калькуляция затрат. Приобретение сырья и материалов."
+    text_two = "Лист 1. Строка 0101. Форма 2 Плановая калькуляция затрат. Приобретение сырья и материалов."
     _write_json(results_dir / "doc-1.json", _result_document("doc-1", "sample.docx", text=text_one))
     _write_json(results_dir / "doc-2.json", _result_document("doc-2", "table.xlsx", text=text_two, table_count=1, warnings=["needs review"]))
     _write_json(index_dir / "corpus_index.json", _index_payload())
@@ -236,6 +238,11 @@ def test_demo_customer_flow_builds_read_only_report(tmp_path: Path, monkeypatch,
     assert scenarios["S6"]["status"] == "limited"
     assert "OCR is not implemented" in scenarios["S6"]["note"]
     assert scenarios["S7"]["status"] == "limited"
+    assert report["table_scenario"]["row_context_probe"]["status"] == "hit"
+    assert report["table_scenario"]["row_context_probe"]["has_row_context"] is True
+    assert report["table_scenario"]["row_context_probe"]["top_hit"]["snippet"]
+    assert "Строка" in report["table_scenario"]["row_context_probe"]["top_hit"]["snippet"]
+    assert report["table_scenario"]["row_context_probe"]["top_hit"]["filename"] == "table.xlsx"
 
     queries = {item["query"]: item for item in report["queries"]}
     assert queries["экология проект"]["status"] == "hit"
@@ -244,10 +251,22 @@ def test_demo_customer_flow_builds_read_only_report(tmp_path: Path, monkeypatch,
     assert queries["затраты на сырье"]["status"] == "hit"
     assert queries["затраты на сырье"]["top_hits"][0]["filename"] == "table.xlsx"
 
-    assert "Customer demo smoke runner" in captured.out
-    assert "Mode: read-only" in captured.out
-    assert "S6 OCR / image limitation: limited" in captured.out
+    assert "Демо-проверка customer flow" in captured.out
+    assert "Режим: read-only / без изменения storage" in captured.out
+    assert "Аудит корпуса: найдено проблемных/требующих внимания документов" in captured.out
+    assert "Это диагностический слой качества корпуса, а не ошибка запуска demo." in captured.out
+    assert "Возможности baseline:" in captured.out
+    assert "Сценарии:" in captured.out
+    assert "Табличный сценарий:" in captured.out
+    assert "Проба контекста строки:" in captured.out
+    assert "Демо-запросы:" in captured.out
+    assert "Ограничения:" in captured.out
+    assert "OCR не реализован." in captured.out
+    assert "Генерация LLM не реализована." in captured.out
     assert "затраты на сырье: hit" in captured.out
+    assert "Поиск по источникам" in captured.out
+    assert "Видимость аудита" in captured.out
+    assert "Краткий справочник" not in captured.out
 
     after_results = {path.name: path.read_text(encoding="utf-8") for path in sorted(results_dir.glob("*.json"))}
     after_index = (index_dir / "corpus_index.json").read_text(encoding="utf-8")
@@ -276,5 +295,45 @@ def test_demo_customer_flow_refresh_index_rebuilds_index(tmp_path: Path, monkeyp
     refreshed = json.loads((index_dir / "corpus_index.json").read_text(encoding="utf-8"))
     assert refreshed["document_count"] == 1
     assert refreshed["chunk_count"] == 1
+
+    get_settings.cache_clear()
+
+
+def test_demo_customer_flow_table_probe_falls_back_without_spreadsheet_row_context(tmp_path: Path, monkeypatch, capsys) -> None:
+    storage_root, results_dir, index_dir = _prepare_storage(tmp_path)
+    monkeypatch.setenv("ETL_STORAGE_DIR", str(storage_root))
+    get_settings.cache_clear()
+
+    spreadsheet_text = "Форма 2 Плановая калькуляция затрат. Приобретение сырья и материалов."
+    doc_text = "Строка 0101. Таблица 9. Текстовый документ с таблицей, но не spreadsheet evidence."
+    _write_json(results_dir / "doc-1.json", _result_document("doc-1", "sample.docx", text=doc_text))
+    _write_json(results_dir / "doc-2.json", _result_document("doc-2", "table.xlsx", text=spreadsheet_text, table_count=1))
+    _write_json(index_dir / "corpus_index.json", _index_payload())
+    _write_json(index_dir / "ingestion_manifest.json", _manifest_payload())
+
+    # Replace the row-context chunk with a spreadsheet chunk that lacks row markers.
+    index_payload = _index_payload()
+    index_payload["entries"][0]["filename"] = "sample.docx"
+    index_payload["entries"][0]["text"] = "Строка 0101. Таблица 9. Текстовый документ с таблицей, но не spreadsheet evidence."
+    index_payload["entries"][0]["normalized_tokens"] = ["строк", "0101", "таблиц", "9", "текстов", "документ", "таблиц", "spreadsheet", "evidence"]
+    index_payload["entries"][0]["tokens"] = ["Строка", "0101", "Таблица", "9", "Текстовый", "документ", "с", "таблицей", "но", "не", "spreadsheet", "evidence"]
+    index_payload["entries"][1]["text"] = spreadsheet_text
+    index_payload["entries"][1]["normalized_tokens"] = ["форма", "2", "плановая", "калькуляц", "затрат", "приобретение", "сырье", "материалов"]
+    index_payload["entries"][1]["tokens"] = ["Форма", "2", "Плановая", "калькуляция", "затрат", "Приобретение", "сырья", "и", "материалов"]
+    _write_json(index_dir / "corpus_index.json", index_payload)
+
+    module = _load_module()
+    report_path = tmp_path / "demo_report.json"
+    monkeypatch.setattr(sys, "argv", ["demo_customer_flow", "--json-report-path", str(report_path)])
+    module.main()
+    captured = capsys.readouterr()
+
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    assert report["table_scenario"]["row_context_probe"]["status"] == "no-hit"
+    assert report["table_scenario"]["row_context_probe"]["top_hit"] is None
+    assert report["table_scenario"]["refresh_hint_needed"] is True
+    assert "В текущем индексе row-level XLS/XLSX контекст не найден" in captured.out
+    assert "Краткий справочник" not in captured.out
+    assert "Табличный сценарий:" in captured.out
 
     get_settings.cache_clear()

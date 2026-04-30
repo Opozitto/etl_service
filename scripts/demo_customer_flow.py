@@ -25,6 +25,16 @@ DEFAULT_QUERIES = [
     "затраты на сырье",
 ]
 
+TABLE_SCENARIO_QUERY = "затраты на сырье"
+TABLE_CONTEXT_PROBE_QUERY = "Строка"
+TABLE_CONTEXT_MARKERS = ("лист", "таблиц", "строк", "строка", "колон", "значен", "row", "sheet")
+SPREADSHEET_EXTENSIONS = {".xls", ".xlsx"}
+TABLE_REFRESH_HINT = (
+    "В текущем индексе row-level XLS/XLSX контекст не найден. "
+    "Для демонстрации обновлённых table chunks пересоберите индекс: "
+    "conda run -n etl_env python -m scripts.demo_customer_flow --refresh-index"
+)
+
 
 def _empty_index() -> CorpusIndex:
     return CorpusIndex(
@@ -180,6 +190,66 @@ def _query_hits(engine: CorpusSearchEngine, query: str, top_k: int = 3) -> dict:
     }
 
 
+def _has_table_context(text: str) -> bool:
+    lowered = text.lower()
+    return any(marker in lowered for marker in TABLE_CONTEXT_MARKERS)
+
+
+def _is_spreadsheet_hit(hit) -> bool:
+    return Path(hit.filename).suffix.lower() in SPREADSHEET_EXTENSIONS
+
+
+def _build_table_scenario(engine: CorpusSearchEngine, top_k: int = 3) -> dict:
+    main_hits = [hit for hit in engine.search(TABLE_SCENARIO_QUERY, top_k=top_k * 3) if _is_spreadsheet_hit(hit)]
+    probe_hits = [
+        hit
+        for hit in engine.search(TABLE_CONTEXT_PROBE_QUERY, top_k=top_k * 3)
+        if _is_spreadsheet_hit(hit) and _has_table_context(hit.snippet)
+    ]
+
+    main_hit = main_hits[0] if main_hits else None
+    selected_probe = probe_hits[0] if probe_hits else None
+    main_context = _has_table_context(main_hit.snippet) if main_hit else False
+    probe_context = _has_table_context(selected_probe.snippet) if selected_probe else False
+
+    return {
+        "query": TABLE_SCENARIO_QUERY,
+        "status": "hit" if main_hits else "no-hit",
+        "has_row_context": main_context,
+        "refresh_hint_needed": not probe_context,
+        "refresh_hint": TABLE_REFRESH_HINT if not probe_context else None,
+        "main_hit": {
+            "rank": 1,
+            "document_id": main_hit.document_id if main_hit else None,
+            "filename": main_hit.filename if main_hit else None,
+            "chunk_id": main_hit.chunk_id if main_hit else None,
+            "section_id": main_hit.section_id if main_hit else None,
+            "section_title": main_hit.section_title if main_hit else None,
+            "score": main_hit.score if main_hit else None,
+            "snippet": main_hit.snippet if main_hit else "",
+        }
+        if main_hit
+        else None,
+        "row_context_probe": {
+            "query": TABLE_CONTEXT_PROBE_QUERY,
+            "status": "hit" if probe_hits else "no-hit",
+            "has_row_context": probe_context,
+            "top_hit": {
+                "rank": 1,
+                "document_id": selected_probe.document_id if selected_probe else None,
+                "filename": selected_probe.filename if selected_probe else None,
+                "chunk_id": selected_probe.chunk_id if selected_probe else None,
+                "section_id": selected_probe.section_id if selected_probe else None,
+                "section_title": selected_probe.section_title if selected_probe else None,
+                "score": selected_probe.score if selected_probe else None,
+                "snippet": selected_probe.snippet if selected_probe else "",
+            }
+            if selected_probe
+            else None,
+        },
+    }
+
+
 def build_demo_report(storage_dir: Path, refresh_index: bool = False, top_k: int = 3) -> dict:
     storage_dir = storage_dir.resolve()
     service = DocumentService()
@@ -190,6 +260,7 @@ def build_demo_report(storage_dir: Path, refresh_index: bool = False, top_k: int
     search_engine = _build_search_engine(service.storage)
     corpus_snapshot = _build_corpus_snapshot(storage_dir)
     queries = [_query_hits(search_engine, query, top_k=top_k) for query in DEFAULT_QUERIES]
+    table_scenario = _build_table_scenario(search_engine, top_k=top_k)
 
     return {
         "report_version": REPORT_VERSION,
@@ -210,17 +281,49 @@ def build_demo_report(storage_dir: Path, refresh_index: bool = False, top_k: int
         "corpus": corpus_snapshot,
         "scenarios": _scenario_checks(),
         "queries": queries,
+        "table_scenario": table_scenario,
     }
 
 
 def print_demo_report(report: dict) -> None:
     corpus = report["corpus"]
     capabilities = report["capabilities"]
-    print(f"Customer demo smoke runner: {report['report_version']}")
-    print(f"Mode: {report['mode']}")
-    print(f"Storage: {report['storage_dir']}")
+    status_display = {
+        "supported-now": "поддерживается сейчас",
+        "limited": "ограничение",
+    }
+    scenario_title_display = {
+        "S1": "Поиск по источникам",
+        "S2": "Готовность к extractive QA по источникам",
+        "S3": "Извлечение требований",
+        "S4": "Поиск входных данных для расчётов с таблицами",
+        "S5": "Видимость аудита",
+        "S6": "Ограничение OCR / изображений",
+        "S7": "Ограничение суммаризации / черновиков",
+    }
+    scenario_note_display = {
+        "S1": "Локальный лексический поиск по сохранённым чанкам с явными ссылками на источники.",
+        "S2": "ask остаётся с опорой на источники и извлекающим ответом; слой генерации не добавляется.",
+        "S3": "Только поиск и сниппеты; сгенерированные требования остаются вне scope.",
+        "S4": "Поиск строк и значений в таблицах остаётся лексическим поиском с контекстом строки, а не аналитикой.",
+        "S5": "Аудит корпуса показывает проблемные документы, отсутствующие чанки, предупреждения и расхождение индекса.",
+        "S6": "jpg/jpeg/png принимаются только как метаданные; OCR не реализован, а HEIC/HEIF/TIFF/TIF/BMP/WEBP остаются неподдерживаемыми.",
+        "S7": "В baseline не реализованы суммаризация и генерация черновиков.",
+    }
+    limit_display = {
+        "OCR is not implemented.": "OCR не реализован.",
+        "LLM generation is not implemented.": "Генерация LLM не реализована.",
+        "summarization is not implemented.": "Суммаризация не реализована.",
+        "vector DB / semantic retrieval / full RAG are not implemented.": "Семантический поиск / векторная БД / полный RAG не реализованы.",
+    }
+    print(f"Демо-проверка customer flow: {report['report_version']}")
+    if report["mode"] == "read-only":
+        print("Режим: read-only / без изменения storage")
+    else:
+        print("Режим: refresh-index / с обновлением индекса")
+    print(f"Хранилище: {report['storage_dir']}")
     print(
-        "Corpus: saved_results={saved} indexed_documents={indexed} indexed_chunks={chunks} tables={tables} images={images}".format(
+        "Корпус: сохранённых результатов={saved}, индексированных документов={indexed}, chunks={chunks}, таблиц={tables}, изображений={images}".format(
             saved=corpus["saved_results_documents"],
             indexed=corpus["indexed_documents"],
             chunks=corpus["indexed_chunks"],
@@ -229,31 +332,62 @@ def print_demo_report(report: dict) -> None:
         )
     )
     print(
-        "Audit: problems={problems} warnings={warnings} missing_from_index={missing}".format(
+        "Аудит корпуса: найдено проблемных/требующих внимания документов: {problems}, предупреждений: {warnings}, отсутствуют в индексе: {missing}".format(
             problems=len(corpus["problem_documents"]),
             warnings=corpus["audit_summary"]["warnings_documents"],
             missing=corpus["audit_summary"]["missing_from_index_documents"],
         )
     )
+    print("Это диагностический слой качества корпуса, а не ошибка запуска demo.")
     print(
-        "Capabilities: supported={supported} metadata_only_images={images} unsupported_image_like={unsupported}".format(
+        "Возможности baseline: поддерживаемые форматы={supported}, только метаданные изображений={images}, неподдерживаемые image-like={unsupported}".format(
             supported=", ".join(capabilities["supported_formats"]),
             images=", ".join(capabilities["metadata_only_image_formats"]),
             unsupported=", ".join(capabilities["unsupported_image_like_formats"]),
         )
     )
+    print("Сценарии:")
     for scenario in report["scenarios"]:
-        print(f"{scenario['id']} {scenario['name']}: {scenario['status']} - {scenario['note']}")
-    print("Queries:")
+        title = scenario_title_display.get(scenario["id"], scenario["name"])
+        note = scenario_note_display.get(scenario["id"], scenario["note"])
+        print(f"- {scenario['id']} {title}: {status_display.get(scenario['status'], scenario['status'])} — {note}")
+    print("Табличный сценарий:")
+    table_scenario = report["table_scenario"]
+    main_hit = table_scenario["main_hit"]
+    probe_hit = table_scenario["row_context_probe"]["top_hit"]
+    print(f"- Запрос: {table_scenario['query']}")
+    if main_hit:
+        print(
+            "  Основной хит: файл={filename}, score={score}, контекст строки={context}".format(
+                filename=main_hit["filename"],
+                score=main_hit["score"],
+                context="да" if table_scenario["has_row_context"] else "нет",
+            )
+        )
+        print(f"  Snippet: {main_hit['snippet']}")
+    if probe_hit and probe_hit["filename"]:
+        print(
+            "  Проба контекста строки: запрос={query}, файл={filename}, контекст строки={context}".format(
+                query=table_scenario["row_context_probe"]["query"],
+                filename=probe_hit["filename"],
+                context="да" if table_scenario["row_context_probe"]["has_row_context"] else "нет",
+            )
+        )
+        print(f"  Snippet: {probe_hit['snippet']}")
+    if table_scenario["row_context_probe"]["status"] != "hit":
+        print(f"  {TABLE_REFRESH_HINT}")
+    elif table_scenario["refresh_hint_needed"]:
+        print(f"  {table_scenario['refresh_hint']}")
+    print("Демо-запросы:")
     for item in report["queries"]:
-        print(f"- {item['query']}: {item['status']} hits={item['hit_count']}")
+        print(f"- {item['query']}: {item['status']}, hits={item['hit_count']}")
         if item["top_hits"]:
             hit = item["top_hits"][0]
-            print(f"  top file={hit['filename']} score={hit['score']}")
-            print(f"  snippet={hit['snippet']}")
-    print("Limits:")
+            print(f"  Лучший файл: {hit['filename']}, score={hit['score']}")
+            print(f"  Snippet: {hit['snippet']}")
+    print("Ограничения:")
     for item in capabilities["limits"]:
-        print(f"- {item}")
+        print(f"- {limit_display.get(item, item)}")
 
 
 def main() -> None:
@@ -271,7 +405,7 @@ def main() -> None:
         report_path = Path(args.json_report_path).resolve()
         report_path.parent.mkdir(parents=True, exist_ok=True)
         report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
-        print(f"Saved demo report to {report_path}")
+        print(f"Сохранён JSON-отчёт демо: {report_path}")
 
 
 if __name__ == "__main__":
