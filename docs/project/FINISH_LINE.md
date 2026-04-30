@@ -63,16 +63,20 @@
 
 ## Next choice
 
-Next recommended: Stage 26 External QA dataset coverage audit.
+Next recommended: Stage 29.1 RAG-ready chunk inspection/export v1.
 
 Follow-up sequence:
 
-- Stage 27 External QA temporary workspace processing/eval.
-- Stage 28 QA failure taxonomy / customer-readable diagnostics.
-- Stage 29 QA evaluator retrieval-loop speed/cache, optional and only if speed remains a blocker after external workspace/failure diagnostics.
+- Stage 29.2 Chunk quality audit v1.
+- Stage 30 RAG chunk contract hardening v1.
+- Stage 31 Table chunk context v1.
+- Stage 32 Source location/citation hardening.
+- Stage 33 QA evaluator retrieval-loop speed/cache, optional/later and only if speed becomes a blocker after chunk inspection/export and quality audit.
 - Final polish checkpoint starts only by explicit user command: "стоп, следующий шаг делаем финал".
 
 This preserves the delivery-first rule: every stage should be demo-ready / shippable, future stages can be dropped without breaking the current baseline, large architecture rewrites stay out of scope, and future AI capabilities remain source-backed / evaluation-visible.
+
+Current chunks are acceptable for lexical search, but weak/partial as self-contained RAG handoff units. The next priority is customer/developer-readable chunk inspection/export, not speed/cache.
 
 Do not present LLM/RAG, scanned PDF OCR, OCR for scanned PDFs, or table analytics as ready.
 

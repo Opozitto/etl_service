@@ -67,10 +67,19 @@
 - Stage 28 adds `app.evaluation.qa_failure_taxonomy` and CLI `scripts.diagnose_qa_failures` with stable taxonomy version `stage28_qa_failure_taxonomy_v1`.
 - Stage 28 writes JSON diagnostics only with explicit `--output-path` and keeps console output short: analyzed questions, failures/limitations, category counts, and recommended next actions.
 - Stage 28 is diagnostic only: no production search/ranking changes, no `/api/v1/ask` contract changes, no ingestion changes, no OCR/RAG/LLM/table analytics, and no external/runtime artifact commits.
+- Stage 29.0 completed as docs-only roadmap alignment after read-only RAG chunk audit.
+- Stage 29.0 records that current chunks are acceptable for lexical search, but weak/partial as self-contained RAG handoff units.
+- The next priority is customer/developer-readable chunk inspection/export, followed by chunk quality audit, chunk contract hardening, table chunk context, and source location/citation hardening.
+- The old retrieval-loop speed/cache stage moved later as optional Stage 33, only if speed becomes a blocker after chunk inspection/export and quality audit.
 
 ## next
 
-- Stage 29 QA evaluator retrieval-loop speed/cache, optional and only if speed remains a blocker after external workspace/failure diagnostics.
+- Stage 29.1 RAG-ready chunk inspection/export v1.
+- Stage 29.2 Chunk quality audit v1.
+- Stage 30 RAG chunk contract hardening v1.
+- Stage 31 Table chunk context v1.
+- Stage 32 Source location/citation hardening.
+- Stage 33 QA evaluator retrieval-loop speed/cache, optional/later and only if speed becomes a blocker after chunk inspection/export and quality audit.
 - Final polish checkpoint starts only by explicit user command: "стоп, следующий шаг делаем финал".
 
 ## alignment
@@ -87,6 +96,7 @@
 - Stage 25.1 aligns the roadmap after QA evaluator diagnostics: coverage first, temporary eval workspace second, failure taxonomy third, speed/cache last if still necessary.
 - Stage 26 keeps external QA dataset audit separate from processing/eval so Stage 27 can operate only on diagnosed inputs in a temporary workspace.
 - Stage 27 keeps external processing/eval isolated in `.runtime_eval` or another explicit temporary workspace; production storage remains the baseline corpus, not an evaluation scratch area.
+- Stage 29.0 realigns the next work after RAG chunk audit: inspection/export and quality audit come before speed/cache.
 
 ## risks
 
@@ -96,6 +106,7 @@
 - OCR is now optional local baseline for standalone images, and candidate reporting remains in place for metadata-only fallback / conservative PDF readiness cases.
 - `HEIC` / `HEIF` / `TIFF` / `TIF` / `BMP` / `WEBP` remain unsupported.
 - LLM / RAG / generation are not implemented.
+- Current chunks are useful for lexical search, but remain weak/partial as self-contained RAG handoff units.
 - QA evaluator `--skip-answer-overlap` is intentionally a faster smoke mode; use full/default mode when answer-overlap trend comparison is needed.
 - Stage 26 matching is deterministic and conservative; ambiguous or missing expected documents require review before Stage 27 processing/eval.
 - Stage 27 can process ambiguous candidates only with explicit `--ambiguous-policy all`; because Stage 26 found all expected docs ambiguous on the real dataset, bounded smoke runs with `--max-documents` remain the safer first step.

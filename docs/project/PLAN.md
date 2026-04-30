@@ -555,10 +555,54 @@ conda run -n etl_env python -m scripts.evaluate_qa_dataset --qa-path "D:\Project
   - table analytics/calculations;
   - commit of external dataset or runtime reports/artifacts.
 
-## Stage 29. QA evaluator retrieval-loop speed/cache
+## Stage 29.0. Docs-only roadmap alignment after RAG chunk audit
 
-- Статус: optional / planned.
-- Условие запуска: только после external workspace/failure diagnostics, если скорость останется blocker.
+- Статус: completed.
+- Цель: зафиксировать outcome read-only RAG chunk audit без изменения production code, tests, storage или external dataset.
+- Подтверждённый вывод:
+  - текущие chunks acceptable for lexical search;
+  - текущие chunks weak/partial as self-contained RAG handoff units;
+  - ближайший приоритет - customer/developer-readable chunk inspection/export, а не speed/cache.
+- Out of scope:
+  - full RAG/LLM generation;
+  - embeddings/vector DB;
+  - OCR/reranking/table analytics;
+  - production search/ranking changes.
+
+## Stage 29.1. RAG-ready chunk inspection/export v1
+
+- Статус: planned.
+- Цель: дать customer/developer-readable inspection/export текущих chunks, чтобы видеть текст, source context и ограничения handoff units.
+- Scope boundary: read-only diagnostics/export; без изменения ingestion, search ranking, `/api/v1/ask`, storage baseline или external dataset.
+
+## Stage 29.2. Chunk quality audit v1
+
+- Статус: planned.
+- Цель: оценить chunk completeness/self-containedness/source-context gaps после inspection/export v1.
+- Scope boundary: deterministic audit/report only; без LLM/RAG generation, embeddings/vector DB, OCR, reranking или table analytics.
+
+## Stage 30. RAG chunk contract hardening v1
+
+- Статус: planned.
+- Цель: уточнить контракт chunk payload/source context для будущего source-backed RAG handoff, не объявляя RAG готовым.
+- Scope boundary: contract/docs/tests only where explicitly needed; без full RAG/LLM generation, semantic retrieval или vector DB.
+
+## Stage 31. Table chunk context v1
+
+- Статус: planned.
+- Цель: улучшить читаемость table chunk context как handoff unit, сохранив lexical retrieval baseline.
+- Scope boundary: context hardening only; без SQL/table analytics, automatic calculations или ranking rewrite.
+
+## Stage 32. Source location/citation hardening
+
+- Статус: planned.
+- Цель: сделать source location/citation context более устойчивым для inspection, diagnostics и будущего source-backed handoff.
+- Scope boundary: citation/source metadata hardening; без генерации ответов, external APIs или vector DB.
+
+## Stage 33. QA evaluator retrieval-loop speed/cache
+
+- Статус: optional / later.
+- Условие запуска: только если после chunk inspection/export и quality audit скорость снова станет blocker.
 
 ## Final polish checkpoint
 
