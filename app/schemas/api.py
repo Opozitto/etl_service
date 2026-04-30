@@ -90,3 +90,37 @@ class ManifestRecordResponse(BaseModel):
     processed_at: str
     warnings: list[str]
     source_encoding: Optional[str] = None
+
+
+class RequirementCandidateResponse(BaseModel):
+    document_id: str
+    filename: str
+    category: str
+    score: float
+    source_type: str
+    block_id: Optional[str] = None
+    chunk_id: Optional[str] = None
+    table_id: Optional[str] = None
+    section_id: Optional[str] = None
+    section_title: Optional[str] = None
+    page: Optional[int] = None
+    matched_terms: list[str]
+    reason_codes: list[str]
+    text: str
+    snippet: str
+
+
+class RequirementsSummaryResponse(BaseModel):
+    documents_seen: int
+    documents_with_candidates: int
+    total_candidates: int
+    categories: dict[str, int]
+
+
+class RequirementsResponse(BaseModel):
+    report_version: str
+    stage: str
+    scope_note: str
+    results_dir: str
+    summary: RequirementsSummaryResponse
+    candidates: list[RequirementCandidateResponse]

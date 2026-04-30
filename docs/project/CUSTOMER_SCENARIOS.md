@@ -44,7 +44,8 @@ Expected output:
 
 - found requirements as extractive snippets;
 - source references;
-- no generation of new requirements.
+- candidate category / score / matched terms where available;
+- no generation of new requirements and no legal/compliance guarantee.
 
 ### S4. Calculation inputs discovery
 

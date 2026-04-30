@@ -116,6 +116,17 @@ conda run -n etl_env python -m scripts.cleanup_storage
 conda run -n etl_env python -m scripts.cleanup_storage --apply
 ```
 
+## Requirements extraction v1
+
+Для read-only извлечения возможных требований из уже обработанных JSON доступен deterministic source-backed слой:
+
+```bash
+conda run -n etl_env python -m scripts.extract_requirements
+conda run -n etl_env python -m scripts.extract_requirements --json-report-path reports/requirements_v1.json
+```
+
+Скрипт читает `storage/results`, возвращает extractive candidates с `document_id`, `filename`, source context, category, score и matched terms. JSON-отчёт пишется только по явному `--json-report-path`. Это не LLM, не RAG, не генерация новых требований и не юридическая/compliance-гарантия.
+
 ## OCR
 
 OCR для standalone `jpg`/`jpeg`/`png` теперь optional local baseline: если локальный `tesseract` доступен, сервис извлекает текст и сохраняет его в обычный document output, чтобы он попадал в blocks/chunks/search/ask path.

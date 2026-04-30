@@ -37,11 +37,11 @@
 - Stage 19.1 keeps OCR out of production flow and only adds detection, reporting, and read-only visibility for candidates.
 - Stage 20 completed as optional local OCR baseline for standalone `jpg` / `jpeg` / `png` with local engine fallback to metadata-only behavior.
 - Stage 21 adds a read-only OCR smoke evaluation script for readiness checks on image samples.
+- Stage 22 adds deterministic source-backed requirements extraction v1: reusable service module, read-only CLI, minimal corpus API endpoint, tests, and docs.
 
 ## next
 
 - Stage 19.2 Customer demo finalization / final polish checkpoint.
-- Stage 22 Requirements extraction v1, source-backed, no generation.
 - Stage 23 Table-aware evaluation / calculation inputs v2.
 - Stage 24 Summarization / draft generation spike, only if source-backed foundation remains stable.
 
@@ -52,6 +52,7 @@
 - The next phase is the pilot AI-service track for ecologists, not a claim that OCR, RAG, or LLM generation are already ready.
 - Stage 19.0 locks the roadmap so future stages remain shippable and independently valuable.
 - Stage 19.1 adds OCR candidate reporting / readiness visibility, and Stage 20 adds the optional local OCR baseline for standalone images.
+- Stage 22 requirements extraction is candidate extraction only: no generation, no legal/compliance guarantee, and no search ranking change.
 
 ## risks
 

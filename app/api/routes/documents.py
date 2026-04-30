@@ -5,6 +5,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
+from app.extraction.requirements import build_requirements_report
 from app.schemas.api import (
     AskRequest,
     AskResponse,
@@ -13,6 +14,7 @@ from app.schemas.api import (
     ManifestRecordResponse,
     ProcessResponse,
     ReindexResponse,
+    RequirementsResponse,
     SearchRequest,
     SearchResponse,
 )
@@ -102,3 +104,20 @@ def corpus_reindex() -> ReindexResponse:
 @router.get("/corpus/manifest", response_model=list[ManifestRecordResponse])
 def corpus_manifest() -> list[ManifestRecordResponse]:
     return [ManifestRecordResponse(**record) for record in service.manifest_records()]
+
+
+@router.get("/corpus/requirements", response_model=RequirementsResponse)
+def corpus_requirements(
+    min_score: float = 0.45,
+    max_per_document: int | None = None,
+    query: str | None = None,
+) -> RequirementsResponse:
+    documents = service.list_documents()
+    report = build_requirements_report(
+        documents=documents,
+        results_dir=service.storage.results_dir,
+        min_score=min_score,
+        max_per_document=max_per_document,
+        query=query,
+    )
+    return RequirementsResponse(**report)

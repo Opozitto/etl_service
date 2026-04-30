@@ -17,6 +17,7 @@
 - `XLS` and `XLSX` are extracted into JSON, flow into chunks/search/ask, and use flattened lexical retrieval.
 - Row-level chunks for tables add `sheet` / `table` / `row` / `column-value` context, but this is still lexical retrieval, not table-aware analytics.
 - Customer demo smoke runner is available as a read-only CLI helper and honestly shows the current baseline limitations.
+- Requirements extraction v1 is available as a deterministic source-backed candidate layer over processed JSON; it extracts snippets with source context and does not provide a legal/compliance guarantee.
 
 ## Best shippable baseline
 
@@ -26,6 +27,7 @@
 - audit/demo runner for corpus visibility and customer flow.
 - optional local OCR baseline for standalone images when a local engine is available.
 - OCR candidate reporting for image-only intake and conservative PDF readiness visibility.
+- deterministic requirements candidate extraction with source context.
 
 ## What is confirmed, and what is not
 
@@ -38,6 +40,7 @@
   - read-only OCR candidate reporting;
   - optional local OCR baseline for standalone images when a local engine is available.
   - read-only OCR smoke evaluation script for image readiness checks.
+  - deterministic source-backed requirements candidate extraction.
 - Not confirmed:
   - scanned PDF OCR;
   - LLM generation;

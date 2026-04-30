@@ -1,6 +1,6 @@
 # PLAN
 
-Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the current delivery-first roadmap lock, Stage 20 is the current optional local OCR baseline for standalone images, and Stage 21 is the read-only OCR smoke evaluation layer.
+Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock, Stage 20 is the optional local OCR baseline for standalone images, Stage 21 is the completed read-only OCR smoke evaluation layer, and Stage 22 is the current requirements extraction v1 layer.
 
 ## Stage 1. Зафиксировать smoke/regression проверки
 
@@ -330,7 +330,7 @@ conda run -n etl_env python -m scripts.batch_process --input-dir first_test_data
   - OCR / RAG / LLM generation не объявляются готовыми, пока это не подтверждено кодом.
 - Cutline rule:
   - после Stage 19.0, 19.1, 19.2, 20 и далее должна быть понятная точка остановки и короткий путь к сдаче.
-- Статус: current.
+- Статус: completed.
 
 ## Stage 19.1. OCR candidate reporting / OCR-readiness without production OCR
 
@@ -382,6 +382,27 @@ conda run -n etl_env python -m scripts.batch_process --input-dir first_test_data
 - Артефакты:
   - `scripts/evaluate_ocr.py`
   - `tests/test_evaluate_ocr.py`
+- Статус: completed.
+
+## Stage 22. Requirements extraction v1, source-backed, no generation
+
+- Цель: добавить deterministic/rule-based extraction layer для возможных нормативных/обязательных требований из уже обработанных документов.
+- Подтверждённый scope:
+  - read-only чтение `storage/results`;
+  - extractive candidates из исходного текста;
+  - source fields: `document_id`, `filename`, `source_type`, block/chunk/table/section/page context where available;
+  - category, score, matched terms и reason codes;
+  - CLI `scripts.extract_requirements`;
+  - минимальный read-only API endpoint `GET /api/v1/corpus/requirements`.
+- Вне scope:
+  - LLM generation, RAG, semantic retrieval, vector DB;
+  - legal/compliance guarantee;
+  - scanned PDF OCR и OCR strategy changes;
+  - search ranking или `/ask` contract changes.
+- Артефакты:
+  - `app/extraction/requirements.py`
+  - `scripts/extract_requirements.py`
+  - `tests/test_requirements_extraction.py`
 - Статус: current.
 
 ## Будущие варианты
@@ -389,7 +410,5 @@ conda run -n etl_env python -m scripts.batch_process --input-dir first_test_data
 Возможные следующие этапы, пока не реализованные:
 
 1. Stage 19.2 Customer demo finalization / final polish checkpoint.
-2. Stage 21 OCR quality evaluation, only after OCR baseline.
-3. Stage 22 Requirements extraction v1, source-backed, no generation.
-4. Stage 23 Table-aware evaluation / calculation inputs v2.
-5. Stage 24 Summarization / draft generation spike, only if source-backed foundation remains stable.
+2. Stage 23 Table-aware evaluation / calculation inputs v2.
+3. Stage 24 Summarization / draft generation spike, only if source-backed foundation remains stable.
