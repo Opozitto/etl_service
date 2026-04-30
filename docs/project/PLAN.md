@@ -1,6 +1,6 @@
 # PLAN
 
-Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock, Stage 20 is the optional local OCR baseline for standalone images, Stage 21 is the completed read-only OCR smoke evaluation layer, and Stage 22 is the current requirements extraction v1 layer.
+Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock, Stage 20 is the optional local OCR baseline for standalone images, Stage 21 is the completed read-only OCR smoke evaluation layer, Stage 22 is the completed requirements extraction v1 layer, and Stage 23 is the current table evidence evaluation layer.
 
 ## Stage 1. Зафиксировать smoke/regression проверки
 
@@ -403,12 +403,34 @@ conda run -n etl_env python -m scripts.batch_process --input-dir first_test_data
   - `app/extraction/requirements.py`
   - `scripts/extract_requirements.py`
   - `tests/test_requirements_extraction.py`
-- Статус: current.
+- Статус: completed.
+
+## Stage 23. Table-aware evidence evaluation / calculation inputs v2
+
+- Цель: добавить read-only deterministic evidence layer для таблиц и возможных входных данных экологических расчетов поверх уже обработанных `StructuredDocument` JSON.
+- Подтверждённый scope:
+  - чтение processed JSON / `StructuredDocument` без reprocess;
+  - table evidence records с `document_id`, `filename`, table/block/chunk/section/page context where available;
+  - conservative scoring по headers/cell text/domain terms;
+  - категории `emissions`, `pollutants`, `limits_or_norms`, `measurements`, `costs_or_resources`, `sources_or_equipment`, `unknown`;
+  - CLI `scripts.evaluate_tables`;
+  - read-only API endpoint `GET /api/v1/corpus/tables`.
+- Вне scope:
+  - SQL-like table questions;
+  - автоматические расчеты;
+  - table analytics / table reasoning;
+  - LLM/RAG/generation;
+  - OCR strategy changes;
+  - search ranking или `/ask` contract changes.
+- Артефакты:
+  - `app/extraction/tables.py`
+  - `scripts/evaluate_tables.py`
+  - `tests/test_table_evidence.py`
+- Статус: completed.
 
 ## Будущие варианты
 
 Возможные следующие этапы, пока не реализованные:
 
 1. Stage 19.2 Customer demo finalization / final polish checkpoint.
-2. Stage 23 Table-aware evaluation / calculation inputs v2.
-3. Stage 24 Summarization / draft generation spike, only if source-backed foundation remains stable.
+2. Stage 24 Summarization / draft generation spike, only if source-backed foundation remains stable.

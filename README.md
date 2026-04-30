@@ -41,6 +41,8 @@ conda run -n etl_env uvicorn app.main:app --reload
 - `GET /api/v1/corpus/stats`
 - `POST /api/v1/corpus/reindex`
 - `GET /api/v1/corpus/manifest`
+- `GET /api/v1/corpus/requirements`
+- `GET /api/v1/corpus/tables`
 
 Поток API подтверждён тестом `tests/test_api.py`.
 
@@ -126,6 +128,17 @@ conda run -n etl_env python -m scripts.extract_requirements --json-report-path r
 ```
 
 Скрипт читает `storage/results`, возвращает extractive candidates с `document_id`, `filename`, source context, category, score и matched terms. JSON-отчёт пишется только по явному `--json-report-path`. Это не LLM, не RAG, не генерация новых требований и не юридическая/compliance-гарантия.
+
+## Table evidence evaluation
+
+Для read-only оценки табличных источников и поиска возможных входных данных для экологических расчетов доступен deterministic source-backed слой:
+
+```bash
+conda run -n etl_env python -m scripts.evaluate_tables
+conda run -n etl_env python -m scripts.evaluate_tables --json-report-path reports/table_evidence_v1.json
+```
+
+Скрипт читает уже обработанные JSON из `storage/results`, показывает найденные таблицы, source-backed preview, категории и matched terms. JSON-отчет пишется только по явному `--json-report-path`. Это не SQL/table analytics, не table reasoning и не автоматические расчеты.
 
 ## OCR
 

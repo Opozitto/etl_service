@@ -6,6 +6,7 @@ from pathlib import Path
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
 from app.extraction.requirements import build_requirements_report
+from app.extraction.tables import build_table_evidence_report
 from app.schemas.api import (
     AskRequest,
     AskResponse,
@@ -17,6 +18,7 @@ from app.schemas.api import (
     RequirementsResponse,
     SearchRequest,
     SearchResponse,
+    TableEvidenceResponse,
 )
 from app.search.index import CorpusSearchEngine
 from app.services.document_service import DocumentService
@@ -121,3 +123,20 @@ def corpus_requirements(
         query=query,
     )
     return RequirementsResponse(**report)
+
+
+@router.get("/corpus/tables", response_model=TableEvidenceResponse)
+def corpus_tables(
+    min_score: float = 0.25,
+    max_tables: int | None = None,
+    category: str | None = None,
+) -> TableEvidenceResponse:
+    documents = service.list_documents()
+    report = build_table_evidence_report(
+        documents=documents,
+        results_dir=service.storage.results_dir,
+        min_score=min_score,
+        max_tables=max_tables,
+        category=category,
+    )
+    return TableEvidenceResponse(**report)

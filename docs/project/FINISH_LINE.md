@@ -16,6 +16,7 @@
 - `HEIC` / `HEIF` / `TIFF` / `TIF` / `BMP` / `WEBP` remain unsupported image-like formats.
 - `XLS` and `XLSX` are extracted into JSON, flow into chunks/search/ask, and use flattened lexical retrieval.
 - Row-level chunks for tables add `sheet` / `table` / `row` / `column-value` context, but this is still lexical retrieval, not table-aware analytics.
+- Table evidence evaluation is available as a read-only readiness layer for finding table candidates, headers, preview rows, and likely calculation input categories; it is not SQL/table analytics and does not perform automatic calculations.
 - Customer demo smoke runner is available as a read-only CLI helper and honestly shows the current baseline limitations.
 - Requirements extraction v1 is available as a deterministic source-backed candidate layer over processed JSON; it extracts snippets with source context and does not provide a legal/compliance guarantee.
 
@@ -24,6 +25,7 @@
 - supported formats: `pdf`, `doc`, `docx`, `rtf`, `txt`, `xlsx`, `xls`.
 - source-backed search/ask with explicit evidence.
 - spreadsheet table retrieval with row-level lexical context.
+- read-only table evidence evaluation for possible calculation inputs.
 - audit/demo runner for corpus visibility and customer flow.
 - optional local OCR baseline for standalone images when a local engine is available.
 - OCR candidate reporting for image-only intake and conservative PDF readiness visibility.
@@ -41,6 +43,7 @@
   - optional local OCR baseline for standalone images when a local engine is available.
   - read-only OCR smoke evaluation script for image readiness checks.
   - deterministic source-backed requirements candidate extraction.
+  - deterministic source-backed table evidence evaluation.
 - Not confirmed:
   - scanned PDF OCR;
   - LLM generation;

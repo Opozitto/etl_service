@@ -38,11 +38,11 @@
 - Stage 20 completed as optional local OCR baseline for standalone `jpg` / `jpeg` / `png` with local engine fallback to metadata-only behavior.
 - Stage 21 adds a read-only OCR smoke evaluation script for readiness checks on image samples.
 - Stage 22 adds deterministic source-backed requirements extraction v1: reusable service module, read-only CLI, minimal corpus API endpoint, tests, and docs.
+- Stage 23 adds deterministic source-backed table evidence evaluation: reusable table evidence module, read-only CLI, minimal corpus API endpoint, tests, and docs.
 
 ## next
 
 - Stage 19.2 Customer demo finalization / final polish checkpoint.
-- Stage 23 Table-aware evaluation / calculation inputs v2.
 - Stage 24 Summarization / draft generation spike, only if source-backed foundation remains stable.
 
 ## alignment
@@ -53,11 +53,13 @@
 - Stage 19.0 locks the roadmap so future stages remain shippable and independently valuable.
 - Stage 19.1 adds OCR candidate reporting / readiness visibility, and Stage 20 adds the optional local OCR baseline for standalone images.
 - Stage 22 requirements extraction is candidate extraction only: no generation, no legal/compliance guarantee, and no search ranking change.
+- Stage 23 table evidence evaluation is read-only table/candidate preview only: no SQL/table analytics, no automatic calculations, and no search ranking or `/ask` contract change.
 
 ## risks
 
 - `XLS` and `XLSX` are still baseline spreadsheet inputs.
 - Spreadsheet retrieval remains lexical; improvement comes from row-level context, not table-aware analytics.
+- Table evidence scoring is deterministic and conservative; it helps find candidate calculation inputs, but does not compute values or validate formulas.
 - OCR is now optional local baseline for standalone images, and candidate reporting remains in place for metadata-only fallback / conservative PDF readiness cases.
 - `HEIC` / `HEIF` / `TIFF` / `TIF` / `BMP` / `WEBP` remain unsupported.
 - LLM / RAG / generation are not implemented.

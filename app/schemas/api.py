@@ -124,3 +124,44 @@ class RequirementsResponse(BaseModel):
     results_dir: str
     summary: RequirementsSummaryResponse
     candidates: list[RequirementCandidateResponse]
+
+
+class TableEvidenceCandidateResponse(BaseModel):
+    document_id: str
+    filename: str
+    table_id: Optional[str] = None
+    block_id: Optional[str] = None
+    chunk_id: Optional[str] = None
+    source_type: str
+    section_id: Optional[str] = None
+    section_title: Optional[str] = None
+    page: Optional[int] = None
+    row_count: int
+    column_count: int
+    headers: list[str]
+    detected_columns: list[str]
+    preview_rows: list[list[str]]
+    category: str
+    tags: list[str]
+    score: float
+    matched_terms: list[str]
+    reason_codes: list[str]
+    snippet: str
+    text_preview: str
+
+
+class TableEvidenceSummaryResponse(BaseModel):
+    documents_seen: int
+    documents_with_tables: int
+    tables_seen: int
+    candidate_tables: int
+    categories: dict[str, int]
+
+
+class TableEvidenceResponse(BaseModel):
+    report_version: str
+    stage: str
+    scope_note: str
+    results_dir: str
+    summary: TableEvidenceSummaryResponse
+    tables: list[TableEvidenceCandidateResponse]

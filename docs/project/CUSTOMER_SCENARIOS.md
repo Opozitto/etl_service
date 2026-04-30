@@ -55,6 +55,7 @@ Expected output:
 
 - found numeric and text fragments;
 - source references;
+- candidate tables with headers, preview rows, category/tags, score, and matched terms where available;
 - a note if tables or OCR are required.
 
 ### S5. Document quality / audit
@@ -135,10 +136,10 @@ Below is the minimal set of evaluation cases for Stage 10. It fixes which questi
 | EC-02 | Requirements search | Find requirements for PДВ / emissions | Documents from client corpus and normative source files | Show extractive snippets with source references | yes | supported now | Requirements must be extracted, not generated |
 | EC-03 | Extractive QA | What deadline or condition is stated in the document? | Chunk-level corpus content | Short answer strictly grounded in sources | yes | supported now | If no answer exists, return `нет информации в корпусе` |
 | EC-04 | No-answer case | Is there information about X if there is none? | Relevant corpus subset | Explicitly say that the information is absent | yes | supported now | Checks honest refusal without hallucination |
-| EC-05 | Calculation inputs | Find source data for a calculation | Text and numeric fragments in docs | Return numbers and fragments with references | yes | partial | May require table awareness and/or OCR |
+| EC-05 | Calculation inputs | Find source data for a calculation | Text and numeric fragments in docs | Return numbers/fragments and candidate table previews with references | yes | supported now | Stage 23 adds read-only table evidence evaluation; no automatic calculations |
 | EC-06 | Audit visibility | A document without chunks should be flagged by audit | Batch corpus outputs and audit report | Appear in problem documents / audit summary | no | supported now | Linked to the Stage 7-9 reporting layer |
 | EC-07 | OCR limitation / candidate visibility | A scan or photo of a document | JPG / JPEG / PNG / HEIC candidate inputs | Mark metadata-only fallback, OCR candidates, and optional local OCR baseline for standalone images when engine is available | no | Stage 20 | Do not promise scanned PDF OCR; HEIC/HEIF/TIFF/TIF/BMP/WEBP stay unsupported |
-| EC-08 | Table input | XLS / XLSX table-heavy document | Spreadsheet or table-like source | XLS and XLSX are supported at baseline level with flattened lexical retrieval | yes | supported now | Row-level chunks add sheet/table/row/column-value context; this is still flattened lexical retrieval, not table-aware analytics |
+| EC-08 | Table input | XLS / XLSX table-heavy document | Spreadsheet or table-like source | XLS and XLSX are supported at baseline level with flattened lexical retrieval plus read-only table evidence candidates | yes | supported now | Row-level chunks and Stage 23 evidence improve source-backed preview; this is still not table-aware analytics |
 | EC-09 | Summarization | Make a short summary of a document | Source document plus request for summary | Future spike only | yes | future | Do not announce ready summarization |
 | EC-10 | Draft generation | Prepare a draft section of documentation | Project doc context and task brief | Future spike only | yes | future | Do not announce ready LLM generation |
 | EC-11 | Source attribution | Show where the answer came from | Search hits and chunk references | Answer must carry explicit source references | yes | supported now | Trust criterion for the pilot track |
@@ -165,5 +166,5 @@ Below is the minimal set of evaluation cases for Stage 10. It fixes which questi
 ## Stage 14 note
 
 - EC-08 now reflects practical `.xls` / `.xlsx` support at baseline level.
-- The scenario set still uses flattened lexical retrieval and does not claim full table reasoning.
-- Row-level spreadsheet chunks improve source-backed table row/value retrieval without table-aware analytics.
+- The scenario set still uses flattened lexical retrieval and deterministic table evidence, and does not claim full table reasoning.
+- Row-level spreadsheet chunks and Stage 23 table evidence improve source-backed table row/value discovery without SQL/table analytics or automatic calculations.
