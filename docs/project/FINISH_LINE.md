@@ -63,7 +63,18 @@
 
 ## Next choice
 
-Next recommended: Stage 19.2 Customer demo finalization / final polish checkpoint, while OCR quality evaluation remains the next OCR-focused follow-up after the standalone image baseline.
+Next recommended: Stage 26 External QA dataset coverage audit.
+
+Follow-up sequence:
+
+- Stage 27 External QA temporary workspace processing/eval.
+- Stage 28 QA failure taxonomy / customer-readable diagnostics.
+- Stage 29 QA evaluator retrieval-loop speed/cache, optional and only if speed remains a blocker after external workspace/failure diagnostics.
+- Final polish checkpoint starts only by explicit user command: "стоп, следующий шаг делаем финал".
+
+This preserves the delivery-first rule: every stage should be demo-ready / shippable, future stages can be dropped without breaking the current baseline, large architecture rewrites stay out of scope, and future AI capabilities remain source-backed / evaluation-visible.
+
+Do not present LLM/RAG, scanned PDF OCR, OCR for scanned PDFs, or table analytics as ready.
 
 ## Note
 

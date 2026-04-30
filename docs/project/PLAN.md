@@ -472,9 +472,53 @@ conda run -n etl_env python -m scripts.evaluate_qa_dataset --qa-path "D:\Project
   - коммит внешнего QA dataset или runtime reports.
 - Статус: completed.
 
-## Будущие варианты
+## Ближайший roadmap после QA evaluator
 
-Возможные следующие этапы, пока не реализованные:
+Следующие этапы идут последовательно и сохраняют delivery-first принцип: каждый stage должен оставлять проект demo-ready / shippable, без обязательной зависимости от будущих этапов.
 
-1. Stage 19.2 Customer demo finalization / final polish checkpoint.
-2. Future summarization / draft generation spike, only if source-backed foundation remains stable and separately requested.
+## Stage 26. External QA dataset coverage audit
+
+- Статус: planned.
+- Цель: read-only аудит покрытия внешнего QA dataset до обработки внешних документов.
+- Scope:
+  - read-only анализ внешнего `Example_data`;
+  - QA CSV coverage;
+  - expected document references;
+  - missing/no-source placeholders;
+  - matching expected docs to files in `Example_data`;
+  - duplicate/ambiguous matches;
+  - supported/unsupported formats;
+  - table-like/numeric question counts;
+  - JSON report only to `.runtime_eval/` by explicit flag;
+  - no ingestion, no production storage writes, no commit of external data.
+- Out of scope:
+  - processing full external dataset;
+  - changing search ranking;
+  - changing `/ask`;
+  - LLM/RAG/embeddings/vector DB;
+  - OCR/scanned PDF OCR;
+  - table analytics.
+
+## Stage 27. External QA temporary workspace processing/eval
+
+- Статус: planned.
+- Scope:
+  - process matched external documents only by explicit command;
+  - write to `.runtime_eval` workspace;
+  - run QA evaluator against temporary results;
+  - do not pollute `storage/index`, `storage/results`, `storage/uploads`.
+
+## Stage 28. QA failure taxonomy / customer-readable diagnostics
+
+- Статус: planned.
+- Цель: классифицировать провалы QA/retrieval eval и сделать диагностику понятной для customer-facing анализа без обещания неподтверждённых AI capabilities.
+
+## Stage 29. QA evaluator retrieval-loop speed/cache
+
+- Статус: optional / planned.
+- Условие запуска: только после external workspace/failure diagnostics, если скорость останется blocker.
+
+## Final polish checkpoint
+
+- Статус: deferred until explicit user command.
+- Запускается только по явной команде пользователя: "стоп, следующий шаг делаем финал".

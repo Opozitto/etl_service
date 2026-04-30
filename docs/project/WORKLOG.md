@@ -48,11 +48,18 @@
 - Stage 25 adds compact report modes through `--report-detail-level summary|failures|full`; `full` remains the default for Stage 24 compatibility.
 - Stage 25 adds report-size controls: `--failures-limit`, `--missing-source-limit`, and `--top-hits-limit`.
 - Stage 25 does not change production `/ask`, search ranking, ingestion, OCR, LLM/RAG, embeddings/vector DB, or the external QA dataset policy.
+- Stage 25.1 Roadmap alignment after QA evaluator completed as a docs-only update.
+- Stage 25.1 baseline before docs-only update: HEAD `15447be` `Polish QA evaluator diagnostics and fast mode`.
+- Stage 25.1 records the new sequence: first external QA dataset coverage audit, then temporary workspace processing/eval, then QA failure taxonomy, then retrieval-loop speed/cache only if needed.
+- Stage 25.1 does not change code, tests, external data, runtime artifacts, or production behavior.
 
 ## next
 
-- Stage 19.2 Customer demo finalization / final polish checkpoint.
-- Future summarization / draft generation remains out of scope until explicitly requested.
+- Stage 26 External QA dataset coverage audit.
+- Stage 27 External QA temporary workspace processing/eval.
+- Stage 28 QA failure taxonomy / customer-readable diagnostics.
+- Stage 29 QA evaluator retrieval-loop speed/cache, optional and only if speed remains a blocker after external workspace/failure diagnostics.
+- Final polish checkpoint starts only by explicit user command: "стоп, следующий шаг делаем финал".
 
 ## alignment
 
@@ -65,6 +72,7 @@
 - Stage 23 table evidence evaluation is read-only table/candidate preview only: no SQL/table analytics, no automatic calculations, and no search ranking or `/ask` contract change.
 - Stage 24 QA/retrieval evaluation is readiness diagnostics only: it measures retrieval/source visibility and token overlap, not final generative answer quality.
 - Stage 25 QA evaluator fast/summary modes are operational diagnostics only; they do not indicate a retrieval quality improvement by themselves.
+- Stage 25.1 aligns the roadmap after QA evaluator diagnostics: coverage first, temporary eval workspace second, failure taxonomy third, speed/cache last if still necessary.
 
 ## risks
 
