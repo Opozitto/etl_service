@@ -26,10 +26,21 @@ class SearchHit(BaseModel):
     document_id: str
     title: str
     filename: str
+    source_filename: Optional[str] = None
+    source_type: Optional[str] = None
     score: float
     chunk_id: str
+    chunk_order: Optional[int] = None
     section_id: Optional[str] = None
     section_title: Optional[str] = None
+    section_path: list[str] = Field(default_factory=list)
+    page_start: Optional[int] = None
+    page_end: Optional[int] = None
+    source_block_ids: list[str] = Field(default_factory=list)
+    table_id: Optional[str] = None
+    table_row_index: Optional[int] = None
+    location_label: Optional[str] = None
+    citation_label: Optional[str] = None
     snippet: str
 
 
@@ -49,10 +60,21 @@ class AskSource(BaseModel):
     score: float
     document_id: str
     filename: str
+    source_filename: Optional[str] = None
+    source_type: Optional[str] = None
     title: str
     chunk_id: str
+    chunk_order: Optional[int] = None
     section_id: Optional[str] = None
     section_title: Optional[str] = None
+    section_path: list[str] = Field(default_factory=list)
+    page_start: Optional[int] = None
+    page_end: Optional[int] = None
+    source_block_ids: list[str] = Field(default_factory=list)
+    table_id: Optional[str] = None
+    table_row_index: Optional[int] = None
+    location_label: Optional[str] = None
+    citation_label: Optional[str] = None
     snippet: str
 
 

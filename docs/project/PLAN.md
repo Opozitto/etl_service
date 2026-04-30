@@ -1,6 +1,6 @@
 # PLAN
 
-Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock. Stage 20–25 are completed OCR/readiness/extraction/table/QA-evaluation layers. Stage 26–31 are completed external QA/chunk visibility, audit, chunk contract hardening, and table chunk context stages. Stage 31 improves table chunk readability for future source-backed handoff, not full RAG or table analytics.
+Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock. Stage 20–25 are completed OCR/readiness/extraction/table/QA-evaluation layers. Stage 26–32 are completed external QA/chunk visibility, audit, chunk contract hardening, table chunk context, and source location/citation hardening stages. Stage 32 improves source-backed handoff traceability, not full RAG or citation generation.
 
 ## Stage 1. Зафиксировать smoke/regression проверки
 
@@ -619,9 +619,15 @@ conda run -n etl_env python -m scripts.evaluate_qa_dataset --qa-path "D:\Project
 
 ## Stage 32. Source location/citation hardening
 
-- Статус: planned.
+- Статус: completed.
 - Цель: сделать source location/citation context более устойчивым для inspection, diagnostics и будущего source-backed handoff.
-- Граница scope: citation/source metadata hardening; без генерации ответов, external APIs или vector DB.
+- Подтвержденный scope:
+  - `IndexedChunk` и backward-compatible API payload для `/api/v1/search` и `/api/v1/ask` теперь могут отдавать source/location hints: `source_filename`, `source_type`, `chunk_order`, `section_path`, `page_start`, `page_end`, `source_block_ids`, `table_id`, `table_row_index`, `location_label`, `citation_label`;
+  - labels собираются детерминированно только из уже доступных filename/section/table/page fields и не выдумывают page, если page metadata отсутствует;
+  - Stage 29.1 export добавляет `chunk_order`, `location_label`, `citation_label` и продолжает использовать fallback для старых processed JSON;
+  - Stage 29.2 audit samples сохраняют source/location fields для диагностики проблемных chunks;
+  - старые index/export/chunk-like records без новых полей остаются читаемыми.
+- Граница scope: source/location/citation metadata hardening only; без full RAG, LLM citation generator, embeddings/vector DB, semantic retrieval, OCR/scanned PDF OCR, reranking или table analytics.
 
 ## Stage 33. QA evaluator retrieval-loop speed/cache
 

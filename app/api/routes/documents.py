@@ -38,9 +38,14 @@ async def process_document(file: UploadFile = File(...)) -> ProcessResponse:
         temp_path = Path(tmp.name)
 
     try:
-        document = service.process_path(temp_path)
+        outcome = service.process_path_with_status(temp_path)
+        document = outcome.document
         document.source.filename = file.filename or temp_path.name
+        for chunk in document.chunks:
+            chunk.source_filename = document.source.filename
         service.storage.save_result(document)
+        service.index_store.upsert_document(document)
+        service.manifest_store.upsert_document(document, status=outcome.status)
         return ProcessResponse(document=document)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

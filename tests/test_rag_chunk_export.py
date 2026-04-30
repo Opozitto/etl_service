@@ -249,6 +249,9 @@ def test_export_prefers_direct_stage30_chunk_fields() -> None:
     assert item["page_start"] == 7
     assert item["page_end"] == 8
     assert item["table_id"] == "tbl-direct"
+    assert item["chunk_order"] == 1
+    assert item["location_label"] == "direct.pdf - table tbl-direct - pages 7-8"
+    assert item["citation_label"] == item["location_label"]
 
 
 def test_export_includes_direct_stage31_table_fields() -> None:
@@ -285,6 +288,41 @@ def test_export_includes_direct_stage31_table_fields() -> None:
     assert item["table_context"] == "Таблица tbl-1: Расчет выбросов"
     assert item["row_count"] == 2
     assert item["column_count"] == 2
+    assert item["location_label"] == "test.pdf - table tbl-1 - row 2 - page 3"
+
+
+def test_location_label_omits_page_when_page_is_missing() -> None:
+    module = _load_export_module()
+    document = _document(
+        blocks=[
+            {
+                "block_id": "blk-no-page",
+                "type": "paragraph",
+                "order": 1,
+                "text": "Source text without page metadata",
+                "section_id": "sec-2",
+                "page_num": None,
+                "metadata": {},
+            }
+        ],
+        chunks=[
+            {
+                "chunk_id": "chk-no-page",
+                "document_id": "doc-1",
+                "section_id": "sec-2",
+                "block_ids": ["blk-no-page"],
+                "section_path": ["Document", "1. Main", "1.1 Detail"],
+                "text": "Source text without page metadata",
+                "order": 1,
+                "token_estimate": 5,
+            }
+        ],
+    )
+
+    item = module.export_document_chunks(document)[0]
+
+    assert item["location_label"] == "test.pdf - Document > 1. Main > 1.1 Detail"
+    assert "page" not in item["location_label"]
 
 
 def test_export_fallback_still_works_for_old_chunks_without_stage30_fields() -> None:

@@ -7,6 +7,7 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 
 from app.core.config import get_settings
+from app.schemas.api import AskSource, SearchHit
 from app.schemas.document import (
     Block,
     Chunk,
@@ -121,10 +122,21 @@ EXPECTED_INDEX_ENTRY_KEYS = {
     "document_id",
     "source_checksum",
     "filename",
+    "source_filename",
+    "source_type",
     "title",
     "chunk_id",
+    "chunk_order",
     "section_id",
     "section_title",
+    "section_path",
+    "page_start",
+    "page_end",
+    "source_block_ids",
+    "table_id",
+    "table_row_index",
+    "location_label",
+    "citation_label",
     "text",
     "tokens",
     "normalized_tokens",
@@ -311,6 +323,43 @@ def test_chunk_contract_is_backward_compatible_with_old_payload() -> None:
     assert chunk.column_count is None
 
 
+def test_search_and_ask_source_schemas_are_backward_compatible_with_old_payloads() -> None:
+    search_hit = SearchHit.model_validate(
+        {
+            "document_id": "doc-old",
+            "title": "Old",
+            "filename": "old.txt",
+            "score": 1.0,
+            "chunk_id": "chk-old",
+            "section_id": "sec-1",
+            "section_title": "Intro",
+            "snippet": "Old snippet",
+        }
+    )
+    ask_source = AskSource.model_validate(
+        {
+            "rank": 1,
+            "score": 1.0,
+            "document_id": "doc-old",
+            "filename": "old.txt",
+            "title": "Old",
+            "chunk_id": "chk-old",
+            "section_id": "sec-1",
+            "section_title": "Intro",
+            "snippet": "Old snippet",
+        }
+    )
+
+    assert search_hit.source_filename is None
+    assert search_hit.section_path == []
+    assert search_hit.source_block_ids == []
+    assert search_hit.location_label is None
+    assert ask_source.source_filename is None
+    assert ask_source.section_path == []
+    assert ask_source.source_block_ids == []
+    assert ask_source.citation_label is None
+
+
 def test_corpus_index_contract_round_trip(tmp_path: Path, monkeypatch) -> None:
     storage_root = _use_tmp_storage(monkeypatch, tmp_path)
     try:
@@ -328,10 +377,21 @@ def test_corpus_index_contract_round_trip(tmp_path: Path, monkeypatch) -> None:
                     document_id="doc-1",
                     source_checksum="abc123",
                     filename="sample.txt",
+                    source_filename="sample.txt",
+                    source_type="txt",
                     title="Sample Title",
                     chunk_id="chk-1",
+                    chunk_order=1,
                     section_id="sec-1",
                     section_title="Intro",
+                    section_path=["Document", "Intro"],
+                    page_start=1,
+                    page_end=1,
+                    source_block_ids=["blk-1"],
+                    table_id=None,
+                    table_row_index=None,
+                    location_label="sample.txt - Document > Intro - page 1",
+                    citation_label="sample.txt - Document > Intro - page 1",
                     text="Hello baseline",
                     tokens=["hello", "baseline"],
                     normalized_tokens=["hello", "baseline"],
@@ -350,6 +410,36 @@ def test_corpus_index_contract_round_trip(tmp_path: Path, monkeypatch) -> None:
         assert storage.corpus_index_path.parent == storage_root / "index"
     finally:
         get_settings.cache_clear()
+
+
+def test_indexed_chunk_contract_is_backward_compatible_with_old_payload() -> None:
+    payload = {
+        "document_id": "doc-old",
+        "source_checksum": "abc123",
+        "filename": "old.txt",
+        "title": "Old",
+        "chunk_id": "chk-old",
+        "section_id": "sec-1",
+        "section_title": "Intro",
+        "text": "Old indexed text",
+        "tokens": ["old", "indexed", "text"],
+        "normalized_tokens": ["old", "indexed", "text"],
+        "token_count": 3,
+    }
+
+    entry = IndexedChunk.model_validate(payload)
+
+    assert entry.source_filename is None
+    assert entry.source_type is None
+    assert entry.chunk_order is None
+    assert entry.section_path == []
+    assert entry.page_start is None
+    assert entry.page_end is None
+    assert entry.source_block_ids == []
+    assert entry.table_id is None
+    assert entry.table_row_index is None
+    assert entry.location_label is None
+    assert entry.citation_label is None
 
 
 def test_ingestion_manifest_contract_round_trip(tmp_path: Path, monkeypatch) -> None:

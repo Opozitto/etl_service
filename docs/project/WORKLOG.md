@@ -96,10 +96,14 @@
 - Stage 31 keeps chunks without headers lexical and readable without inventing `table_headers` values.
 - Stage 31 updates Stage 29.1 export to surface direct/fallback table fields and Stage 29.2 audit to treat rich table context as sufficient handoff context.
 - Stage 31 does not add SQL-like table QA, table analytics/calculations, full RAG/LLM generation, embeddings/vector DB, semantic retrieval, reranking, OCR/scanned PDF OCR, production storage migration, or search ranking changes.
+- Stage 32 completed as Source location/citation hardening for future source-backed handoff readiness.
+- Stage 32 extends `IndexedChunk`, `/api/v1/search` hits, and `/api/v1/ask` sources with backward-compatible optional source/location fields: `source_filename`, `source_type`, `chunk_order`, `section_path`, `page_start`, `page_end`, `source_block_ids`, `table_id`, `table_row_index`, `location_label`, and `citation_label`.
+- Stage 32 labels are deterministic and derived only from available filename/section/table/page fields; they omit page text when page metadata is absent.
+- Stage 32 updates Stage 29.1 export with `chunk_order`, `location_label`, and `citation_label`, and Stage 29.2 audit samples preserve source/location fields for diagnostics.
+- Stage 32 does not add full RAG, LLM citation generation, embeddings/vector DB, semantic retrieval/reranking, OCR/scanned PDF OCR, SQL-like table questions, or table analytics/calculations.
 
 ## next
 
-- Stage 32 Source location/citation hardening.
 - Stage 33 QA evaluator retrieval-loop speed/cache, optional/later and only if speed becomes a blocker after chunk inspection/export and quality audit.
 - Final polish checkpoint starts only by explicit user command: "стоп, следующий шаг делаем финал".
 
@@ -118,7 +122,7 @@
 - Stage 26 keeps external QA dataset audit separate from processing/eval so Stage 27 can operate only on diagnosed inputs in a temporary workspace.
 - Stage 27 keeps external processing/eval isolated in `.runtime_eval` or another explicit temporary workspace; production storage remains the baseline corpus, not an evaluation scratch area.
 - Stage 29.0 realigns the next work after RAG chunk audit: inspection/export and quality audit come before speed/cache.
-- Stage 29.1/29.2 close the visibility/export/audit layer for chunks; Stage 30 hardens payload/source context and Stage 31 improves table chunk context so chunks become stronger handoff units without claiming embeddings, vector DB, semantic retrieval, LLM generation, table analytics, or full RAG.
+- Stage 29.1/29.2 close the visibility/export/audit layer for chunks; Stage 30 hardens payload/source context, Stage 31 improves table chunk context, and Stage 32 strengthens source location/citation hints so chunks become stronger handoff units without claiming embeddings, vector DB, semantic retrieval, LLM generation, table analytics, or full RAG.
 
 ## risks
 
@@ -128,8 +132,8 @@
 - OCR is now optional local baseline for standalone images, and candidate reporting remains in place for metadata-only fallback / conservative PDF readiness cases.
 - `HEIC` / `HEIF` / `TIFF` / `TIF` / `BMP` / `WEBP` remain unsupported.
 - LLM / RAG / generation are not implemented.
-- Current chunks are useful for lexical search and now carry stronger source/section/page/content/table context for future handoff, but this is still not a full RAG implementation.
-- The remaining chunk-context risk is richer source location/citation hardening, planned for Stage 32.
+- Current chunks are useful for lexical search and now carry stronger source/section/page/content/table/location context for future handoff, but this is still not a full RAG implementation.
+- The remaining chunk-context risk is not source visibility itself, but future validation on larger real corpora and consumer-side use of the source-backed handoff contract.
 - QA evaluator `--skip-answer-overlap` is intentionally a faster smoke mode; use full/default mode when answer-overlap trend comparison is needed.
 - Stage 26 matching is deterministic and conservative; ambiguous or missing expected documents require review before Stage 27 processing/eval.
 - Stage 27 can process ambiguous candidates only with explicit `--ambiguous-policy all`; because Stage 26 found all expected docs ambiguous on the real dataset, bounded smoke runs with `--max-documents` remain the safer first step.

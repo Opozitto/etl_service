@@ -176,6 +176,41 @@ def test_samples_are_limited_per_issue() -> None:
     assert len(short_samples) == 2
 
 
+def test_samples_preserve_source_location_fields() -> None:
+    module = _load_quality_module()
+
+    report = module.build_quality_audit_from_items(
+        [
+            _item(
+                text="Tiny",
+                text_preview="Tiny",
+                source_filename="source.pdf",
+                chunk_order=4,
+                section_path=["Document", "Section"],
+                page_start=2,
+                page_end=2,
+                source_block_ids=["blk-1"],
+                table_id="tbl-1",
+                table_row_index=3,
+                location_label="source.pdf - table tbl-1 - row 3 - page 2",
+                citation_label="source.pdf - table tbl-1 - row 3 - page 2",
+            )
+        ],
+        short_threshold=10,
+        include_samples=True,
+    )
+
+    sample = report["samples"][0]
+    assert sample["source_filename"] == "source.pdf"
+    assert sample["chunk_order"] == 4
+    assert sample["section_path"] == ["Document", "Section"]
+    assert sample["page_start"] == 2
+    assert sample["source_block_ids"] == ["blk-1"]
+    assert sample["table_id"] == "tbl-1"
+    assert sample["table_row_index"] == 3
+    assert sample["citation_label"] == "source.pdf - table tbl-1 - row 3 - page 2"
+
+
 def test_cli_does_not_write_output_without_explicit_output_path(tmp_path: Path, capsys) -> None:
     cli = _load_cli_module()
     results_dir = tmp_path / "results"

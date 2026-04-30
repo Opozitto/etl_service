@@ -191,7 +191,7 @@ def test_search_and_ask_work_for_uploaded_document() -> None:
 
     search_response = client.post(
         "/api/v1/search",
-        json={"query": "\u043f\u0440\u0435\u0434\u0435\u043b\u044c\u043d\u043e \u0434\u043e\u043f\u0443\u0441\u0442\u0438\u043c\u044b\u0435 \u0432\u044b\u0431\u0440\u043e\u0441\u044b", "top_k": 3},
+        json={"query": "\u043f\u0440\u0435\u0434\u0435\u043b\u044c\u043d\u043e \u0434\u043e\u043f\u0443\u0441\u0442\u0438\u043c\u044b\u0435 \u0432\u044b\u0431\u0440\u043e\u0441\u044b", "top_k": 20},
     )
     assert search_response.status_code == 200
     search_data = search_response.json()
@@ -200,12 +200,22 @@ def test_search_and_ask_work_for_uploaded_document() -> None:
         "предельно" in hit["snippet"].lower() and "выброс" in hit["snippet"].lower()
         for hit in search_data["hits"]
     )
+    uploaded_search_hit = next(
+        hit for hit in search_data["hits"] if hit["source_filename"] == "norms.txt"
+    )
+    assert uploaded_search_hit["filename"] == "norms.txt"
+    assert uploaded_search_hit["source_type"] == "txt"
+    assert uploaded_search_hit["chunk_order"] is not None
+    assert uploaded_search_hit["section_path"]
+    assert uploaded_search_hit["source_block_ids"]
+    assert uploaded_search_hit["location_label"]
+    assert uploaded_search_hit["citation_label"] == uploaded_search_hit["location_label"]
 
     ask_response = client.post(
         "/api/v1/ask",
         json={
             "question": "\u0427\u0442\u043e \u0441\u043a\u0430\u0437\u0430\u043d\u043e \u043f\u0440\u043e \u043f\u0440\u0435\u0434\u0435\u043b\u044c\u043d\u043e \u0434\u043e\u043f\u0443\u0441\u0442\u0438\u043c\u044b\u0435 \u0432\u044b\u0431\u0440\u043e\u0441\u044b?",
-            "top_k": 3,
+            "top_k": 20,
             "max_sentences": 2,
         },
     )
@@ -216,14 +226,32 @@ def test_search_and_ask_work_for_uploaded_document() -> None:
     assert ask_data["strategy"] == "extractive-rag-baseline"
     assert ask_data["answer"]
     assert "выброс" in ask_data["answer"].lower()
-    first_source = ask_data["sources"][0]
-    assert first_source["rank"] == 1
-    assert first_source["document_id"]
-    assert first_source["chunk_id"]
-    assert first_source["snippet"]
-    assert first_source["score"] >= 0
-    assert "filename" in first_source
-    assert "section_title" in first_source
+    uploaded_source = next(
+        source for source in ask_data["sources"] if source["source_filename"] == "norms.txt"
+    )
+    uploaded_hit = next(
+        hit
+        for hit in ask_data["hits"]
+        if hit["document_id"] == uploaded_source["document_id"]
+        and hit["chunk_id"] == uploaded_source["chunk_id"]
+    )
+    assert uploaded_source["rank"] >= 1
+    assert uploaded_source["document_id"]
+    assert uploaded_source["chunk_id"]
+    assert uploaded_source["chunk_order"] is not None
+    assert uploaded_source["snippet"]
+    assert uploaded_source["score"] >= 0
+    assert uploaded_source["filename"] == "norms.txt"
+    assert uploaded_source["source_filename"] == uploaded_source["filename"]
+    assert uploaded_source["source_type"] == "txt"
+    assert "section_title" in uploaded_source
+    assert uploaded_source["section_path"]
+    assert uploaded_source["source_block_ids"]
+    assert uploaded_source["location_label"]
+    assert uploaded_source["citation_label"] == uploaded_source["location_label"]
+    assert uploaded_source["source_type"] == uploaded_hit["source_type"]
+    assert uploaded_source["chunk_order"] == uploaded_hit["chunk_order"]
+    assert uploaded_source["location_label"] == uploaded_hit["location_label"]
 
     no_hit_response = client.post(
         "/api/v1/ask",

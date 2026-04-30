@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
+from app.source_location import build_location_label
+
 
 EXPORT_VERSION = "stage29_1_rag_chunk_export_v1"
 
@@ -349,29 +351,45 @@ def export_document_chunks(
             document=document,
         )
         text = str(chunk.get("text") or "")
+        source_filename = _chunk_text_field(chunk, "source_filename") or normalize_text(source.get("filename"))
+        section_title = _chunk_text_field(chunk, "section_title") or (normalize_text(section.get("title")) if section else None)
+        resolved_section_path = _chunk_section_path(chunk, section_id, sections_by_id)
+        table_row_index = _chunk_int(chunk, "table_row_index") if is_table_item else None
+        location_label = build_location_label(
+            filename=source_filename,
+            section_path=resolved_section_path,
+            section_title=section_title,
+            page_start=page_start,
+            page_end=page_end,
+            table_id=table_id,
+            table_row_index=table_row_index,
+        )
         item = {
             "document_id": normalize_text(chunk.get("document_id")) or normalize_text(metadata.get("document_id")),
-            "filename": _chunk_text_field(chunk, "source_filename") or normalize_text(source.get("filename")),
-            "source_filename": _chunk_text_field(chunk, "source_filename") or normalize_text(source.get("filename")),
+            "filename": source_filename,
+            "source_filename": source_filename,
             "source_type": _chunk_text_field(chunk, "source_type") or normalize_text(source.get("extension")).lstrip("."),
             "title": normalize_text(metadata.get("title")),
             "chunk_id": normalize_text(chunk.get("chunk_id")),
             "order": chunk.get("order"),
+            "chunk_order": chunk.get("order"),
             "content_type": content_type,
             "section_id": section_id,
-            "section_title": _chunk_text_field(chunk, "section_title") or (normalize_text(section.get("title")) if section else None),
-            "section_path": _chunk_section_path(chunk, section_id, sections_by_id),
+            "section_title": section_title,
+            "section_path": resolved_section_path,
             "page_start": page_start,
             "page_end": page_end,
             "source_block_ids": source_block_ids,
             "table_id": table_id,
             "table_title": _table_title_from_context(chunk, section, linked_blocks) if is_table_item else None,
             "table_headers": table_headers,
-            "table_row_index": _chunk_int(chunk, "table_row_index") if is_table_item else None,
+            "table_row_index": table_row_index,
             "table_column_values": table_column_values,
             "table_context": _chunk_text_field(chunk, "table_context") if is_table_item else None,
             "row_count": row_count,
             "column_count": column_count,
+            "location_label": location_label,
+            "citation_label": location_label,
             "text_preview": normalize_text(text)[: max(0, text_preview_chars)],
             "quality_flags": flags,
             "handoff_notes": handoff_notes(flags, content_type, table_id),

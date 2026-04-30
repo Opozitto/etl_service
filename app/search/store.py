@@ -10,6 +10,7 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 from app.schemas.document import StructuredDocument
+from app.source_location import build_location_label
 from app.storage.filesystem import FileStorage
 
 
@@ -17,10 +18,21 @@ class IndexedChunk(BaseModel):
     document_id: str
     source_checksum: str
     filename: str
+    source_filename: Optional[str] = None
+    source_type: Optional[str] = None
     title: str
     chunk_id: str
+    chunk_order: Optional[int] = None
     section_id: Optional[str] = None
     section_title: Optional[str] = None
+    section_path: list[str] = Field(default_factory=list)
+    page_start: Optional[int] = None
+    page_end: Optional[int] = None
+    source_block_ids: list[str] = Field(default_factory=list)
+    table_id: Optional[str] = None
+    table_row_index: Optional[int] = None
+    location_label: Optional[str] = None
+    citation_label: Optional[str] = None
     text: str
     tokens: list[str] = Field(default_factory=list)
     normalized_tokens: list[str] = Field(default_factory=list)
@@ -68,6 +80,8 @@ class SearchIndexStore:
 
             for document in documents:
                 section_titles = {section.section_id: section.title for section in document.sections}
+                section_paths = self._section_paths_by_id(document.sections)
+                blocks_by_id = {block.block_id: block for block in document.blocks}
                 for chunk in document.chunks:
                     tokens = self._tokenize(chunk.text)
                     normalized_tokens = self._normalize_tokens(chunk.text)
@@ -83,18 +97,14 @@ class SearchIndexStore:
                         continue
                     seen_chunks.add(dedupe_key)
                     entries.append(
-                        IndexedChunk(
-                            document_id=document.metadata.document_id,
-                            source_checksum=document.source.checksum_sha256,
-                            filename=document.source.filename,
-                            title=document.metadata.title,
-                            chunk_id=chunk.chunk_id,
-                            section_id=chunk.section_id,
-                            section_title=section_titles.get(chunk.section_id),
-                            text=chunk.text,
-                            tokens=tokens,
-                            normalized_tokens=normalized_tokens,
-                            token_count=len(tokens),
+                        self._indexed_chunk_from_document_chunk(
+                            document,
+                            chunk,
+                            tokens,
+                            normalized_tokens,
+                            section_titles,
+                            section_paths,
+                            blocks_by_id,
                         )
                     )
 
@@ -141,13 +151,12 @@ class SearchIndexStore:
             remaining = [
                 entry
                 for entry in index.entries
-                if not (
-                    entry.source_checksum == document.source.checksum_sha256
-                    and entry.filename.lower() == document.source.filename.lower()
-                )
+                if entry.source_checksum != document.source.checksum_sha256
             ]
 
             section_titles = {section.section_id: section.title for section in document.sections}
+            section_paths = self._section_paths_by_id(document.sections)
+            blocks_by_id = {block.block_id: block for block in document.blocks}
             new_entries: list[IndexedChunk] = []
             for chunk in document.chunks:
                 tokens = self._tokenize(chunk.text)
@@ -155,18 +164,14 @@ class SearchIndexStore:
                 if not tokens:
                     continue
                 new_entries.append(
-                    IndexedChunk(
-                        document_id=document.metadata.document_id,
-                        source_checksum=document.source.checksum_sha256,
-                        filename=document.source.filename,
-                        title=document.metadata.title,
-                        chunk_id=chunk.chunk_id,
-                        section_id=chunk.section_id,
-                        section_title=section_titles.get(chunk.section_id),
-                        text=chunk.text,
-                        tokens=tokens,
-                        normalized_tokens=normalized_tokens,
-                        token_count=len(tokens),
+                    self._indexed_chunk_from_document_chunk(
+                        document,
+                        chunk,
+                        tokens,
+                        normalized_tokens,
+                        section_titles,
+                        section_paths,
+                        blocks_by_id,
                     )
                 )
 
@@ -217,3 +222,81 @@ class SearchIndexStore:
         from app.search.index import normalize_search_tokens
 
         return normalize_search_tokens(text)
+
+    @staticmethod
+    def _indexed_chunk_from_document_chunk(
+        document: StructuredDocument,
+        chunk,
+        tokens: list[str],
+        normalized_tokens: list[str],
+        section_titles: dict[str, str],
+        section_paths: dict[str, list[str]],
+        blocks_by_id: dict,
+    ) -> IndexedChunk:
+        source_filename = chunk.source_filename or document.source.filename
+        source_type = chunk.source_type or document.source.extension.lstrip(".") or None
+        section_title = chunk.section_title or section_titles.get(chunk.section_id)
+        section_path = chunk.section_path or section_paths.get(chunk.section_id or "", [])
+        linked_blocks = [blocks_by_id[block_id] for block_id in chunk.block_ids if block_id in blocks_by_id]
+        derived_page_start, derived_page_end = SearchIndexStore._page_range_from_blocks(linked_blocks)
+        page_start = chunk.page_start if chunk.page_start is not None else derived_page_start
+        page_end = chunk.page_end if chunk.page_end is not None else derived_page_end
+        location_label = build_location_label(
+            filename=source_filename,
+            section_path=section_path,
+            section_title=section_title,
+            page_start=page_start,
+            page_end=page_end,
+            table_id=chunk.table_id,
+            table_row_index=chunk.table_row_index,
+        )
+        return IndexedChunk(
+            document_id=document.metadata.document_id,
+            source_checksum=document.source.checksum_sha256,
+            filename=document.source.filename,
+            source_filename=source_filename,
+            source_type=source_type,
+            title=document.metadata.title,
+            chunk_id=chunk.chunk_id,
+            chunk_order=chunk.order,
+            section_id=chunk.section_id,
+            section_title=section_title,
+            section_path=section_path,
+            page_start=page_start,
+            page_end=page_end,
+            source_block_ids=chunk.block_ids,
+            table_id=chunk.table_id,
+            table_row_index=chunk.table_row_index,
+            location_label=location_label,
+            citation_label=location_label,
+            text=chunk.text,
+            tokens=tokens,
+            normalized_tokens=normalized_tokens,
+            token_count=len(tokens),
+        )
+
+    @staticmethod
+    def _section_paths_by_id(sections) -> dict[str, list[str]]:
+        sections_by_id = {section.section_id: section for section in sections}
+        paths: dict[str, list[str]] = {}
+        for section in sections:
+            current_id = section.section_id
+            seen: set[str] = set()
+            path: list[str] = []
+            while current_id and current_id not in seen:
+                seen.add(current_id)
+                current = sections_by_id.get(current_id)
+                if current is None:
+                    break
+                if current.title:
+                    path.append(current.title)
+                current_id = current.parent_id
+            paths[section.section_id] = list(reversed(path))
+        return paths
+
+    @staticmethod
+    def _page_range_from_blocks(blocks) -> tuple[int | None, int | None]:
+        pages = [block.page_num for block in blocks if block.page_num is not None]
+        if not pages:
+            return None, None
+        return min(pages), max(pages)

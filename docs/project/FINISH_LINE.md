@@ -23,6 +23,7 @@
 - Chunk quality audit is available as a read-only diagnostic layer for chunk completeness/self-containedness/source-context gaps; it reports deterministic issues and recommendations, but does not make the system a RAG implementation.
 - Chunk contract hardening v1 is completed: newly processed chunks can carry direct optional source/section/page/content/table context for future source-backed handoff while old processed JSON remains readable.
 - Table chunk context v1 is completed: newly processed row-level table chunks can carry deterministic table title/context, headers, row index, header-to-value pairs, and table shape where available; this improves source-backed handoff readability but is not table analytics.
+- Source location/citation hardening is completed: search/ask/export/audit can surface deterministic source/location hints such as filename, source type, chunk order, section path, page range, block ids, table id/row index, and location/citation labels where existing metadata supports them.
 
 ## Best shippable baseline
 
@@ -38,6 +39,7 @@
 - read-only chunk quality audit for handoff-readiness diagnostics.
 - backward-compatible chunk/source context hardening for future source-backed handoff.
 - readable table chunk context for future source-backed handoff without SQL-like QA or calculations.
+- source location/citation hints for future handoff traceability without LLM citation generation.
 
 ## What is confirmed, and what is not
 
@@ -56,6 +58,7 @@
   - read-only chunk quality audit.
   - backward-compatible chunk contract hardening v1 for source-backed handoff readiness.
   - backward-compatible table chunk context v1 for source-backed handoff readability.
+  - deterministic source location/citation hardening for search/ask/export/audit handoff visibility.
 - Not confirmed:
   - scanned PDF OCR;
   - LLM generation;
@@ -75,18 +78,18 @@
 
 ## Next choice
 
-Next recommended: Stage 32 Source location/citation hardening.
+Next recommended: Stage 33 QA evaluator retrieval-loop speed/cache only if speed becomes a blocker.
 
 Follow-up sequence:
 
-- Stage 33 QA evaluator retrieval-loop speed/cache, optional/later and only if speed becomes a blocker after chunk inspection/export and quality audit.
+- Stage 33 QA evaluator retrieval-loop speed/cache, optional/later and only if speed becomes a blocker after chunk inspection/export, quality audit, and source location/citation hardening.
 - Final polish checkpoint starts only by explicit user command: "стоп, следующий шаг делаем финал".
 
 This preserves the delivery-first rule: every stage should be demo-ready / shippable, future stages can be dropped without breaking the current baseline, large architecture rewrites stay out of scope, and future AI capabilities remain source-backed / evaluation-visible.
 
-Stage 29.1 and Stage 29.2 closed visibility/export/audit for chunks. Stage 30 completed the first production-contract hardening step for chunk payload/source context, and Stage 31 improved table chunk readability for future source-backed handoff, without claiming full RAG readiness or table analytics.
+Stage 29.1 and Stage 29.2 closed visibility/export/audit for chunks. Stage 30 completed the first production-contract hardening step for chunk payload/source context, Stage 31 improved table chunk readability, and Stage 32 strengthened source location/citation hints for future source-backed handoff, without claiming full RAG readiness or table analytics.
 
-Current chunks are acceptable for lexical search and now stronger as source-backed handoff units. The next priority is source location/citation hardening, not another diagnostic script and not speed/cache.
+Current chunks are acceptable for lexical search and now stronger as source-backed handoff units. The next optional priority is retrieval-loop speed/cache only if it becomes a blocker; it is not a substitute for RAG, OCR, or table analytics.
 
 Do not present LLM/RAG, scanned PDF OCR, OCR for scanned PDFs, or table analytics as ready.
 
