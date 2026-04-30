@@ -28,6 +28,10 @@ def _result_document(
     image_count: int = 0,
     ocr_candidate: bool = False,
     ocr_reason: str | None = None,
+    ocr_used: bool = False,
+    ocr_engine: str | None = None,
+    ocr_status: str = "not_applicable",
+    ocr_text_length: int = 0,
     warnings: list[str] | None = None,
 ) -> dict:
     warnings = warnings or []
@@ -90,8 +94,11 @@ def _result_document(
             "features": {
                 "tables_detected": False,
                 "images_detected": False,
-                "ocr_used": False,
+                "ocr_used": ocr_used,
                 "ocr_candidate": ocr_candidate,
+                "ocr_engine": ocr_engine,
+                "ocr_text_length": ocr_text_length,
+                "ocr_status": ocr_status,
             },
             "ocr_candidate": ocr_candidate,
             "ocr_reason": ocr_reason,
@@ -444,6 +451,25 @@ def test_audit_corpus_reports_ocr_candidates(tmp_path: Path, monkeypatch, capsys
         ),
     )
     _write_json(
+        results_dir / "ocr-used.json",
+        _result_document(
+            document_id="doc-ocr-used",
+            filename="ocr.png",
+            extension=".png",
+            extractor="image",
+            text_char_count=18,
+            text_block_count=1,
+            section_count=1,
+            block_count=2,
+            chunk_count=1,
+            image_count=1,
+            ocr_used=True,
+            ocr_engine="tesseract",
+            ocr_status="success",
+            ocr_text_length=18,
+        ),
+    )
+    _write_json(
         index_dir / "corpus_index.json",
         {
             "version": "1",
@@ -467,10 +493,15 @@ def test_audit_corpus_reports_ocr_candidates(tmp_path: Path, monkeypatch, capsys
     report = module.build_audit_report(storage_root)
 
     assert report["summary"]["ocr_candidate_documents"] == 2
+    assert report["summary"]["ocr_used_documents"] == 1
+    assert report["summary"]["ocr_used_engines"] == {"tesseract": 1}
+    assert report["summary"]["ocr_used_statuses"] == {"success": 1}
     assert [item["filename"] for item in report["ocr_candidates"]] == ["scan.png", "scan.pdf"]
     assert report["ocr_candidates"][0]["reason"] == "standalone_image"
     assert report["ocr_candidates"][1]["reason"] == "possible_scanned_pdf"
     assert "OCR candidates=2" in captured.out
+    assert "OCR used=1" in captured.out
+    assert "tesseract:1" in captured.out
     assert "scan.png" in captured.out
     assert "scan.pdf" in captured.out
 

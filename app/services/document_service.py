@@ -8,7 +8,10 @@ from typing import Literal
 
 from app.pipeline.extractors.registry import ExtractorRegistry
 from app.pipeline.errors import ExtractionError
+from app.pipeline.ocr import LocalOCRAdapter
 from app.pipeline.transform.structure import build_structure
+from app.pipeline.transform.normalizer import normalize_text
+from app.pipeline.types import RawBlock
 from app.search.store import SearchIndexStore
 from app.schemas.document import (
     DocumentArtifact,
@@ -33,11 +36,12 @@ class ProcessOutcome:
 
 
 class DocumentService:
-    def __init__(self) -> None:
+    def __init__(self, ocr_adapter: LocalOCRAdapter | None = None) -> None:
         self.registry = ExtractorRegistry()
         self.storage = FileStorage()
         self.index_store = SearchIndexStore(self.storage)
         self.manifest_store = CorpusManifestStore(self.storage)
+        self.ocr_adapter = ocr_adapter or LocalOCRAdapter()
 
     def process_path(self, path: Path) -> StructuredDocument:
         return self.process_path_with_status(path).document
@@ -60,6 +64,39 @@ class DocumentService:
                 f"Failed to extract {path.name} with extractor {extractor.name}: {exc}",
                 code="extract_failed",
             ) from exc
+
+        ocr_result = None
+        ocr_text = ""
+        ocr_used = False
+        ocr_candidate = False
+        ocr_reason: str | None = None
+        if path.suffix.lower() in OCR_STANDALONE_IMAGE_SUFFIXES:
+            ocr_result = self.ocr_adapter.run(path)
+            if ocr_result.success and ocr_result.text.strip():
+                ocr_text = normalize_text(ocr_result.text)
+                if ocr_text:
+                    extracted.text = normalize_text("\n\n".join(part for part in [extracted.text, ocr_text] if part))
+                    extracted.blocks.append(
+                        RawBlock(
+                            kind="text",
+                            text=ocr_text,
+                            metadata={
+                                "source": "ocr",
+                                "ocr_engine": ocr_result.engine,
+                                "ocr_status": ocr_result.status,
+                            },
+                        )
+                    )
+                    ocr_used = True
+                    ocr_candidate = False
+                    ocr_reason = None
+                else:
+                    ocr_candidate = True
+                    ocr_reason = OCR_IMAGE_REASON
+            else:
+                ocr_candidate = True
+                ocr_reason = ocr_result.reason if ocr_result and ocr_result.reason else OCR_IMAGE_REASON
+
         document_id = str(uuid.uuid4())
         saved_source = self.storage.save_source(path, document_id)
         checksum = self.storage.compute_checksum(saved_source)
@@ -68,7 +105,8 @@ class DocumentService:
         for chunk in chunks:
             chunk.document_id = document_id
 
-        ocr_candidate, ocr_reason = self._detect_ocr_candidate(path, extracted, chunks)
+        if path.suffix.lower() not in OCR_STANDALONE_IMAGE_SUFFIXES:
+            ocr_candidate, ocr_reason = self._detect_ocr_candidate(path, extracted, chunks)
 
         title = self._resolve_title(path, sections)
         metadata = DocumentMetadata(
@@ -102,8 +140,11 @@ class DocumentService:
                 features={
                     "tables_detected": bool(tables),
                     "images_detected": bool(images),
-                    "ocr_used": False,
+                    "ocr_used": ocr_used,
                     "ocr_candidate": ocr_candidate,
+                    "ocr_engine": ocr_result.engine if ocr_result else None,
+                    "ocr_text_length": len(ocr_text),
+                    "ocr_status": ocr_result.status if ocr_result else "not_applicable",
                 },
                 ocr_candidate=ocr_candidate,
                 ocr_reason=ocr_reason,

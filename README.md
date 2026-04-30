@@ -7,7 +7,7 @@
 - принимает документы через API или пакетную CLI-обработку
 - поддерживает `pdf`, `doc`, `docx`, `rtf`, `txt`, `xlsx`, `xls`
 - `xlsx` и `xls` извлекают таблицы, сохраняют их в JSON и дают табличный текст в retrieval path
-- `jpg`/`jpeg`/`png` фиксируют как наличие изображений без OCR
+- `jpg`/`jpeg`/`png` поддерживают optional local OCR baseline: при наличии локального engine текст извлекается, а при его отсутствии сохраняется metadata-only OCR-candidate поведение
 - извлекает текст, таблицы, базовые метаданные и факт наличия изображений
 - строит структурированный JSON с разделами, блоками и таблицами
 - сохраняет результаты локально в `storage/`
@@ -118,13 +118,13 @@ conda run -n etl_env python -m scripts.cleanup_storage --apply
 
 ## OCR
 
-OCR всё ещё не входит в текущий baseline. Stage 19.1 добавляет только OCR candidate reporting и OCR-readiness visibility, но не распознавание.
-`jpg`/`jpeg`/`png` продолжают приниматься как standalone image input в metadata-only режиме, без OCR, и помечаются как `ocr_candidate=True` с `ocr_reason=standalone_image`.
-`pdf` без meaningful extracted text / chunks может быть conservatively отмечен как `possible_scanned_pdf` / OCR candidate, но страницы не рендерятся в изображения и OCR не запускается.
-В `processing_info.features` для image-only intake фиксируются `images_detected=True` / `ocr_used=False`, а для OCR candidates в целом добавляется `ocr_candidate=True`.
-`HEIC`/`HEIF`/`TIFF`/`TIF`/`BMP`/`WEBP` по-прежнему остаются неподдерживаемыми image-like форматами до отдельной проверки local decoding/OCR.
-Read-only audit и customer demo runner теперь показывают summary по OCR candidates без изменения storage.
-Для ручной проверки image intake можно использовать `first_test_data/Справка (таблица).jpg` и `first_test_data/Справка (таблица).png`; это metadata-only standalone image intake без OCR, и они не нужны для автоматических тестов.
+OCR для standalone `jpg`/`jpeg`/`png` теперь optional local baseline: если локальный `tesseract` доступен, сервис извлекает текст и сохраняет его в обычный document output, чтобы он попадал в blocks/chunks/search/ask path.
+Если локальный OCR engine недоступен, упал или вернул пустой текст, сохраняется metadata-only OCR-candidate поведение Stage 19.1.
+В `processing_info.features` для image-only intake теперь могут появляться `ocr_used`, `ocr_candidate`, `ocr_engine`, `ocr_text_length` и `ocr_status`; top-level contract при этом не расширяется.
+`pdf` без meaningful extracted text / chunks по-прежнему может быть conservatively отмечен как `possible_scanned_pdf` / OCR candidate, но страницы не рендерятся в изображения и OCR для scanned PDF не запускается.
+`HEIC`/`HEIF`/`TIFF`/`TIF`/`BMP`/`WEBP` по-прежнему остаются неподдерживаемыми image-like форматами.
+Read-only audit и customer demo runner теперь показывают summary по OCR candidates и OCR-used documents без изменения storage.
+Для ручной проверки OCR engine можно использовать `conda run -n etl_env python -m scripts.check_ocr`.
 
 ## Поддержка DOC
 

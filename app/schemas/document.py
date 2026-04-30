@@ -92,7 +92,7 @@ class ProcessingInfo(BaseModel):
     extractor: str
     transform_version: str = "baseline-v1"
     warnings: list[str] = Field(default_factory=list)
-    features: dict[str, bool] = Field(default_factory=dict)
+    features: dict[str, Any] = Field(default_factory=dict)
     ocr_candidate: bool = False
     ocr_reason: Optional[str] = None
     source_encoding: Optional[str] = None

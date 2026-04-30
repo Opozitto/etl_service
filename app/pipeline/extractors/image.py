@@ -14,7 +14,6 @@ class ImageExtractor(BaseExtractor):
             text="",
             blocks=[RawBlock(kind="image", metadata={"filename": path.name})],
             page_count=1,
-            warnings=["OCR is disabled in baseline mode; only image presence was captured."],
+            warnings=["Standalone image presence captured; OCR may be attempted by the service when available."],
             metadata={"ocr_enabled": False},
         )
-

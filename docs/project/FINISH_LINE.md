@@ -11,8 +11,8 @@
 
 - ETL baseline runs end-to-end in the confirmed local environment.
 - Supported document formats: `pdf`, `doc`, `docx`, `rtf`, `txt`, `xlsx`, `xls`.
-- Standalone `jpg` / `jpeg` / `png` are accepted only in metadata-only mode without OCR and are marked as OCR candidates.
-- PDFs without meaningful extracted text / chunks can be conservatively surfaced as possible scanned PDF / OCR candidates.
+- Standalone `jpg` / `jpeg` / `png` now have an optional local OCR baseline: when a local engine is available, extracted text is written into the normal document output; otherwise they remain OCR candidates in metadata-only mode.
+- PDFs without meaningful extracted text / chunks can still be conservatively surfaced as possible scanned PDF / OCR candidates, but scanned PDF OCR itself is not implemented.
 - `HEIC` / `HEIF` / `TIFF` / `TIF` / `BMP` / `WEBP` remain unsupported image-like formats.
 - `XLS` and `XLSX` are extracted into JSON, flow into chunks/search/ask, and use flattened lexical retrieval.
 - Row-level chunks for tables add `sheet` / `table` / `row` / `column-value` context, but this is still lexical retrieval, not table-aware analytics.
@@ -24,7 +24,7 @@
 - source-backed search/ask with explicit evidence.
 - spreadsheet table retrieval with row-level lexical context.
 - audit/demo runner for corpus visibility and customer flow.
-- image intake metadata-only without OCR.
+- optional local OCR baseline for standalone images when a local engine is available.
 - OCR candidate reporting for image-only intake and conservative PDF readiness visibility.
 
 ## What is confirmed, and what is not
@@ -35,9 +35,10 @@
   - corpus audit visibility;
   - corpus rebuild;
   - spreadsheet table retrieval with row-level context;
-  - read-only OCR candidate reporting.
+  - read-only OCR candidate reporting;
+  - optional local OCR baseline for standalone images when a local engine is available.
 - Not confirmed:
-  - OCR;
+  - scanned PDF OCR;
   - LLM generation;
   - summarization / draft generation;
   - semantic retrieval;
@@ -55,7 +56,7 @@
 
 ## Next choice
 
-Next recommended: Stage 19.2 Customer demo finalization / final polish checkpoint, while OCR remains unimplemented.
+Next recommended: Stage 19.2 Customer demo finalization / final polish checkpoint, while OCR quality evaluation remains the next OCR-focused follow-up after the standalone image baseline.
 
 ## Note
 

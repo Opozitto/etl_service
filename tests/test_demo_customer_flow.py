@@ -22,7 +22,18 @@ def _prepare_storage(tmp_path: Path) -> tuple[Path, Path, Path]:
     return storage_root, results_dir, index_dir
 
 
-def _result_document(document_id: str, filename: str, *, text: str, table_count: int = 0, image_count: int = 0, warnings: list[str] | None = None) -> dict:
+def _result_document(
+    document_id: str,
+    filename: str,
+    *,
+    text: str,
+    table_count: int = 0,
+    image_count: int = 0,
+    ocr_used: bool = False,
+    ocr_engine: str | None = None,
+    ocr_status: str = "not_applicable",
+    warnings: list[str] | None = None,
+) -> dict:
     warnings = warnings or []
     return {
         "metadata": {
@@ -85,7 +96,10 @@ def _result_document(document_id: str, filename: str, *, text: str, table_count:
             "features": {
                 "tables_detected": table_count > 0,
                 "images_detected": image_count > 0,
-                "ocr_used": False,
+                "ocr_used": ocr_used,
+                "ocr_engine": ocr_engine,
+                "ocr_text_length": len(text) if ocr_used else 0,
+                "ocr_status": ocr_status,
             },
             "source_encoding": "utf-8",
             "text_char_count": len(text),
@@ -192,7 +206,17 @@ def test_demo_customer_flow_builds_read_only_report(tmp_path: Path, monkeypatch,
 
     text_one = "Экология проект. Предельно допустимые выбросы ПДВ."
     text_two = "Лист 1. Строка 0101. Форма 2 Плановая калькуляция затрат. Приобретение сырья и материалов."
-    _write_json(results_dir / "doc-1.json", _result_document("doc-1", "sample.docx", text=text_one))
+    _write_json(
+        results_dir / "doc-1.json",
+        _result_document(
+            "doc-1",
+            "sample.docx",
+            text=text_one,
+            ocr_used=True,
+            ocr_engine="tesseract",
+            ocr_status="success",
+        ),
+    )
     _write_json(results_dir / "doc-2.json", _result_document("doc-2", "table.xlsx", text=text_two, table_count=1, warnings=["needs review"]))
     _write_json(index_dir / "corpus_index.json", _index_payload())
     _write_json(index_dir / "ingestion_manifest.json", _manifest_payload())
@@ -222,13 +246,16 @@ def test_demo_customer_flow_builds_read_only_report(tmp_path: Path, monkeypatch,
     assert report["capabilities"]["supported_formats"] == ["pdf", "doc", "docx", "rtf", "txt", "xlsx", "xls"]
     assert report["capabilities"]["metadata_only_image_formats"] == ["jpg", "jpeg", "png"]
     assert report["capabilities"]["unsupported_image_like_formats"] == ["heic", "heif", "tiff", "tif", "bmp", "webp"]
-    assert "OCR is not implemented." in report["capabilities"]["limits"]
+    assert any("optional local OCR" in item for item in report["capabilities"]["limits"])
     assert "LLM generation is not implemented." in report["capabilities"]["limits"]
     assert report["corpus"]["indexed_documents"] == 2
     assert report["corpus"]["indexed_chunks"] == 2
     assert report["corpus"]["documents_with_tables"] == 1
     assert report["corpus"]["documents_with_images"] == 0
     assert report["corpus"]["documents_with_warnings"] == 1
+    assert report["corpus"]["ocr_used_documents"] == 1
+    assert report["corpus"]["ocr_used_engines"] == {"tesseract": 1}
+    assert report["corpus"]["ocr_used_statuses"] == {"success": 1}
     assert report["corpus"]["audit_summary"]["warnings_documents"] == 1
     assert report["corpus"]["audit_summary"]["missing_from_index_documents"] == 0
 
@@ -236,7 +263,7 @@ def test_demo_customer_flow_builds_read_only_report(tmp_path: Path, monkeypatch,
     assert scenarios["S4"]["status"] == "supported-now"
     assert "row/value retrieval is lexical" in scenarios["S4"]["note"]
     assert scenarios["S6"]["status"] == "limited"
-    assert "OCR is not implemented" in scenarios["S6"]["note"]
+    assert "optional local OCR" in scenarios["S6"]["note"]
     assert scenarios["S7"]["status"] == "limited"
     assert report["table_scenario"]["row_context_probe"]["status"] == "hit"
     assert report["table_scenario"]["row_context_probe"]["has_row_context"] is True
@@ -254,6 +281,7 @@ def test_demo_customer_flow_builds_read_only_report(tmp_path: Path, monkeypatch,
     assert "Демо-проверка customer flow" in captured.out
     assert "Режим: read-only / без изменения storage" in captured.out
     assert "Аудит корпуса: найдено проблемных/требующих внимания документов" in captured.out
+    assert "OCR used documents: 1" in captured.out
     assert "Это диагностический слой качества корпуса, а не ошибка запуска demo." in captured.out
     assert "Возможности baseline:" in captured.out
     assert "Сценарии:" in captured.out

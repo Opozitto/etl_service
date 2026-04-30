@@ -201,11 +201,17 @@ def build_audit_report(
     no_section_documents = 0
     missing_from_index_documents = 0
     ocr_candidate_documents = 0
+    ocr_used_documents = 0
+    ocr_used_engines: Counter[str] = Counter()
+    ocr_used_statuses: Counter[str] = Counter()
 
     for document in documents:
         metadata = document.get("metadata") or {}
         source = document.get("source") or {}
         processing_info = document.get("processing_info") or {}
+        features = processing_info.get("features") or {}
+        if not isinstance(features, dict):
+            features = {}
         warnings = normalize_list(processing_info.get("warnings"))
 
         extension = source.get("extension") or Path(source.get("filename") or "").suffix.lower()
@@ -237,6 +243,16 @@ def build_audit_report(
             no_section_documents += 1
         if index_present and document_id and document_id not in index_document_ids:
             missing_from_index_documents += 1
+
+        ocr_used = bool(features.get("ocr_used"))
+        if ocr_used:
+            ocr_used_documents += 1
+            engine = features.get("ocr_engine")
+            status = features.get("ocr_status")
+            if isinstance(engine, str) and engine:
+                ocr_used_engines[engine] += 1
+            if isinstance(status, str) and status:
+                ocr_used_statuses[status] += 1
 
         is_ocr_candidate, ocr_reason, ocr_signals = detect_ocr_candidate(document)
         if is_ocr_candidate:
@@ -302,6 +318,9 @@ def build_audit_report(
             "no_section_documents": no_section_documents,
             "missing_from_index_documents": missing_from_index_documents,
             "ocr_candidate_documents": ocr_candidate_documents,
+            "ocr_used_documents": ocr_used_documents,
+            "ocr_used_engines": dict(ocr_used_engines),
+            "ocr_used_statuses": dict(ocr_used_statuses),
         },
         "problem_documents": problem_documents,
         "ocr_candidates": ocr_candidates,
@@ -328,6 +347,15 @@ def print_summary(report: dict) -> None:
         )
     )
     print(f"OCR candidates={summary['ocr_candidate_documents']}")
+    used_engines = summary.get("ocr_used_engines") or {}
+    used_statuses = summary.get("ocr_used_statuses") or {}
+    print(
+        "OCR used={used} engines={engines} statuses={statuses}".format(
+            used=summary.get("ocr_used_documents", 0),
+            engines=", ".join(f"{engine}:{count}" for engine, count in used_engines.items()) or "n/a",
+            statuses=", ".join(f"{status}:{count}" for status, count in used_statuses.items()) or "n/a",
+        )
+    )
     for candidate in report["ocr_candidates"]:
         signals = ", ".join(candidate["signals"]) if candidate["signals"] else "n/a"
         print(

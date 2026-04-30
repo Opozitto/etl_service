@@ -7,6 +7,7 @@ from PIL import Image
 
 from app.api.routes import documents as documents_routes
 from app.core.config import get_settings
+from app.pipeline.ocr import OCRResult
 from app.main import app
 from app.search.index import CorpusSearchEngine
 from app.services.document_service import DocumentService
@@ -118,7 +119,7 @@ def test_process_xls_document_returns_table_metadata(monkeypatch) -> None:
         shutil.rmtree(smoke_root, ignore_errors=True)
 
 
-def test_process_standalone_png_image_returns_image_metadata(monkeypatch) -> None:
+def test_process_standalone_png_image_uses_ocr_when_available(monkeypatch) -> None:
     project_root = Path(__file__).resolve().parents[1]
     smoke_root = project_root / "tests" / ".stage12_api_smoke_png"
     storage_dir = smoke_root / "storage"
@@ -127,11 +128,22 @@ def test_process_standalone_png_image_returns_image_metadata(monkeypatch) -> Non
 
     monkeypatch.setenv("ETL_STORAGE_DIR", str(storage_dir))
     get_settings.cache_clear()
-    monkeypatch.setattr(documents_routes, "service", DocumentService())
+    service = DocumentService()
+    monkeypatch.setattr(
+        service.ocr_adapter,
+        "run",
+        lambda path: OCRResult(
+            text="OCR extracted text for api",
+            engine="tesseract",
+            success=True,
+            status="success",
+        ),
+    )
+    monkeypatch.setattr(documents_routes, "service", service)
     monkeypatch.setattr(
         documents_routes,
         "search_engine",
-        CorpusSearchEngine(documents_routes.service.storage),
+        CorpusSearchEngine(service.storage),
     )
 
     try:
@@ -149,10 +161,15 @@ def test_process_standalone_png_image_returns_image_metadata(monkeypatch) -> Non
         assert document["blocks"]
         assert document["blocks"][0]["type"] == "image"
         assert document["processing_info"]["features"]["images_detected"] is True
-        assert document["processing_info"]["features"]["ocr_used"] is False
-        assert document["processing_info"]["features"]["ocr_candidate"] is True
-        assert document["processing_info"]["ocr_candidate"] is True
-        assert document["processing_info"]["ocr_reason"] == "standalone_image"
+        assert document["processing_info"]["features"]["ocr_used"] is True
+        assert document["processing_info"]["features"]["ocr_candidate"] is False
+        assert document["processing_info"]["features"]["ocr_engine"] == "tesseract"
+        assert document["processing_info"]["features"]["ocr_text_length"] > 0
+        assert document["processing_info"]["features"]["ocr_status"] == "success"
+        assert document["processing_info"]["ocr_candidate"] is False
+        assert document["processing_info"]["ocr_reason"] is None
+        assert any("OCR extracted text for api" in block["text"] for block in document["blocks"] if block.get("text"))
+        assert any("OCR extracted text for api" in chunk["text"] for chunk in document["chunks"])
     finally:
         get_settings.cache_clear()
         shutil.rmtree(smoke_root, ignore_errors=True)

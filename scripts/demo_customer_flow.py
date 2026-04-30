@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -96,15 +97,29 @@ def _build_corpus_snapshot(storage_dir: Path) -> dict:
     table_documents = 0
     image_documents = 0
     warning_documents = 0
+    ocr_used_documents = 0
+    ocr_used_engines: Counter[str] = Counter()
+    ocr_used_statuses: Counter[str] = Counter()
     for document in result_documents:
         metadata = document.get("metadata") or {}
         processing_info = document.get("processing_info") or {}
+        features = processing_info.get("features") or {}
+        if not isinstance(features, dict):
+            features = {}
         if isinstance(metadata.get("table_count"), int) and metadata.get("table_count", 0) > 0:
             table_documents += 1
         if isinstance(metadata.get("image_count"), int) and metadata.get("image_count", 0) > 0:
             image_documents += 1
         if processing_info.get("warnings"):
             warning_documents += 1
+        if bool(features.get("ocr_used")):
+            ocr_used_documents += 1
+            engine = features.get("ocr_engine")
+            status = features.get("ocr_status")
+            if isinstance(engine, str) and engine:
+                ocr_used_engines[engine] += 1
+            if isinstance(status, str) and status:
+                ocr_used_statuses[status] += 1
 
     summary = audit_report["summary"]
     return {
@@ -115,6 +130,9 @@ def _build_corpus_snapshot(storage_dir: Path) -> dict:
         "documents_with_tables": table_documents,
         "documents_with_images": image_documents,
         "documents_with_warnings": warning_documents,
+        "ocr_used_documents": ocr_used_documents,
+        "ocr_used_engines": dict(ocr_used_engines),
+        "ocr_used_statuses": dict(ocr_used_statuses),
         "manifest_records": len((manifest_payload or {}).get("records", [])) if isinstance(manifest_payload, dict) else 0,
         "audit_summary": summary,
         "problem_documents": audit_report["problem_documents"],
@@ -158,7 +176,7 @@ def _scenario_checks() -> list[dict]:
             "id": "S6",
             "name": "OCR / image limitation",
             "status": "limited",
-            "note": "jpg/jpeg/png are metadata-only and flagged as OCR candidates; OCR is not implemented and HEIC/HEIF/TIFF/TIF/BMP/WEBP stay unsupported.",
+            "note": "jpg/jpeg/png keep metadata-only fallback and OCR-candidate reporting, but may use optional local OCR when a local engine is available; HEIC/HEIF/TIFF/TIF/BMP/WEBP stay unsupported and scanned PDFs are not OCR-enabled.",
         },
         {
             "id": "S7",
@@ -273,7 +291,8 @@ def build_demo_report(storage_dir: Path, refresh_index: bool = False, top_k: int
             "metadata_only_image_formats": METADATA_ONLY_IMAGE_FORMATS,
             "unsupported_image_like_formats": UNSUPPORTED_IMAGE_LIKE_FORMATS,
             "limits": [
-                "OCR is not implemented.",
+                "optional local OCR baseline for standalone jpg/jpeg/png when a local engine is available.",
+                "scanned PDF OCR is not implemented.",
                 "LLM generation is not implemented.",
                 "summarization is not implemented.",
                 "vector DB / semantic retrieval / full RAG are not implemented.",
@@ -308,11 +327,12 @@ def print_demo_report(report: dict) -> None:
         "S3": "Только поиск и сниппеты; сгенерированные требования остаются вне scope.",
         "S4": "Поиск строк и значений в таблицах остаётся лексическим поиском с контекстом строки, а не аналитикой.",
         "S5": "Аудит корпуса показывает проблемные документы, отсутствующие чанки, предупреждения и расхождение индекса.",
-        "S6": "jpg/jpeg/png принимаются как metadata-only и дополнительно помечаются как OCR candidates; OCR не реализован, а HEIC/HEIF/TIFF/TIF/BMP/WEBP остаются неподдерживаемыми.",
+        "S6": "jpg/jpeg/png keep metadata-only fallback and OCR-candidate reporting; optional local OCR can be used when a local engine is available, while HEIC/HEIF/TIFF/TIF/BMP/WEBP stay unsupported and scanned PDFs are not OCR-enabled.",
         "S7": "В baseline не реализованы суммаризация и генерация черновиков.",
     }
     limit_display = {
-        "OCR is not implemented.": "OCR не реализован.",
+        "optional local OCR baseline for standalone jpg/jpeg/png when a local engine is available.": "Optional local OCR baseline for standalone jpg/jpeg/png is available when a local engine is present.",
+        "scanned PDF OCR is not implemented.": "OCR для scanned PDF не реализован.",
         "LLM generation is not implemented.": "Генерация LLM не реализована.",
         "summarization is not implemented.": "Суммаризация не реализована.",
         "vector DB / semantic retrieval / full RAG are not implemented.": "Семантический поиск / векторная БД / полный RAG не реализованы.",
@@ -340,14 +360,24 @@ def print_demo_report(report: dict) -> None:
         )
     )
     print(f"OCR candidates: {corpus['audit_summary'].get('ocr_candidate_documents', 0)}")
+    used_engines = corpus.get("ocr_used_engines") or {}
+    used_statuses = corpus.get("ocr_used_statuses") or {}
+    print(
+        "OCR used documents: {used} (engines={engines}; statuses={statuses})".format(
+            used=corpus.get("ocr_used_documents", 0),
+            engines=", ".join(f"{engine}:{count}" for engine, count in used_engines.items()) or "n/a",
+            statuses=", ".join(f"{status}:{count}" for status, count in used_statuses.items()) or "n/a",
+        )
+    )
     for candidate in corpus["ocr_candidates"]:
         signals = ", ".join(candidate["signals"]) if candidate["signals"] else "n/a"
         print(f"  - {candidate['filename']}: {candidate['reason']} ({signals})")
     print("Это диагностический слой качества корпуса, а не ошибка запуска demo.")
     print(
-        "Возможности baseline: поддерживаемые форматы={supported}, только метаданные изображений={images}, неподдерживаемые image-like={unsupported}".format(
+        "Возможности baseline: поддерживаемые форматы={supported}, только метаданные изображений={images}, optional local OCR baseline for standalone jpg/jpeg/png={ocr}, неподдерживаемые image-like={unsupported}".format(
             supported=", ".join(capabilities["supported_formats"]),
             images=", ".join(capabilities["metadata_only_image_formats"]),
+            ocr="да" if corpus.get("ocr_used_documents", 0) else "возможен при наличии локального engine",
             unsupported=", ".join(capabilities["unsupported_image_like_formats"]),
         )
     )

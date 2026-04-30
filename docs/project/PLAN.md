@@ -1,6 +1,6 @@
 # PLAN
 
-Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the current delivery-first roadmap lock.
+Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the current delivery-first roadmap lock, and Stage 20 is the current optional local OCR baseline for standalone images.
 
 ## Stage 1. Зафиксировать smoke/regression проверки
 
@@ -350,13 +350,33 @@ conda run -n etl_env python -m scripts.batch_process --input-dir first_test_data
   - `tests/test_api.py`
 - Статус: completed.
 
+## Stage 20. Optional local OCR baseline for standalone JPG/PNG
+
+- Цель: добавить минимальный optional local OCR baseline для standalone `jpg` / `jpeg` / `png` без внешних proprietary API и без обязательной новой тяжёлой зависимости.
+- Подзадачи:
+  - использовать локальный OCR adapter только для standalone image intake;
+  - извлекать текст, если локальный engine доступен и вернул meaningful text;
+  - сохранять OCR-text в обычный document output, чтобы он попадал в blocks/chunks/search/ask path;
+  - оставлять metadata-only fallback и OCR-candidate reporting, если engine недоступен, упал или вернул пустой текст;
+  - не затрагивать scanned PDF OCR и не менять unsupported image-like formats.
+- Артефакты:
+  - `app/pipeline/ocr.py`
+  - `app/services/document_service.py`
+  - `scripts/audit_corpus.py`
+  - `scripts/demo_customer_flow.py`
+  - `scripts/check_ocr.py`
+  - `tests/test_extractors.py`
+  - `tests/test_api.py`
+  - `tests/test_audit_corpus.py`
+  - `tests/test_demo_customer_flow.py`
+- Статус: completed.
+
 ## Будущие варианты
 
 Возможные следующие этапы, пока не реализованные:
 
 1. Stage 19.2 Customer demo finalization / final polish checkpoint.
-2. Stage 20 Local OCR baseline for jpg/png, only if time allows.
-3. Stage 21 OCR quality evaluation, only after OCR baseline.
-4. Stage 22 Requirements extraction v1, source-backed, no generation.
-5. Stage 23 Table-aware evaluation / calculation inputs v2.
-6. Stage 24 Summarization / draft generation spike, only if source-backed foundation remains stable.
+2. Stage 21 OCR quality evaluation, only after OCR baseline.
+3. Stage 22 Requirements extraction v1, source-backed, no generation.
+4. Stage 23 Table-aware evaluation / calculation inputs v2.
+5. Stage 24 Summarization / draft generation spike, only if source-backed foundation remains stable.
