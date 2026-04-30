@@ -33,10 +33,11 @@
 - Storage changes after `test_api` were cleaned before commit.
 - `git status --short` after commit was clean.
 - Stage 19.0 added as a docs-only roadmap lock to keep the project delivery-first.
+- Stage 19.1 completed as OCR candidate reporting / OCR-readiness without production OCR.
+- Stage 19.1 keeps OCR out of production flow and only adds detection, reporting, and read-only visibility for candidates.
 
 ## next
 
-- Stage 19.1 OCR candidate reporting / OCR-readiness, without production OCR.
 - Stage 19.2 Customer demo finalization / final polish checkpoint.
 - Stage 20 Local OCR baseline for jpg/png, only if time allows.
 - Stage 21 OCR quality evaluation, only after OCR baseline.
@@ -50,12 +51,14 @@
 - That foundation covers part of the brief about solution quality evaluation.
 - The next phase is the pilot AI-service track for ecologists, not a claim that OCR, RAG, or LLM generation are already ready.
 - Stage 19.0 locks the roadmap so future stages remain shippable and independently valuable.
+- Stage 19.1 adds OCR candidate reporting, but OCR itself is still not implemented.
 
 ## risks
 
 - `XLS` and `XLSX` are still baseline spreadsheet inputs.
 - Spreadsheet retrieval remains lexical; improvement comes from row-level context, not table-aware analytics.
 - OCR is not implemented.
+- OCR candidate reporting is implemented for standalone images and conservative PDF readiness cases.
 - `HEIC` / `HEIF` / `TIFF` / `TIF` / `BMP` / `WEBP` remain unsupported.
 - LLM / RAG / generation are not implemented.
 - The main current risk is not a lack of ideas, but scope creep into OCR / RAG / LLM work before the foundation is stable.
@@ -71,6 +74,13 @@
 - Codex sandbox ACL limits on Windows are treated as environment limitations, not a reason to change code or tests.
 - Stage 19.1 must stay OCR candidate reporting, not production OCR.
 - Stage 20 OCR baseline is allowed only after Stage 19.1 and a separate decision.
+
+## checks
+
+- `conda run -n etl_env python -m pytest -q tests\test_extractors.py -k "image or ocr or registry"`
+- `conda run -n etl_env python -m pytest -q tests\test_audit_corpus.py`
+- `conda run -n etl_env python -m py_compile scripts\audit_corpus.py scripts\demo_customer_flow.py`
+- Full `pytest` remains subject to the Codex sandbox temp / ACL limitation on Windows.
 
 ## open questions
 

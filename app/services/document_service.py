@@ -21,6 +21,11 @@ from app.storage.filesystem import FileStorage
 from app.storage.manifest import CorpusManifestStore
 
 
+OCR_STANDALONE_IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png"}
+OCR_PDF_REASON = "possible_scanned_pdf"
+OCR_IMAGE_REASON = "standalone_image"
+
+
 @dataclass
 class ProcessOutcome:
     document: StructuredDocument
@@ -63,6 +68,8 @@ class DocumentService:
         for chunk in chunks:
             chunk.document_id = document_id
 
+        ocr_candidate, ocr_reason = self._detect_ocr_candidate(path, extracted, chunks)
+
         title = self._resolve_title(path, sections)
         metadata = DocumentMetadata(
             document_id=document_id,
@@ -96,7 +103,10 @@ class DocumentService:
                     "tables_detected": bool(tables),
                     "images_detected": bool(images),
                     "ocr_used": False,
+                    "ocr_candidate": ocr_candidate,
                 },
+                ocr_candidate=ocr_candidate,
+                ocr_reason=ocr_reason,
                 source_encoding=extracted.metadata.get("source_encoding"),
                 text_char_count=len(extracted.text),
                 text_block_count=sum(1 for block in blocks if block.text),
@@ -148,3 +158,16 @@ class DocumentService:
             if section.level > 0 and section.title:
                 return section.title
         return path.stem
+
+    @staticmethod
+    def _detect_ocr_candidate(path: Path, extracted, chunks: list) -> tuple[bool, str | None]:
+        suffix = path.suffix.lower()
+        if suffix in OCR_STANDALONE_IMAGE_SUFFIXES:
+            return True, OCR_IMAGE_REASON
+
+        if suffix == ".pdf":
+            has_meaningful_text = bool((extracted.text or "").strip())
+            if not has_meaningful_text and not chunks:
+                return True, OCR_PDF_REASON
+
+        return False, None

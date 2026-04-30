@@ -93,6 +93,8 @@ class ProcessingInfo(BaseModel):
     transform_version: str = "baseline-v1"
     warnings: list[str] = Field(default_factory=list)
     features: dict[str, bool] = Field(default_factory=dict)
+    ocr_candidate: bool = False
+    ocr_reason: Optional[str] = None
     source_encoding: Optional[str] = None
     text_char_count: int = 0
     text_block_count: int = 0

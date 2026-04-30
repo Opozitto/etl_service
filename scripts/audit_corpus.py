@@ -10,6 +10,9 @@ from app.core.config import get_settings
 
 
 REPORT_VERSION = "stage8_corpus_quality_audit_v1"
+OCR_STANDALONE_IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png"}
+OCR_IMAGE_REASON = "standalone_image"
+OCR_PDF_REASON = "possible_scanned_pdf"
 
 
 def load_json_file(path: Path) -> dict | None:
@@ -35,6 +38,41 @@ def as_int(value: object) -> int | None:
     if isinstance(value, int):
         return value
     return None
+
+
+def detect_ocr_candidate(document: dict) -> tuple[bool, str | None, list[str]]:
+    source = document.get("source") or {}
+    processing_info = document.get("processing_info") or {}
+    filename = source.get("filename") or ""
+    extension = (source.get("extension") or Path(filename).suffix.lower()).lower()
+    text_char_count = processing_info.get("text_char_count")
+    text_block_count = processing_info.get("text_block_count")
+    chunk_count = len(document.get("chunks") or [])
+
+    ocr_candidate = processing_info.get("ocr_candidate")
+    ocr_reason = processing_info.get("ocr_reason")
+
+    if isinstance(ocr_candidate, bool) and ocr_candidate:
+        reason = ocr_reason if isinstance(ocr_reason, str) and ocr_reason else None
+        if not reason:
+            reason = OCR_PDF_REASON if extension == ".pdf" else OCR_IMAGE_REASON
+        return True, reason, [reason]
+
+    if extension in OCR_STANDALONE_IMAGE_SUFFIXES:
+        return True, OCR_IMAGE_REASON, [OCR_IMAGE_REASON]
+
+    if extension == ".pdf":
+        signals: list[str] = []
+        if text_char_count in (None, 0) or not (isinstance(text_char_count, int) and text_char_count > 0):
+            signals.append("no_text_extracted")
+        if text_block_count in (None, 0) or not (isinstance(text_block_count, int) and text_block_count > 0):
+            signals.append("no_text_blocks")
+        if chunk_count == 0:
+            signals.append("no_chunks")
+        if signals and len(signals) >= 2:
+            return True, OCR_PDF_REASON, signals
+
+    return False, None, []
 
 
 def iter_result_documents(results_dir: Path) -> list[dict]:
@@ -153,6 +191,7 @@ def build_audit_report(
     by_extractor = Counter()
     by_status = Counter()
     problem_documents: list[dict] = []
+    ocr_candidates: list[dict] = []
 
     warnings_documents = 0
     null_text_metric_documents = 0
@@ -161,6 +200,7 @@ def build_audit_report(
     no_block_documents = 0
     no_section_documents = 0
     missing_from_index_documents = 0
+    ocr_candidate_documents = 0
 
     for document in documents:
         metadata = document.get("metadata") or {}
@@ -197,6 +237,23 @@ def build_audit_report(
             no_section_documents += 1
         if index_present and document_id and document_id not in index_document_ids:
             missing_from_index_documents += 1
+
+        is_ocr_candidate, ocr_reason, ocr_signals = detect_ocr_candidate(document)
+        if is_ocr_candidate:
+            ocr_candidate_documents += 1
+            ocr_candidates.append(
+                {
+                    "document_id": document_id,
+                    "filename": source.get("filename") or "",
+                    "extension": extension,
+                    "status": status,
+                    "reason": ocr_reason,
+                    "signals": ocr_signals,
+                    "text_char_count": text_char_count,
+                    "text_block_count": text_block_count,
+                    "chunk_count": chunk_count,
+                }
+            )
 
         problem_document, tags = build_problem_document(
             document=document,
@@ -244,8 +301,10 @@ def build_audit_report(
             "no_block_documents": no_block_documents,
             "no_section_documents": no_section_documents,
             "missing_from_index_documents": missing_from_index_documents,
+            "ocr_candidate_documents": ocr_candidate_documents,
         },
         "problem_documents": problem_documents,
+        "ocr_candidates": ocr_candidates,
     }
     return report
 
@@ -268,6 +327,16 @@ def print_summary(report: dict) -> None:
             missing=summary["missing_from_index_documents"],
         )
     )
+    print(f"OCR candidates={summary['ocr_candidate_documents']}")
+    for candidate in report["ocr_candidates"]:
+        signals = ", ".join(candidate["signals"]) if candidate["signals"] else "n/a"
+        print(
+            "  - {filename} ({reason}; signals={signals})".format(
+                filename=candidate["filename"],
+                reason=candidate["reason"],
+                signals=signals,
+            )
+        )
 
 
 def main() -> None:

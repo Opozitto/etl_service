@@ -26,6 +26,8 @@ def _result_document(
     chunk_count: int,
     table_count: int = 0,
     image_count: int = 0,
+    ocr_candidate: bool = False,
+    ocr_reason: str | None = None,
     warnings: list[str] | None = None,
 ) -> dict:
     warnings = warnings or []
@@ -85,7 +87,14 @@ def _result_document(
             "extractor": extractor,
             "transform_version": "baseline-v1",
             "warnings": warnings,
-            "features": {"tables_detected": False, "images_detected": False, "ocr_used": False},
+            "features": {
+                "tables_detected": False,
+                "images_detected": False,
+                "ocr_used": False,
+                "ocr_candidate": ocr_candidate,
+            },
+            "ocr_candidate": ocr_candidate,
+            "ocr_reason": ocr_reason,
             "source_encoding": "utf-8",
             "text_char_count": text_char_count,
             "text_block_count": text_block_count,
@@ -396,5 +405,81 @@ def test_audit_corpus_handles_missing_index_and_manifest(tmp_path: Path, monkeyp
     assert report["summary"]["indexed_chunks"] == 0
     assert report["summary"]["manifest_records"] == 0
     assert report["summary"]["missing_from_index_documents"] == 0
+
+    get_settings.cache_clear()
+
+
+def test_audit_corpus_reports_ocr_candidates(tmp_path: Path, monkeypatch, capsys) -> None:
+    storage_root, results_dir, index_dir = _prepare_storage(tmp_path)
+    monkeypatch.setenv("ETL_STORAGE_DIR", str(storage_root))
+    get_settings.cache_clear()
+
+    _write_json(
+        results_dir / "image.json",
+        _result_document(
+            document_id="doc-image",
+            filename="scan.png",
+            extension=".png",
+            extractor="image",
+            text_char_count=0,
+            text_block_count=0,
+            section_count=0,
+            block_count=1,
+            chunk_count=0,
+            image_count=1,
+        ),
+    )
+    _write_json(
+        results_dir / "pdf.json",
+        _result_document(
+            document_id="doc-pdf",
+            filename="scan.pdf",
+            extension=".pdf",
+            extractor="pdf",
+            text_char_count=0,
+            text_block_count=0,
+            section_count=0,
+            block_count=0,
+            chunk_count=0,
+        ),
+    )
+    _write_json(
+        index_dir / "corpus_index.json",
+        {
+            "version": "1",
+            "updated_at": "2026-04-29T10:10:00",
+            "document_count": 0,
+            "chunk_count": 0,
+            "avg_chunk_length": 0.0,
+            "doc_frequencies": {},
+            "entries": [],
+        },
+    )
+
+    before_results = {
+        path.name: path.read_text(encoding="utf-8")
+        for path in sorted(results_dir.glob("*.json"))
+    }
+    before_index = (index_dir / "corpus_index.json").read_text(encoding="utf-8")
+
+    module = _run_audit(monkeypatch, tmp_path)
+    captured = capsys.readouterr()
+    report = module.build_audit_report(storage_root)
+
+    assert report["summary"]["ocr_candidate_documents"] == 2
+    assert [item["filename"] for item in report["ocr_candidates"]] == ["scan.png", "scan.pdf"]
+    assert report["ocr_candidates"][0]["reason"] == "standalone_image"
+    assert report["ocr_candidates"][1]["reason"] == "possible_scanned_pdf"
+    assert "OCR candidates=2" in captured.out
+    assert "scan.png" in captured.out
+    assert "scan.pdf" in captured.out
+
+    after_results = {
+        path.name: path.read_text(encoding="utf-8")
+        for path in sorted(results_dir.glob("*.json"))
+    }
+    after_index = (index_dir / "corpus_index.json").read_text(encoding="utf-8")
+    assert after_results == before_results
+    assert after_index == before_index
 
     get_settings.cache_clear()

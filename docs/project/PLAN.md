@@ -332,14 +332,31 @@ conda run -n etl_env python -m scripts.batch_process --input-dir first_test_data
   - после Stage 19.0, 19.1, 19.2, 20 и далее должна быть понятная точка остановки и короткий путь к сдаче.
 - Статус: current.
 
+## Stage 19.1. OCR candidate reporting / OCR-readiness without production OCR
+
+- Цель: добавить read-only detection и reporting OCR candidates без запуска OCR и без изменения production intake.
+- Подзадачи:
+  - помечать standalone `jpg` / `jpeg` / `png` как OCR candidates в metadata-only режиме;
+  - консервативно отмечать `pdf` без meaningful extracted text / chunks как possible scanned PDF / OCR candidate;
+  - показывать OCR candidate summary в audit и customer demo runner;
+  - честно фиксировать, что OCR baseline всё ещё не реализован.
+- Артефакты:
+  - `app/schemas/document.py`
+  - `app/services/document_service.py`
+  - `scripts/audit_corpus.py`
+  - `scripts/demo_customer_flow.py`
+  - `tests/test_extractors.py`
+  - `tests/test_audit_corpus.py`
+  - `tests/test_api.py`
+- Статус: completed.
+
 ## Будущие варианты
 
 Возможные следующие этапы, пока не реализованные:
 
-1. Stage 19.1 OCR candidate reporting / OCR-readiness, without production OCR.
-2. Stage 19.2 Customer demo finalization / final polish checkpoint.
-3. Stage 20 Local OCR baseline for jpg/png, only if time allows.
-4. Stage 21 OCR quality evaluation, only after OCR baseline.
-5. Stage 22 Requirements extraction v1, source-backed, no generation.
-6. Stage 23 Table-aware evaluation / calculation inputs v2.
-7. Stage 24 Summarization / draft generation spike, only if source-backed foundation remains stable.
+1. Stage 19.2 Customer demo finalization / final polish checkpoint.
+2. Stage 20 Local OCR baseline for jpg/png, only if time allows.
+3. Stage 21 OCR quality evaluation, only after OCR baseline.
+4. Stage 22 Requirements extraction v1, source-backed, no generation.
+5. Stage 23 Table-aware evaluation / calculation inputs v2.
+6. Stage 24 Summarization / draft generation spike, only if source-backed foundation remains stable.

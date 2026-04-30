@@ -11,7 +11,8 @@
 
 - ETL baseline runs end-to-end in the confirmed local environment.
 - Supported document formats: `pdf`, `doc`, `docx`, `rtf`, `txt`, `xlsx`, `xls`.
-- Standalone `jpg` / `jpeg` / `png` are accepted only in metadata-only mode without OCR.
+- Standalone `jpg` / `jpeg` / `png` are accepted only in metadata-only mode without OCR and are marked as OCR candidates.
+- PDFs without meaningful extracted text / chunks can be conservatively surfaced as possible scanned PDF / OCR candidates.
 - `HEIC` / `HEIF` / `TIFF` / `TIF` / `BMP` / `WEBP` remain unsupported image-like formats.
 - `XLS` and `XLSX` are extracted into JSON, flow into chunks/search/ask, and use flattened lexical retrieval.
 - Row-level chunks for tables add `sheet` / `table` / `row` / `column-value` context, but this is still lexical retrieval, not table-aware analytics.
@@ -24,6 +25,7 @@
 - spreadsheet table retrieval with row-level lexical context.
 - audit/demo runner for corpus visibility and customer flow.
 - image intake metadata-only without OCR.
+- OCR candidate reporting for image-only intake and conservative PDF readiness visibility.
 
 ## What is confirmed, and what is not
 
@@ -32,7 +34,8 @@
   - source-backed ask / extractive QA;
   - corpus audit visibility;
   - corpus rebuild;
-  - spreadsheet table retrieval with row-level context.
+  - spreadsheet table retrieval with row-level context;
+  - read-only OCR candidate reporting.
 - Not confirmed:
   - OCR;
   - LLM generation;
@@ -52,7 +55,7 @@
 
 ## Next choice
 
-Next recommended: Stage 19.1 OCR candidate reporting, not production OCR.
+Next recommended: Stage 19.2 Customer demo finalization / final polish checkpoint, while OCR remains unimplemented.
 
 ## Note
 

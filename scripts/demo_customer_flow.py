@@ -118,6 +118,7 @@ def _build_corpus_snapshot(storage_dir: Path) -> dict:
         "manifest_records": len((manifest_payload or {}).get("records", [])) if isinstance(manifest_payload, dict) else 0,
         "audit_summary": summary,
         "problem_documents": audit_report["problem_documents"],
+        "ocr_candidates": audit_report["ocr_candidates"],
     }
 
 
@@ -157,7 +158,7 @@ def _scenario_checks() -> list[dict]:
             "id": "S6",
             "name": "OCR / image limitation",
             "status": "limited",
-            "note": "jpg/jpeg/png are metadata-only; OCR is not implemented and HEIC/HEIF/TIFF/TIF/BMP/WEBP stay unsupported.",
+            "note": "jpg/jpeg/png are metadata-only and flagged as OCR candidates; OCR is not implemented and HEIC/HEIF/TIFF/TIF/BMP/WEBP stay unsupported.",
         },
         {
             "id": "S7",
@@ -307,7 +308,7 @@ def print_demo_report(report: dict) -> None:
         "S3": "Только поиск и сниппеты; сгенерированные требования остаются вне scope.",
         "S4": "Поиск строк и значений в таблицах остаётся лексическим поиском с контекстом строки, а не аналитикой.",
         "S5": "Аудит корпуса показывает проблемные документы, отсутствующие чанки, предупреждения и расхождение индекса.",
-        "S6": "jpg/jpeg/png принимаются только как метаданные; OCR не реализован, а HEIC/HEIF/TIFF/TIF/BMP/WEBP остаются неподдерживаемыми.",
+        "S6": "jpg/jpeg/png принимаются как metadata-only и дополнительно помечаются как OCR candidates; OCR не реализован, а HEIC/HEIF/TIFF/TIF/BMP/WEBP остаются неподдерживаемыми.",
         "S7": "В baseline не реализованы суммаризация и генерация черновиков.",
     }
     limit_display = {
@@ -338,6 +339,10 @@ def print_demo_report(report: dict) -> None:
             missing=corpus["audit_summary"]["missing_from_index_documents"],
         )
     )
+    print(f"OCR candidates: {corpus['audit_summary'].get('ocr_candidate_documents', 0)}")
+    for candidate in corpus["ocr_candidates"]:
+        signals = ", ".join(candidate["signals"]) if candidate["signals"] else "n/a"
+        print(f"  - {candidate['filename']}: {candidate['reason']} ({signals})")
     print("Это диагностический слой качества корпуса, а не ошибка запуска demo.")
     print(
         "Возможности baseline: поддерживаемые форматы={supported}, только метаданные изображений={images}, неподдерживаемые image-like={unsupported}".format(

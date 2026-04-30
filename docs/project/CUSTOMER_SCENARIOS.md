@@ -134,7 +134,7 @@ Below is the minimal set of evaluation cases for Stage 10. It fixes which questi
 | EC-04 | No-answer case | Is there information about X if there is none? | Relevant corpus subset | Explicitly say that the information is absent | yes | supported now | Checks honest refusal without hallucination |
 | EC-05 | Calculation inputs | Find source data for a calculation | Text and numeric fragments in docs | Return numbers and fragments with references | yes | partial | May require table awareness and/or OCR |
 | EC-06 | Audit visibility | A document without chunks should be flagged by audit | Batch corpus outputs and audit report | Appear in problem documents / audit summary | no | supported now | Linked to the Stage 7-9 reporting layer |
-| EC-07 | OCR limitation | A scan or photo of a document | JPG / JPEG / PNG / HEIC candidate inputs | Mark the limitation / future OCR spike | no | future | Do not promise ready OCR |
+| EC-07 | OCR limitation / candidate visibility | A scan or photo of a document | JPG / JPEG / PNG / HEIC candidate inputs | Mark metadata-only limitation, OCR candidates, and future OCR spike | no | Stage 19.1 | Do not promise ready OCR; future path remains local OCR baseline |
 | EC-08 | Table input | XLS / XLSX table-heavy document | Spreadsheet or table-like source | XLS and XLSX are supported at baseline level with flattened lexical retrieval | yes | supported now | Row-level chunks add sheet/table/row/column-value context; this is still flattened lexical retrieval, not table-aware analytics |
 | EC-09 | Summarization | Make a short summary of a document | Source document plus request for summary | Future spike only | yes | future | Do not announce ready summarization |
 | EC-10 | Draft generation | Prepare a draft section of documentation | Project doc context and task brief | Future spike only | yes | future | Do not announce ready LLM generation |
@@ -149,13 +149,14 @@ Below is the minimal set of evaluation cases for Stage 10. It fixes which questi
 - Stage 15 should align customer demo readiness, ingestion-search QA, supported formats, and the scenario matrix after XLS support.
 - Stage 16 should treat summarization / draft generation as a future spike, not a baseline claim.
 - Stage 17 should connect the confirmed parts into a prototype integration flow while keeping audit and eval visible.
+- Stage 19.1 adds OCR candidate reporting and read-only visibility, but not production OCR.
 - The Stage 17 demo helper may read the current corpus snapshot, rebuild the index only behind an explicit flag, and show the current baseline honestly.
 
 ## Notes on the current baseline
 
 - Stage 7-9 already provide batch reporting, corpus audit, and retrieval quality evaluation.
 - This makes source-backed search and source-backed proof the right immediate pilot direction.
-- OCR, semantic retrieval, vector DB, RAG, and LLM generation remain outside the confirmed baseline.
+- OCR, semantic retrieval, vector DB, RAG, and LLM generation remain outside the confirmed baseline; OCR candidate reporting is the current read-only bridge toward a future local OCR baseline.
 
 ## Stage 14 note
 

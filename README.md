@@ -78,7 +78,7 @@ conda run -n etl_env python -m scripts.demo_customer_flow --json-report-path sto
 
 Режим по умолчанию read-only. Путь для опционального JSON-отчёта является runtime artifact, а `--refresh-index` — единственный режим, который может обновить `storage/index`.
 Этот demo показывает только текущий baseline: OCR, LLM generation, summarization, vector DB, semantic retrieval и full RAG не реализованы.
-Вывод демо-проверки русскоязычный и ориентирован на read-only просмотр текущего состояния корпуса; для более явного row-level table context при необходимости можно запустить `--refresh-index`.
+Вывод демо-проверки русскоязычный и ориентирован на read-only просмотр текущего состояния корпуса; в Stage 19.1 он также показывает OCR candidate summary без запуска OCR. Для более явного row-level table context при необходимости можно запустить `--refresh-index`.
 
 ## Пересборка индекса корпуса
 
@@ -118,9 +118,12 @@ conda run -n etl_env python -m scripts.cleanup_storage --apply
 
 ## OCR
 
-OCR не входит в текущий baseline. `jpg`/`jpeg`/`png` поддерживаются только как standalone image input и используются для фиксации наличия изображений, без OCR.
-`HEIC`/`HEIF`/`TIFF`/`TIF`/`BMP`/`WEBP` сейчас намеренно остаются неподдерживаемыми image-like форматами до отдельной проверки local decoding/OCR.
-Для standalone image intake в `processing_info.features` фиксируются `images_detected=True` и `ocr_used=False`, а результат сохраняется в обычный JSON.
+OCR всё ещё не входит в текущий baseline. Stage 19.1 добавляет только OCR candidate reporting и OCR-readiness visibility, но не распознавание.
+`jpg`/`jpeg`/`png` продолжают приниматься как standalone image input в metadata-only режиме, без OCR, и помечаются как `ocr_candidate=True` с `ocr_reason=standalone_image`.
+`pdf` без meaningful extracted text / chunks может быть conservatively отмечен как `possible_scanned_pdf` / OCR candidate, но страницы не рендерятся в изображения и OCR не запускается.
+В `processing_info.features` для image-only intake фиксируются `images_detected=True` / `ocr_used=False`, а для OCR candidates в целом добавляется `ocr_candidate=True`.
+`HEIC`/`HEIF`/`TIFF`/`TIF`/`BMP`/`WEBP` по-прежнему остаются неподдерживаемыми image-like форматами до отдельной проверки local decoding/OCR.
+Read-only audit и customer demo runner теперь показывают summary по OCR candidates без изменения storage.
 Для ручной проверки image intake можно использовать `first_test_data/Справка (таблица).jpg` и `first_test_data/Справка (таблица).png`; это metadata-only standalone image intake без OCR, и они не нужны для автоматических тестов.
 
 ## Поддержка DOC

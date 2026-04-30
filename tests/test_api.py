@@ -150,6 +150,9 @@ def test_process_standalone_png_image_returns_image_metadata(monkeypatch) -> Non
         assert document["blocks"][0]["type"] == "image"
         assert document["processing_info"]["features"]["images_detected"] is True
         assert document["processing_info"]["features"]["ocr_used"] is False
+        assert document["processing_info"]["features"]["ocr_candidate"] is True
+        assert document["processing_info"]["ocr_candidate"] is True
+        assert document["processing_info"]["ocr_reason"] == "standalone_image"
     finally:
         get_settings.cache_clear()
         shutil.rmtree(smoke_root, ignore_errors=True)
