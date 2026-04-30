@@ -1,6 +1,6 @@
 # PLAN
 
-Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock, Stage 20 is the optional local OCR baseline for standalone images, Stage 21 is the completed read-only OCR smoke evaluation layer, Stage 22 is the completed requirements extraction v1 layer, Stage 23 is the completed table evidence evaluation layer, and Stage 24 is the completed read-only QA/retrieval readiness evaluation layer.
+Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock, Stage 20 is the optional local OCR baseline for standalone images, Stage 21 is the completed read-only OCR smoke evaluation layer, Stage 22 is the completed requirements extraction v1 layer, Stage 23 is the completed table evidence evaluation layer, Stage 24 is the completed read-only QA/retrieval readiness evaluation layer, and Stage 25 is the completed QA evaluator speed/diagnostics polish.
 
 ## Stage 1. Зафиксировать smoke/regression проверки
 
@@ -446,6 +446,30 @@ conda run -n etl_env python -m scripts.batch_process --input-dir first_test_data
   - scanned PDF OCR, OCR strategy changes;
   - SQL/table analytics;
   - коммит внешнего QA dataset или generated reports.
+- Статус: completed.
+
+## Stage 25. QA evaluator speed/diagnostics polish
+
+- Цель: сделать `scripts.evaluate_qa_dataset` удобнее для регулярных smoke/eval прогонов без изменения production behavior.
+- Подтверждённый scope:
+  - evaluator остаётся read-only и читает внешний QA CSV только через явный `--qa-path`;
+  - добавлены timing diagnostics в console output и JSON report: `load_qa_seconds`, `load_results_seconds`, `evaluate_seconds`, `write_report_seconds`, `total_seconds`, `avg_seconds_per_question`;
+  - добавлен fast-флаг `--skip-answer-overlap`, который отключает extractive `ask`/answer-overlap слой и явно помечает `answer_overlap_evaluated=false`, не подменяя skipped результат нулевым score;
+  - добавлен `--report-detail-level summary|failures|full`, где `full` остаётся default и наиболее совместим с Stage 24;
+  - добавлены output limits `--failures-limit`, `--missing-source-limit`, `--top-hits-limit`, которые ограничивают размер report, но не меняют retrieval/top-k evaluation intent;
+  - console output показывает mode, report detail level, skip answer overlap, total elapsed и avg seconds/question.
+- Рекомендуемый регулярный smoke:
+```powershell
+conda run -n etl_env python -m scripts.evaluate_qa_dataset --qa-path "D:\Projects\etl_service_backup\Example_data\[ОТВЕТЫ] Данные для тестирования\test_with_answers.csv" --skip-answer-overlap --report-detail-level summary --failures-limit 10 --missing-source-limit 5 --top-hits-limit 3 --json-report-path .runtime_eval\qa_smoke_summary.json
+```
+- Полный режим остаётся доступен по default или явно через `--report-detail-level full` без `--skip-answer-overlap`.
+- Вне scope:
+  - изменение production `/ask` contract;
+  - изменение search ranking;
+  - изменение ingestion pipeline;
+  - OCR/scanned PDF OCR;
+  - LLM, embeddings/vector DB, RAG generation;
+  - коммит внешнего QA dataset или runtime reports.
 - Статус: completed.
 
 ## Будущие варианты

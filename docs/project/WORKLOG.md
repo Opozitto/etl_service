@@ -15,7 +15,7 @@
 - Stage 12 partial: explicit unsupported image format contract added for known image-like formats outside `jpg` / `jpeg` / `png`, with user-facing wording localized to Russian.
 - Stage 12.2 completed as standalone `jpg` / `jpeg` / `png` image intake smoke/evaluation without OCR.
 - Stage 12 closed with API smoke/evaluation for standalone image intake and documentation closure.
-- Stage 12 follow-up: added manual image intake sample files `first_test_data/РЎРїСЂР°РІРєР° (С‚Р°Р±Р»РёС†Р°).jpg` and `first_test_data/РЎРїСЂР°РІРєР° (С‚Р°Р±Р»РёС†Р°).png`.
+- Stage 12 follow-up: added manual image intake sample files `first_test_data/Справка (таблица).jpg` and `first_test_data/Справка (таблица).png`.
 - Code/tests/OCR/dependencies were unchanged in the sample-files follow-up.
 - Commits:
   - `6997d98` `Add unsupported image format contract`
@@ -43,6 +43,11 @@
 - Stage 24 reads the user's external `Example_data/test_with_answers.csv` by path only; the dataset is not training data and is not committed or copied into the repository.
 - Stage 24 is CSV-first and uses processed `StructuredDocument` JSON from `storage/results` or an explicit `--results-dir`.
 - Stage 24 does not add LLM, RAG generation, embeddings/vector DB, external API, API endpoint, ingestion changes, OCR changes, or production search ranking changes.
+- Stage 25 polishes the QA evaluator for regular smoke/eval runs: timing diagnostics are now written to console and JSON reports.
+- Stage 25 adds `--skip-answer-overlap` for faster retrieval/source smoke runs by skipping the extractive `ask`/answer-overlap layer while keeping retrieval metrics.
+- Stage 25 adds compact report modes through `--report-detail-level summary|failures|full`; `full` remains the default for Stage 24 compatibility.
+- Stage 25 adds report-size controls: `--failures-limit`, `--missing-source-limit`, and `--top-hits-limit`.
+- Stage 25 does not change production `/ask`, search ranking, ingestion, OCR, LLM/RAG, embeddings/vector DB, or the external QA dataset policy.
 
 ## next
 
@@ -59,6 +64,7 @@
 - Stage 22 requirements extraction is candidate extraction only: no generation, no legal/compliance guarantee, and no search ranking change.
 - Stage 23 table evidence evaluation is read-only table/candidate preview only: no SQL/table analytics, no automatic calculations, and no search ranking or `/ask` contract change.
 - Stage 24 QA/retrieval evaluation is readiness diagnostics only: it measures retrieval/source visibility and token overlap, not final generative answer quality.
+- Stage 25 QA evaluator fast/summary modes are operational diagnostics only; they do not indicate a retrieval quality improvement by themselves.
 
 ## risks
 
@@ -68,6 +74,7 @@
 - OCR is now optional local baseline for standalone images, and candidate reporting remains in place for metadata-only fallback / conservative PDF readiness cases.
 - `HEIC` / `HEIF` / `TIFF` / `TIF` / `BMP` / `WEBP` remain unsupported.
 - LLM / RAG / generation are not implemented.
+- QA evaluator `--skip-answer-overlap` is intentionally a faster smoke mode; use full/default mode when answer-overlap trend comparison is needed.
 - The main current risk is not a lack of ideas, but scope creep into OCR / RAG / LLM work before the foundation is stable.
 - Full `pytest` inside the Codex sandbox on Windows can still hit `PermissionError` in pytest temp / `tmp_path`, even though the local `etl_env` run works.
 - `PermissionError` in the Codex sandbox remains an environment limitation, not a project defect.
@@ -88,6 +95,12 @@
 - `conda run -n etl_env python -m pytest -q --basetemp=D:\Projects\etl_service\.pytest-run-temp\stage20_full` -> tests executed, but pytest sessionfinish hit `PermissionError` on `basetemp` cleanup in the Codex sandbox.
 - `conda run -n etl_env python -m py_compile app\schemas\document.py app\services\document_service.py app\pipeline\ocr.py scripts\audit_corpus.py scripts\demo_customer_flow.py scripts\check_ocr.py` -> OK.
 - `conda run -n etl_env python -m scripts.demo_customer_flow` -> OK after runtime storage artifacts were restored.
+- `conda run -n etl_env python -m py_compile scripts\evaluate_qa_dataset.py tests\test_qa_dataset_evaluation.py` -> OK.
+- `conda run -n etl_env python -m scripts.evaluate_qa_dataset --help` -> OK; Stage 25 CLI flags are visible.
+- `conda run -n etl_env python -m pytest -q tests/test_qa_dataset_evaluation.py --basetemp=D:\Projects\etl_service\.pytest-run-temp\stage25_codex_qa` -> blocked by Codex sandbox `PermissionError` on `basetemp` cleanup.
+- `conda run -n etl_env python -m pytest -q tests/test_qa_dataset_evaluation.py -x --tb=short` -> blocked before the first `tmp_path` test by `PermissionError: [WinError 5] Отказано в доступе: 'D:\Temp\pytest-of-opozi'`.
+- `conda run -n etl_env python -m pytest -q tests/test_qa_dataset_evaluation.py::test_table_question_heuristic_identifies_domain_questions` -> 1 passed.
+- Manual Stage 25 evaluator smoke through `build_report(..., skip_answer_overlap=True, report_detail_level='summary', failures_limit=0, missing_source_limit=0, top_hits_limit=0)` -> OK.
 
 ## open questions
 

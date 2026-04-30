@@ -4,6 +4,7 @@ import argparse
 import csv
 import json
 import re
+from time import perf_counter
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
@@ -17,6 +18,9 @@ from app.search.store import CorpusIndex, IndexedChunk
 
 
 REPORT_VERSION = "stage24_qa_retrieval_readiness_v1"
+REPORT_DETAIL_LEVELS = ("summary", "failures", "full")
+DEFAULT_FAILURES_LIMIT = 10
+DEFAULT_MISSING_SOURCE_LIMIT = 5
 SCOPE_NOTE = (
     "QA/retrieval readiness evaluation for future source-backed answer layer / RAG layer; "
     "not a guarantee of generative answer quality. No LLM, no embeddings, no generation."
@@ -423,13 +427,60 @@ def format_hit(hit: SearchHit, rank: int) -> dict[str, Any]:
     }
 
 
+def make_timings(
+    *,
+    load_qa_seconds: float = 0.0,
+    load_results_seconds: float = 0.0,
+    evaluate_seconds: float = 0.0,
+    write_report_seconds: float = 0.0,
+    questions_total: int = 0,
+) -> dict[str, float]:
+    total_seconds = load_qa_seconds + load_results_seconds + evaluate_seconds + write_report_seconds
+    return {
+        "load_qa_seconds": round(load_qa_seconds, 4),
+        "load_results_seconds": round(load_results_seconds, 4),
+        "evaluate_seconds": round(evaluate_seconds, 4),
+        "write_report_seconds": round(write_report_seconds, 4),
+        "total_seconds": round(total_seconds, 4),
+        "avg_seconds_per_question": round(total_seconds / questions_total, 4) if questions_total else 0.0,
+    }
+
+
+def apply_report_detail_level(
+    report: dict[str, Any],
+    report_detail_level: str,
+) -> dict[str, Any]:
+    if report_detail_level == "full":
+        return report
+    if report_detail_level == "failures":
+        report["results"] = [item for item in report.get("results", []) if item.get("status") != "pass"]
+        return report
+    if report_detail_level == "summary":
+        report["results"] = []
+        return report
+    raise ValueError(f"Unsupported report detail level: {report_detail_level}")
+
+
 def evaluate_qa_rows(
     rows: Sequence[QARow],
     documents: Sequence[StructuredDocument],
     results_dir: Path,
     top_k: int = 5,
     skipped_result_files: Sequence[str] = (),
+    skip_answer_overlap: bool = False,
+    report_detail_level: str = "full",
+    failures_limit: int = DEFAULT_FAILURES_LIMIT,
+    missing_source_limit: int = DEFAULT_MISSING_SOURCE_LIMIT,
+    top_hits_limit: int | None = None,
 ) -> dict[str, Any]:
+    if report_detail_level not in REPORT_DETAIL_LEVELS:
+        raise ValueError(f"Unsupported report detail level: {report_detail_level}")
+    if failures_limit < 0 or missing_source_limit < 0:
+        raise ValueError("Report limits must be greater than or equal to 0")
+    stored_top_hits_limit = top_k if top_hits_limit is None else top_hits_limit
+    if stored_top_hits_limit < 0:
+        raise ValueError("top_hits_limit must be greater than or equal to 0")
+
     base_summary = {
         "questions_total": len(rows),
         "evaluated_questions": 0,
@@ -440,7 +491,9 @@ def evaluate_qa_rows(
         "document_hit_at_3": 0,
         "document_hit_at_5": 0,
         "source_hit_rate": 0.0,
-        "answer_overlap_avg": 0.0,
+        "answer_overlap_avg": None if skip_answer_overlap else 0.0,
+        "answer_overlap_evaluated": not skip_answer_overlap,
+        "skipped_answer_overlap": skip_answer_overlap,
         "evidence_overlap_avg": 0.0,
         "table_question_count": 0,
         "table_question_document_hit_rate": 0.0,
@@ -453,7 +506,14 @@ def evaluate_qa_rows(
             "mode": "read-only",
             "status": "no_documents",
             "results_dir": str(results_dir),
-            "config": {"top_k": top_k},
+            "config": {
+                "top_k": top_k,
+                "report_detail_level": report_detail_level,
+                "skip_answer_overlap": skip_answer_overlap,
+                "failures_limit": failures_limit,
+                "missing_source_limit": missing_source_limit,
+                "top_hits_limit": stored_top_hits_limit,
+            },
             "diagnostics": {
                 "message": "No processed StructuredDocument JSON files found in results dir.",
                 "skipped_result_files": list(skipped_result_files),
@@ -463,8 +523,10 @@ def evaluate_qa_rows(
                 "Answer overlap uses the current extractive ask path when hits are available.",
             ],
             "summary": base_summary,
+            "timings": make_timings(questions_total=len(rows)),
             "results": [],
             "top_failures": [],
+            "missing_source_examples": [],
         }
 
     index = build_read_only_index(documents)
@@ -479,15 +541,19 @@ def evaluate_qa_rows(
     missing_expected_source_count = 0
     source_hits = 0
     missing_source_examples: list[dict[str, Any]] = []
+    no_hit_count = 0
 
     for row in rows:
         hits = engine.search(row.question, top_k=top_k)
-        ask_response = engine.ask(row.question, top_k=top_k) if hits else None
+        if not hits:
+            no_hit_count += 1
+        ask_response = None if skip_answer_overlap else engine.ask(row.question, top_k=top_k) if hits else None
         answer_text = ask_response.answer if ask_response is not None else ""
         evidence_text = " ".join(hit.snippet for hit in hits)
-        answer_overlap = token_recall(row.expected_answer, answer_text)
+        answer_overlap = None if skip_answer_overlap else token_recall(row.expected_answer, answer_text)
         evidence_overlap = token_recall(row.expected_answer, evidence_text)
-        answer_overlaps.append(answer_overlap)
+        if answer_overlap is not None:
+            answer_overlaps.append(answer_overlap)
         evidence_overlaps.append(evidence_overlap)
 
         has_expected_source = not is_missing_expected_source(row.expected_document)
@@ -530,12 +596,14 @@ def evaluate_qa_rows(
             "table_like_question": table_like,
             "status": "pass" if reason == "ok" else "fail",
             "reason": reason,
-            "answer_surrogate_note": "current extractive ask answer" if ask_response is not None else "no answer; no hits",
-            "top_hits": [format_hit(hit, rank) for rank, hit in enumerate(hits, start=1)],
+            "answer_overlap_evaluated": not skip_answer_overlap,
+            "skipped_answer_overlap": skip_answer_overlap,
+            "answer_surrogate_note": "answer overlap skipped" if skip_answer_overlap else "current extractive ask answer" if ask_response is not None else "no answer; no hits",
+            "top_hits": [format_hit(hit, rank) for rank, hit in enumerate(hits[:stored_top_hits_limit], start=1)],
         }
         results.append(item)
         if reason == "missing_expected_source":
-            if len(missing_source_examples) < 5:
+            if len(missing_source_examples) < missing_source_limit:
                 missing_source_examples.append(
                     {
                         "question": item["question"],
@@ -547,24 +615,22 @@ def evaluate_qa_rows(
                     }
                 )
         elif reason != "ok":
-            failures.append(
-                {
-                    key: item[key]
-                    for key in (
-                        "question",
-                        "expected_answer_preview",
-                        "expected_document",
-                        "retrieved_documents",
-                        "hit_at_1",
-                        "hit_at_3",
-                        "hit_at_5",
-                        "answer_overlap",
-                        "evidence_overlap",
-                        "reason",
-                        "status",
-                    )
-                }
-            )
+            failure_keys = [
+                "question",
+                "expected_answer_preview",
+                "expected_document",
+                "retrieved_documents",
+                "hit_at_1",
+                "hit_at_3",
+                "hit_at_5",
+                "answer_overlap",
+                "answer_overlap_evaluated",
+                "skipped_answer_overlap",
+                "evidence_overlap",
+                "reason",
+                "status",
+            ]
+            failures.append({key: item[key] for key in failure_keys})
 
     evaluated = len(rows)
     source_hit_rate = round(source_hits / source_expected_count, 4) if source_expected_count else 0.0
@@ -579,20 +645,29 @@ def evaluate_qa_rows(
         "document_hit_at_3": sum(1 for item in results if item["hit_at_3"] and not is_missing_expected_source(item["expected_document"])),
         "document_hit_at_5": sum(1 for item in results if item["hit_at_5"] and not is_missing_expected_source(item["expected_document"])),
         "source_hit_rate": source_hit_rate,
-        "answer_overlap_avg": round(sum(answer_overlaps) / evaluated, 4) if evaluated else 0.0,
+        "answer_overlap_avg": None if skip_answer_overlap else round(sum(answer_overlaps) / evaluated, 4) if evaluated else 0.0,
+        "answer_overlap_evaluated": not skip_answer_overlap,
+        "skipped_answer_overlap": skip_answer_overlap,
         "evidence_overlap_avg": round(sum(evidence_overlaps) / evaluated, 4) if evaluated else 0.0,
         "table_question_count": table_questions,
         "table_question_document_hit_rate": table_question_document_hit_rate,
-        "no_hit_count": sum(1 for item in results if not item["top_hits"]),
+        "no_hit_count": no_hit_count,
     }
 
-    return {
+    report = {
         "report_version": REPORT_VERSION,
         "scope_note": SCOPE_NOTE,
         "mode": "read-only",
         "status": "ok",
         "results_dir": str(results_dir),
-        "config": {"top_k": top_k},
+        "config": {
+            "top_k": top_k,
+            "report_detail_level": report_detail_level,
+            "skip_answer_overlap": skip_answer_overlap,
+            "failures_limit": failures_limit,
+            "missing_source_limit": missing_source_limit,
+            "top_hits_limit": stored_top_hits_limit,
+        },
         "diagnostics": {
             "documents_loaded": len(documents),
             "index_document_count": index.document_count,
@@ -605,10 +680,12 @@ def evaluate_qa_rows(
             "Missing expected source placeholders such as 'Нет' are excluded from document-hit denominators.",
         ],
         "summary": summary,
+        "timings": make_timings(questions_total=len(rows)),
         "results": results,
-        "top_failures": failures[:10],
+        "top_failures": failures[:failures_limit],
         "missing_source_examples": missing_source_examples,
     }
+    return apply_report_detail_level(report, report_detail_level)
 
 
 def build_report(
@@ -621,9 +698,15 @@ def build_report(
     document_column: str | None = None,
     encoding: str | None = None,
     delimiter: str | None = None,
+    skip_answer_overlap: bool = False,
+    report_detail_level: str = "full",
+    failures_limit: int = DEFAULT_FAILURES_LIMIT,
+    missing_source_limit: int = DEFAULT_MISSING_SOURCE_LIMIT,
+    top_hits_limit: int | None = None,
 ) -> dict[str, Any]:
     if not qa_path.exists():
         raise ValueError(f"QA file not found: {qa_path}")
+    load_qa_started = perf_counter()
     rows, csv_info = load_qa_rows(
         qa_path=qa_path,
         question_column=question_column,
@@ -633,28 +716,49 @@ def build_report(
         delimiter=delimiter,
         max_questions=max_questions,
     )
+    load_qa_seconds = perf_counter() - load_qa_started
+    load_results_started = perf_counter()
     documents, skipped_files = load_documents_from_results(results_dir)
+    load_results_seconds = perf_counter() - load_results_started
+    evaluate_started = perf_counter()
     report = evaluate_qa_rows(
         rows=rows,
         documents=documents,
         results_dir=results_dir,
         top_k=top_k,
         skipped_result_files=skipped_files,
+        skip_answer_overlap=skip_answer_overlap,
+        report_detail_level=report_detail_level,
+        failures_limit=failures_limit,
+        missing_source_limit=missing_source_limit,
+        top_hits_limit=top_hits_limit,
     )
+    evaluate_seconds = perf_counter() - evaluate_started
     report["qa_path"] = str(qa_path)
     report["csv"] = csv_info
+    report["timings"] = make_timings(
+        load_qa_seconds=load_qa_seconds,
+        load_results_seconds=load_results_seconds,
+        evaluate_seconds=evaluate_seconds,
+        questions_total=len(rows),
+    )
     return report
 
 
 def print_report(report: dict[str, Any]) -> None:
     summary = report["summary"]
-    print("Stage 24 QA/retrieval dataset evaluation")
+    config = report["config"]
+    timings = report.get("timings", {})
+    print("Stage 25 QA/retrieval dataset evaluation")
     print(SCOPE_NOTE)
     print(f"QA path: {report.get('qa_path')}")
     print(f"Results dir: {report['results_dir']}")
+    print(f"Mode: {report.get('mode', 'read-only')}")
+    print(f"Report detail level: {config.get('report_detail_level', 'full')}")
+    print(f"Skip answer overlap: {str(config.get('skip_answer_overlap', False)).lower()}")
     print(
         "questions_total={questions_total} evaluated={evaluated_questions} skipped={skipped_questions} top_k={top_k}".format(
-            top_k=report["config"]["top_k"],
+            top_k=config["top_k"],
             **summary,
         )
     )
@@ -673,6 +777,18 @@ def print_report(report: dict[str, Any]) -> None:
             **summary
         )
     )
+    print(
+        "timings: load_qa={load_qa_seconds}s load_results={load_results_seconds}s evaluate={evaluate_seconds}s write_report={write_report_seconds}s total={total_seconds}s avg_per_question={avg_seconds_per_question}s".format(
+            load_qa_seconds=timings.get("load_qa_seconds", 0.0),
+            load_results_seconds=timings.get("load_results_seconds", 0.0),
+            evaluate_seconds=timings.get("evaluate_seconds", 0.0),
+            write_report_seconds=timings.get("write_report_seconds", 0.0),
+            total_seconds=timings.get("total_seconds", 0.0),
+            avg_seconds_per_question=timings.get("avg_seconds_per_question", 0.0),
+        )
+    )
+    if report.get("json_report_path"):
+        print(f"JSON report: {report['json_report_path']}")
     if report["status"] != "ok":
         print(f"Diagnostic: {report['diagnostics'].get('message', report['status'])}")
         return
@@ -696,6 +812,13 @@ def print_report(report: dict[str, Any]) -> None:
         print(f"   retrieved: {', '.join(failure['retrieved_documents']) or 'none'}")
 
 
+def non_negative_int(value: str) -> int:
+    parsed = int(value)
+    if parsed < 0:
+        raise argparse.ArgumentTypeError("must be greater than or equal to 0")
+    return parsed
+
+
 def main(argv: Sequence[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Read-only QA/retrieval readiness evaluation for external CSV dataset")
     parser.add_argument("--qa-path", required=True, help="Path to CSV with questions, expected answers and expected source")
@@ -708,10 +831,16 @@ def main(argv: Sequence[str] | None = None) -> None:
     parser.add_argument("--json-report-path", help="Optional path to save the JSON report")
     parser.add_argument("--encoding", help="Optional CSV encoding override")
     parser.add_argument("--delimiter", help="Optional CSV delimiter override")
+    parser.add_argument("--skip-answer-overlap", action="store_true", help="Skip extractive ask answer-overlap scoring for faster retrieval-only smoke runs")
+    parser.add_argument("--report-detail-level", choices=REPORT_DETAIL_LEVELS, default="full", help="JSON report detail level")
+    parser.add_argument("--failures-limit", type=non_negative_int, default=DEFAULT_FAILURES_LIMIT, help="Maximum top_failures records stored in the JSON report")
+    parser.add_argument("--missing-source-limit", type=non_negative_int, default=DEFAULT_MISSING_SOURCE_LIMIT, help="Maximum missing_source_examples records stored in the JSON report")
+    parser.add_argument("--top-hits-limit", type=non_negative_int, default=None, help="Maximum top_hits records stored per question in the JSON report")
     args = parser.parse_args(argv)
 
     settings = get_settings()
     results_dir = Path(args.results_dir).resolve() if args.results_dir else settings.resolved_storage_dir / "results"
+    started_at = perf_counter()
     try:
         report = build_report(
             qa_path=Path(args.qa_path).resolve(),
@@ -723,16 +852,57 @@ def main(argv: Sequence[str] | None = None) -> None:
             document_column=args.document_column,
             encoding=args.encoding,
             delimiter=args.delimiter,
+            skip_answer_overlap=args.skip_answer_overlap,
+            report_detail_level=args.report_detail_level,
+            failures_limit=args.failures_limit,
+            missing_source_limit=args.missing_source_limit,
+            top_hits_limit=args.top_hits_limit,
         )
     except ValueError as exc:
         raise SystemExit(str(exc)) from exc
 
-    print_report(report)
-
+    write_report_seconds = 0.0
     if args.json_report_path:
         report_path = Path(args.json_report_path).resolve()
+        report["json_report_path"] = str(report_path)
         report_path.parent.mkdir(parents=True, exist_ok=True)
+        write_started = perf_counter()
+        report["timings"] = make_timings(
+            load_qa_seconds=report["timings"]["load_qa_seconds"],
+            load_results_seconds=report["timings"]["load_results_seconds"],
+            evaluate_seconds=report["timings"]["evaluate_seconds"],
+            write_report_seconds=0.0,
+            questions_total=report["summary"]["questions_total"],
+        )
         report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+        write_report_seconds = perf_counter() - write_started
+        report["timings"] = make_timings(
+            load_qa_seconds=report["timings"]["load_qa_seconds"],
+            load_results_seconds=report["timings"]["load_results_seconds"],
+            evaluate_seconds=report["timings"]["evaluate_seconds"],
+            write_report_seconds=write_report_seconds,
+            questions_total=report["summary"]["questions_total"],
+        )
+        report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    else:
+        report["timings"] = make_timings(
+            load_qa_seconds=report["timings"]["load_qa_seconds"],
+            load_results_seconds=report["timings"]["load_results_seconds"],
+            evaluate_seconds=report["timings"]["evaluate_seconds"],
+            write_report_seconds=write_report_seconds,
+            questions_total=report["summary"]["questions_total"],
+        )
+
+    report["timings"]["total_seconds"] = round(perf_counter() - started_at, 4)
+    report["timings"]["avg_seconds_per_question"] = round(
+        report["timings"]["total_seconds"] / report["summary"]["questions_total"],
+        4,
+    ) if report["summary"]["questions_total"] else 0.0
+    if args.json_report_path:
+        report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    print_report(report)
+    if args.json_report_path:
         print(f"Saved QA/retrieval eval report to {report_path}")
 
 

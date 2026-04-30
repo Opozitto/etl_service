@@ -189,6 +189,142 @@ def test_evaluator_computes_hits_and_overlap_metrics(tmp_path: Path) -> None:
     assert report["top_failures"] == []
 
 
+def test_report_includes_timing_keys(tmp_path: Path) -> None:
+    module = _load_module()
+    results_dir = _prepare_results(tmp_path)
+    qa_path = tmp_path / "qa.csv"
+    _write_qa(qa_path, [("Какой ПДВ для источника выбросов?", "1.2 т/год", "emissions.docx")])
+
+    report = module.build_report(qa_path=qa_path, results_dir=results_dir)
+
+    assert set(report["timings"]) == {
+        "load_qa_seconds",
+        "load_results_seconds",
+        "evaluate_seconds",
+        "write_report_seconds",
+        "total_seconds",
+        "avg_seconds_per_question",
+    }
+    assert report["timings"]["total_seconds"] >= 0
+    assert report["timings"]["avg_seconds_per_question"] >= 0
+
+
+def test_skip_answer_overlap_skips_extracting_ask_answer(tmp_path: Path) -> None:
+    module = _load_module()
+    results_dir = _prepare_results(tmp_path)
+    qa_path = tmp_path / "qa.csv"
+    _write_qa(qa_path, [("Какой ПДВ для источника выбросов?", "1.2 т/год", "emissions.docx")])
+
+    report = module.build_report(qa_path=qa_path, results_dir=results_dir, skip_answer_overlap=True)
+
+    assert report["config"]["skip_answer_overlap"] is True
+    assert report["summary"]["answer_overlap_evaluated"] is False
+    assert report["summary"]["skipped_answer_overlap"] is True
+    assert report["summary"]["answer_overlap_avg"] is None
+    assert report["summary"]["source_hit_rate"] == 1.0
+    assert report["results"][0]["answer_overlap"] is None
+    assert report["results"][0]["answer_overlap_evaluated"] is False
+    assert report["results"][0]["skipped_answer_overlap"] is True
+
+
+def test_summary_detail_level_omits_bulky_question_details(tmp_path: Path) -> None:
+    module = _load_module()
+    results_dir = _prepare_results(tmp_path)
+    qa_path = tmp_path / "qa.csv"
+    _write_qa(
+        qa_path,
+        [
+            ("Какой ПДВ для источника выбросов?", "1.2 т/год", "emissions.docx"),
+            ("Несуществующий термин", "нет", "missing.pdf"),
+        ],
+    )
+
+    report = module.build_report(qa_path=qa_path, results_dir=results_dir, report_detail_level="summary")
+
+    assert report["config"]["report_detail_level"] == "summary"
+    assert report["summary"]["questions_total"] == 2
+    assert report["results"] == []
+    assert "top_failures" in report
+    assert "missing_source_examples" in report
+
+
+def test_failures_detail_level_keeps_failures_without_success_details(tmp_path: Path) -> None:
+    module = _load_module()
+    results_dir = _prepare_results(tmp_path)
+    qa_path = tmp_path / "qa.csv"
+    _write_qa(
+        qa_path,
+        [
+            ("Какой ПДВ для источника выбросов?", "1.2 т/год", "emissions.docx"),
+            ("Какой ПДВ для источника выбросов?", "1.2 т/год", "missing.pdf"),
+            ("Какой ПДВ для источника выбросов?", "1.2 т/год", "Нет"),
+        ],
+    )
+
+    report = module.build_report(
+        qa_path=qa_path,
+        results_dir=results_dir,
+        report_detail_level="failures",
+        failures_limit=1,
+        missing_source_limit=1,
+    )
+
+    assert report["config"]["report_detail_level"] == "failures"
+    assert all(item["status"] == "fail" for item in report["results"])
+    assert len(report["top_failures"]) == 1
+    assert len(report["missing_source_examples"]) == 1
+    assert not any(item["expected_document"] == "emissions.docx" for item in report["results"])
+
+
+def test_failures_limit_bounds_top_failures(tmp_path: Path) -> None:
+    module = _load_module()
+    results_dir = _prepare_results(tmp_path)
+    qa_path = tmp_path / "qa.csv"
+    _write_qa(
+        qa_path,
+        [
+            ("Какой ПДВ для источника выбросов?", "1.2 т/год", "missing-1.pdf"),
+            ("Какой ПДВ для источника выбросов?", "1.2 т/год", "missing-2.pdf"),
+        ],
+    )
+
+    report = module.build_report(qa_path=qa_path, results_dir=results_dir, failures_limit=1)
+
+    assert len(report["top_failures"]) == 1
+
+
+def test_missing_source_limit_bounds_examples(tmp_path: Path) -> None:
+    module = _load_module()
+    results_dir = _prepare_results(tmp_path)
+    qa_path = tmp_path / "qa.csv"
+    _write_qa(
+        qa_path,
+        [
+            ("Какой ПДВ?", "1.2 т/год", "Нет"),
+            ("Как контроль?", "квартально", "нет."),
+        ],
+    )
+
+    report = module.build_report(qa_path=qa_path, results_dir=results_dir, missing_source_limit=1)
+
+    assert len(report["missing_source_examples"]) == 1
+
+
+def test_top_hits_limit_bounds_stored_hits_without_changing_top_k_eval(tmp_path: Path) -> None:
+    module = _load_module()
+    results_dir = _prepare_results(tmp_path)
+    qa_path = tmp_path / "qa.csv"
+    _write_qa(qa_path, [("Контроль ПДВ вод мониторинг", "контроль", "water.txt")])
+
+    full_report = module.build_report(qa_path=qa_path, results_dir=results_dir, top_k=2)
+    limited_report = module.build_report(qa_path=qa_path, results_dir=results_dir, top_k=2, top_hits_limit=1)
+
+    assert full_report["summary"]["source_hit_rate"] == limited_report["summary"]["source_hit_rate"]
+    assert full_report["results"][0]["retrieved_documents"] == limited_report["results"][0]["retrieved_documents"]
+    assert len(full_report["results"][0]["top_hits"]) >= len(limited_report["results"][0]["top_hits"])
+    assert len(limited_report["results"][0]["top_hits"]) == 1
+
+
 def test_missing_expected_source_and_no_hit_are_graceful(tmp_path: Path) -> None:
     module = _load_module()
     results_dir = _prepare_results(tmp_path)
