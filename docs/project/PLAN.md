@@ -1,6 +1,6 @@
 # PLAN
 
-Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the current delivery-first roadmap lock, and Stage 20 is the current optional local OCR baseline for standalone images.
+Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the current delivery-first roadmap lock, Stage 20 is the current optional local OCR baseline for standalone images, and Stage 21 is the read-only OCR smoke evaluation layer.
 
 ## Stage 1. Зафиксировать smoke/regression проверки
 
@@ -370,6 +370,19 @@ conda run -n etl_env python -m scripts.batch_process --input-dir first_test_data
   - `tests/test_audit_corpus.py`
   - `tests/test_demo_customer_flow.py`
 - Статус: completed.
+
+## Stage 21. OCR smoke evaluation / read-only quality check
+
+- Цель: дать read-only smoke/eval проверку OCR readiness на image samples без записи в storage и без изменения production behavior.
+- Подзадачи:
+  - переиспользовать Stage 20 OCR adapter;
+  - собрать per-file OCR summary для supported/unsupported image-like inputs;
+  - не трогать scanned PDF OCR, RAG, LLM, vector DB, search ranking и batch ingestion behavior;
+  - сохранять JSON-report только по явному флагу.
+- Артефакты:
+  - `scripts/evaluate_ocr.py`
+  - `tests/test_evaluate_ocr.py`
+- Статус: current.
 
 ## Будущие варианты
 

@@ -152,6 +152,7 @@ Below is the minimal set of evaluation cases for Stage 10. It fixes which questi
 - Stage 16 should treat summarization / draft generation as a future spike, not a baseline claim.
 - Stage 17 should connect the confirmed parts into a prototype integration flow while keeping audit and eval visible.
 - Stage 19.1 adds OCR candidate reporting and read-only visibility, while Stage 20 adds the optional local OCR baseline for standalone images only.
+- Stage 21 adds a separate read-only OCR smoke evaluation script for image readiness checks.
 - The Stage 17 demo helper may read the current corpus snapshot, rebuild the index only behind an explicit flag, and show the current baseline honestly.
 
 ## Notes on the current baseline

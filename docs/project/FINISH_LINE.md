@@ -37,6 +37,7 @@
   - spreadsheet table retrieval with row-level context;
   - read-only OCR candidate reporting;
   - optional local OCR baseline for standalone images when a local engine is available.
+  - read-only OCR smoke evaluation script for image readiness checks.
 - Not confirmed:
   - scanned PDF OCR;
   - LLM generation;

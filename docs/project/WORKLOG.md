@@ -36,11 +36,11 @@
 - Stage 19.1 completed as OCR candidate reporting / OCR-readiness without production OCR.
 - Stage 19.1 keeps OCR out of production flow and only adds detection, reporting, and read-only visibility for candidates.
 - Stage 20 completed as optional local OCR baseline for standalone `jpg` / `jpeg` / `png` with local engine fallback to metadata-only behavior.
+- Stage 21 adds a read-only OCR smoke evaluation script for readiness checks on image samples.
 
 ## next
 
 - Stage 19.2 Customer demo finalization / final polish checkpoint.
-- Stage 21 OCR quality evaluation, only after OCR baseline.
 - Stage 22 Requirements extraction v1, source-backed, no generation.
 - Stage 23 Table-aware evaluation / calculation inputs v2.
 - Stage 24 Summarization / draft generation spike, only if source-backed foundation remains stable.

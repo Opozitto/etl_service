@@ -126,6 +126,19 @@ OCR для standalone `jpg`/`jpeg`/`png` теперь optional local baseline: �
 Read-only audit и customer demo runner теперь показывают summary по OCR candidates и OCR-used documents без изменения storage.
 Для ручной проверки OCR engine можно использовать `conda run -n etl_env python -m scripts.check_ocr`.
 
+### OCR smoke/eval
+
+Для read-only smoke/eval проверки качества OCR на sample images можно использовать:
+
+```bash
+conda run -n etl_env python -m scripts.evaluate_ocr
+conda run -n etl_env python -m scripts.evaluate_ocr --input-dir first_test_data --json-report-path tmp/ocr_smoke_report.json
+```
+
+Этот script читает входные image samples, использует Stage 20 OCR adapter и не пишет в `storage/index`, `storage/results` или `storage/uploads`.
+Это smoke/eval слой для проверки readiness, а не production OCR quality guarantee.
+Scanned PDF OCR в Stage 21 не входит.
+
 ## Поддержка DOC
 
 Для старых файлов `DOC` baseline использует локальный `LibreOffice` (`soffice`) и конвертирует документ в `DOCX` перед извлечением. Внешние API не используются.
