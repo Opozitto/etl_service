@@ -1,6 +1,6 @@
 # PLAN
 
-Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock, Stage 20 is the optional local OCR baseline for standalone images, Stage 21 is the completed read-only OCR smoke evaluation layer, Stage 22 is the completed requirements extraction v1 layer, Stage 23 is the completed table evidence evaluation layer, Stage 24 is the completed read-only QA/retrieval readiness evaluation layer, and Stage 25 is the completed QA evaluator speed/diagnostics polish.
+Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock. Stage 20–25 are completed OCR/readiness/extraction/table/QA-evaluation layers. Stage 26–29.2 are completed external QA/chunk visibility diagnostics and audit stages. Stage 30 is planned as RAG chunk contract hardening v1 for future source-backed handoff, not as full RAG.
 
 ## Stage 1. Зафиксировать smoke/regression проверки
 
@@ -480,7 +480,7 @@ conda run -n etl_env python -m scripts.evaluate_qa_dataset --qa-path "D:\Project
 
 - Статус: completed.
 - Цель: read-only аудит покрытия внешнего QA dataset до обработки внешних документов.
-- Scope:
+- Граница scope:
   - read-only анализ внешнего `Example_data`;
   - QA CSV coverage;
   - expected document references;
@@ -498,7 +498,7 @@ conda run -n etl_env python -m scripts.evaluate_qa_dataset --qa-path "D:\Project
 - Подготовка к Stage 27:
   - audit отделяет matched/missing/ambiguous expected documents;
   - Stage 27 должен использовать временный workspace и не писать в `storage/index`, `storage/results`, `storage/uploads`.
-- Out of scope:
+- Вне scope:
   - processing full external dataset;
   - changing search ranking;
   - changing `/ask`;
@@ -510,7 +510,7 @@ conda run -n etl_env python -m scripts.evaluate_qa_dataset --qa-path "D:\Project
 
 - Статус: completed.
 - Цель: добавить safe temporary workspace workflow для внешнего QA dataset после Stage 26 audit.
-- Scope:
+- Граница scope:
   - CLI `scripts.evaluate_external_qa_workspace`;
   - default safe/dry-run behavior, если `--process` и `--run-eval` не указаны;
   - processing только по явному `--process`;
@@ -527,7 +527,7 @@ conda run -n etl_env python -m scripts.evaluate_qa_dataset --qa-path "D:\Project
   - production `storage/index`, `storage/results`, `storage/uploads` не должны загрязняться Stage 27 workflow;
   - ambiguous expected docs из Stage 26 по default не обрабатываются, а попадают в skipped examples;
   - `all-supported` и `ambiguous-policy all` требуют явных флагов и могут быть ограничены `--max-documents`.
-- Out of scope:
+- Вне scope:
   - external dataset commit/copy into repo;
   - production search ranking, `/api/v1/ask`, OCR strategy, scanned PDF OCR;
   - LLM/RAG generation, embeddings/vector DB, semantic retrieval;
@@ -537,7 +537,7 @@ conda run -n etl_env python -m scripts.evaluate_qa_dataset --qa-path "D:\Project
 
 - Статус: completed.
 - Цель: классифицировать провалы QA/retrieval eval и сделать диагностику понятной для customer-facing анализа без обещания неподтверждённых AI capabilities.
-- Scope:
+- Граница scope:
   - read-only module `app.evaluation.qa_failure_taxonomy`;
   - CLI `scripts.diagnose_qa_failures`;
   - stable `taxonomy_version: "stage28_qa_failure_taxonomy_v1"`;
@@ -546,7 +546,7 @@ conda run -n etl_env python -m scripts.evaluate_qa_dataset --qa-path "D:\Project
   - JSON diagnostics пишется только по явному `--output-path`;
   - console summary показывает количество вопросов, failures/limitations, counts by category и честные next actions;
   - классификация консервативна: если в старом report не хватает полей, item уходит в `unknown_or_needs_manual_review`.
-- Out of scope:
+- Вне scope:
   - production search/ranking changes;
   - `/api/v1/ask` contract changes;
   - ingestion pipeline changes;
@@ -563,7 +563,7 @@ conda run -n etl_env python -m scripts.evaluate_qa_dataset --qa-path "D:\Project
   - текущие chunks acceptable for lexical search;
   - текущие chunks weak/partial as self-contained RAG handoff units;
   - ближайший приоритет - customer/developer-readable chunk inspection/export, а не speed/cache.
-- Out of scope:
+- Вне scope:
   - full RAG/LLM generation;
   - embeddings/vector DB;
   - OCR/reranking/table analytics;
@@ -579,7 +579,7 @@ conda run -n etl_env python -m scripts.evaluate_qa_dataset --qa-path "D:\Project
   - JSON report только по явному `--output-path`;
   - compact chunk export с document/source/section/page/table context where available;
   - conservative `content_type` и `quality_flags` без OCR/table analytics/LLM.
-- Scope boundary: read-only diagnostics/export; без изменения ingestion, search ranking, `/api/v1/ask`, storage baseline или external dataset.
+- Граница scope: read-only diagnostics/export; без изменения ingestion, search ranking, `/api/v1/ask`, storage baseline или external dataset.
 
 ## Stage 29.2. Chunk quality audit v1
 
@@ -591,25 +591,25 @@ conda run -n etl_env python -m scripts.evaluate_qa_dataset --qa-path "D:\Project
   - JSON report только по явному `--output-path`, console summary без записи файла по default;
   - deterministic issue taxonomy для short/long/missing section/page/table-like/unknown/empty/low-context/duplicate/image-or-OCR-limited signals;
   - per-document aggregation, bounded samples, roadmap-linked recommendations для Stage 30/31/32.
-- Scope boundary: deterministic audit/report only; без LLM/RAG generation, embeddings/vector DB, OCR, reranking или table analytics.
+- Граница scope: deterministic audit/report only; без LLM/RAG generation, embeddings/vector DB, OCR, reranking или table analytics.
 
 ## Stage 30. RAG chunk contract hardening v1
 
 - Статус: planned.
-- Цель: уточнить контракт chunk payload/source context для будущего source-backed RAG handoff, не объявляя RAG готовым.
-- Scope boundary: contract/docs/tests only where explicitly needed; без full RAG/LLM generation, semantic retrieval или vector DB.
+- Цель: уточнить и укрепить production contract для существующего `chunk` payload/source context, чтобы будущий source-backed RAG handoff мог опираться на более устойчивые handoff units, не объявляя RAG готовым.
+- Граница scope: hardening существующего chunk/source contract; без full RAG/LLM generation, semantic retrieval, embeddings или vector DB.
 
 ## Stage 31. Table chunk context v1
 
 - Статус: planned.
 - Цель: улучшить читаемость table chunk context как handoff unit, сохранив lexical retrieval baseline.
-- Scope boundary: context hardening only; без SQL/table analytics, automatic calculations или ranking rewrite.
+- Граница scope: context hardening only; без SQL/table analytics, automatic calculations или ranking rewrite.
 
 ## Stage 32. Source location/citation hardening
 
 - Статус: planned.
 - Цель: сделать source location/citation context более устойчивым для inspection, diagnostics и будущего source-backed handoff.
-- Scope boundary: citation/source metadata hardening; без генерации ответов, external APIs или vector DB.
+- Граница scope: citation/source metadata hardening; без генерации ответов, external APIs или vector DB.
 
 ## Stage 33. QA evaluator retrieval-loop speed/cache
 

@@ -1,170 +1,205 @@
 # CUSTOMER SCENARIOS
 
-## Goal of Stage 10
+## Назначение документа
 
-Capture customer scenarios and an evaluation set for the pilot track before Stage 11-17 sharpen ask / OCR / tables / summarization / integration. This is a docs-level baseline that connects the current local ETL/search/evaluation foundation to real ecologist workflows.
+Документ был создан на Stage 10 как docs-level baseline для пользовательских сценариев и минимального evaluation set. Сейчас он актуализируется по мере развития ETL/search/evaluation baseline и отражает текущее состояние после Stage 29.2.
 
-## Main user
+Сценарии описывают пилотный контур для эколога-проектировщика: source-backed search, extractive QA, extraction/evidence diagnostics, контроль качества корпуса и подготовку chunk handoff для будущего source-backed RAG layer. Документ не объявляет готовыми full RAG, LLM generation, embeddings/vector DB, semantic retrieval, scanned PDF OCR или table analytics.
 
-Main user: ecologist-planner.
+## Основной пользователь
 
-He works with client source files, normative documents, project documentation, templates, and methodological materials. For him, source-backed search, extractive QA, requirements extraction, calculation inputs, and corpus quality control are critical.
+Основной пользователь: эколог-проектировщик.
+
+Он работает с исходными файлами клиента, нормативными документами, проектной документацией, шаблонами и методическими материалами. Для него важны source-backed поиск, extractive QA, извлечение требований, поиск входных данных для расчетов, контроль качества корпуса и прозрачность источников.
 
 ## MVP / pilot scenarios
 
-All pilot scenarios below remain source-backed. They may use existing corpus content and audit visibility, but they do not imply generated answers or ungrounded synthesis.
+Все сценарии ниже остаются source-backed. Они могут использовать существующий корпус, audit visibility и chunk diagnostics, но не обещают generated answers или ungrounded synthesis.
 
 ### S1. Source-backed search
 
-The user searches for fragments or sections in client or normative documents.
+Пользователь ищет фрагменты или разделы в документах клиента или нормативных материалах.
 
-Expected output:
+Ожидаемый результат:
 
-- list of found documents / chunks;
-- `file` / `document_id`;
+- список найденных documents / chunks;
+- `file` / `filename` / `document_id`;
 - `section_title`;
 - `snippet`;
 - `score` / `rank`.
 
 ### S2. Source-backed extractive QA
 
-The user asks a question about uploaded documents.
+Пользователь задает вопрос по загруженным документам.
 
-Expected output:
+Ожидаемый результат:
 
-- a short answer strictly grounded in found sources;
-- links to `file` / `document_id` / `chunk` / `section`;
-- if no data exists, an explicit `нет информации в корпусе`.
+- короткий ответ, строго основанный на найденных источниках;
+- ссылки на `file` / `document_id` / `chunk` / `section`;
+- если данных нет, явное `нет информации в корпусе`.
 
 ### S3. Requirements extraction
 
-The user asks to find requirements or normative conditions.
+Пользователь просит найти требования или нормативные условия.
 
-Expected output:
+Ожидаемый результат:
 
-- found requirements as extractive snippets;
-- source references;
+- найденные требования как extractive snippets;
+- ссылки на источники;
 - candidate category / score / matched terms where available;
-- no generation of new requirements and no legal/compliance guarantee.
+- без генерации новых требований и без legal/compliance guarantee.
 
 ### S4. Calculation inputs discovery
 
-The user searches for data needed for calculations or justifications.
+Пользователь ищет данные для расчетов или обоснований.
 
-Expected output:
+Ожидаемый результат:
 
-- found numeric and text fragments;
-- source references;
-- candidate tables with headers, preview rows, category/tags, score, and matched terms where available;
-- a note if tables or OCR are required.
+- найденные числовые и текстовые фрагменты;
+- ссылки на источники;
+- candidate tables с headers, preview rows, category/tags, score и matched terms where available;
+- честная отметка, если нужны таблицы, OCR или ручная проверка.
 
 ### S5. Document quality / audit
 
-The user or developer checks whether the corpus is fit for use.
+Пользователь или разработчик проверяет, пригоден ли корпус для работы.
 
-Expected output:
+Ожидаемый результат:
 
 - batch report;
 - corpus audit;
 - retrieval eval;
-- problem documents.
+- problem documents;
+- явные limitations вместо обещания неподтвержденных AI capabilities.
 
 ### S6. OCR / image intake candidate
 
-A scan or photo of a document.
+Пользователь загружает скан или фотографию документа.
 
-Current output:
+Текущий результат:
 
-- metadata-only fallback when no local OCR engine is available;
+- metadata-only fallback, если локальный OCR engine недоступен;
 - OCR candidate detection / reporting;
-- optional local OCR baseline for standalone `jpg` / `jpeg` / `png` when the engine is available;
-- do not promise ready scanned PDF OCR.
+- optional local OCR baseline для standalone `jpg` / `jpeg` / `png`, если engine доступен;
+- scanned PDF OCR не обещается как готовый.
 
-Future path:
+Будущий путь:
 
-- scanned PDF OCR remains out of scope;
-- table/table-layout OCR and full document layout analysis remain out of scope.
+- scanned PDF OCR остается вне подтвержденного baseline;
+- table/table-layout OCR и full document layout analysis остаются вне текущего scope.
 
 ### S7. Summarization / draft generation candidate
 
-The user asks for a summary or a draft section.
+Пользователь просит summary или draft section.
 
-Expected output at the current stage:
+Ожидаемый результат на текущем этапе:
 
 - future spike only;
-- do not promise LLM generation as ready.
+- не обещать summarization или LLM generation как готовые возможности.
 
-## Out of scope for Stage 10
+### S8. Chunk inspection / RAG-ready handoff diagnostics
 
-Currently out of scope:
+Пользователь или разработчик проверяет, как документ разбит на chunks и насколько chunks пригодны для будущего source-backed RAG layer.
 
-- production OCR;
+Ожидаемый результат:
+
+- chunk text / preview;
+- `filename`;
+- `document_id`;
+- section path where available;
+- page where available;
+- `content_type`;
+- `quality_flags`;
+- limitations / handoff notes.
+
+Это diagnostics/handoff visibility после Stage 29.1/29.2. Это не full RAG, не semantic retrieval, не embeddings/vector DB и не generation.
+
+## Вне текущего подтвержденного baseline
+
+Сейчас вне подтвержденного baseline:
+
+- scanned PDF OCR;
 - semantic retrieval;
-- vector DB;
+- embeddings/vector DB;
 - full RAG;
 - LLM generation / answer synthesis;
+- summarization / draft generation как готовая функция;
 - automatic generation of documentation fragments;
-- promise of HEIC as a ready intake path;
-- promise of XLS/XLSX table intelligence beyond the current baseline;
+- HEIC как готовый intake path;
+- XLS/XLSX table intelligence beyond the current baseline;
+- SQL/table analytics или automatic calculations;
 - external proprietary APIs.
 
-## Expected results
+## Ожидаемые результаты документа
 
-Stage 10 should record not a functional implementation, but a pilot track contract:
+Этот документ фиксирует не новую функциональную реализацию, а pilot track contract:
 
-- user scenarios;
-- expected outputs for search, QA, extraction, and audit;
-- limitations of the current baseline;
+- пользовательские сценарии;
+- expected outputs для search, QA, extraction, audit и chunk diagnostics;
+- ограничения текущего baseline;
 - minimal evaluation set;
-- links to future stages.
+- связь с будущими stage.
 
 ## Acceptance criteria
 
-- Scenarios are formulated for the ecologist-planner, not for an abstract user.
-- Each MVP / pilot scenario has an expected result tied to source-backed behavior.
-- Nothing from OCR / RAG / LLM generation is announced as ready unless it is confirmed by code.
-- The minimal evaluation set covers supported now / partial / future boundaries.
-- The material connects the current Stage 7-9 baseline with Stage 11-17.
+- Сценарии сформулированы для эколога-проектировщика, а не для абстрактного пользователя.
+- У каждого MVP / pilot сценария есть ожидаемый результат, связанный с source-backed behavior.
+- OCR / RAG / LLM generation не объявляются готовыми, если это не подтверждено кодом.
+- Minimal evaluation set покрывает границы supported now / diagnostics / future.
+- Материал связывает исторический Stage 10 baseline с текущим состоянием после Stage 29.2.
 
 ## Minimal evaluation set
 
-Below is the minimal set of evaluation cases for Stage 10. It fixes which questions must pass through the current foundation and which ones should remain honestly limited.
+Минимальный набор evaluation cases фиксирует, какие задачи должны проходить через текущий baseline, а какие должны честно оставаться ограниченными.
 
 | id | scenario | user_question_or_task | input_scope | expected_behavior | expected_sources_required | current_stage_support | notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| EC-01 | Source-backed search | Find `экология проект` in the corpus | Local corpus index and saved JSON results | Return top hits with `file`, `document_id`, `section_title`, `snippet`, `score` / `rank` | yes | supported now | Basic retrieval proof |
-| EC-02 | Requirements search | Find requirements for PДВ / emissions | Documents from client corpus and normative source files | Show extractive snippets with source references | yes | supported now | Requirements must be extracted, not generated |
-| EC-03 | Extractive QA | What deadline or condition is stated in the document? | Chunk-level corpus content | Short answer strictly grounded in sources | yes | supported now | If no answer exists, return `нет информации в корпусе` |
-| EC-04 | No-answer case | Is there information about X if there is none? | Relevant corpus subset | Explicitly say that the information is absent | yes | supported now | Checks honest refusal without hallucination |
-| EC-05 | Calculation inputs | Find source data for a calculation | Text and numeric fragments in docs | Return numbers/fragments and candidate table previews with references | yes | supported now | Stage 23 adds read-only table evidence evaluation; no automatic calculations |
-| EC-06 | Audit visibility | A document without chunks should be flagged by audit | Batch corpus outputs and audit report | Appear in problem documents / audit summary | no | supported now | Linked to the Stage 7-9 reporting layer |
-| EC-07 | OCR limitation / candidate visibility | A scan or photo of a document | JPG / JPEG / PNG / HEIC candidate inputs | Mark metadata-only fallback, OCR candidates, and optional local OCR baseline for standalone images when engine is available | no | Stage 20 | Do not promise scanned PDF OCR; HEIC/HEIF/TIFF/TIF/BMP/WEBP stay unsupported |
-| EC-08 | Table input | XLS / XLSX table-heavy document | Spreadsheet or table-like source | XLS and XLSX are supported at baseline level with flattened lexical retrieval plus read-only table evidence candidates | yes | supported now | Row-level chunks and Stage 23 evidence improve source-backed preview; this is still not table-aware analytics |
-| EC-09 | Summarization | Make a short summary of a document | Source document plus request for summary | Future spike only | yes | future | Do not announce ready summarization |
-| EC-10 | Draft generation | Prepare a draft section of documentation | Project doc context and task brief | Future spike only | yes | future | Do not announce ready LLM generation |
-| EC-11 | Source attribution | Show where the answer came from | Search hits and chunk references | Answer must carry explicit source references | yes | supported now | Trust criterion for the pilot track |
-| EC-12 | Problem documents | Find problematic documents in the corpus | Index, manifest, batch and audit reports | Audit should surface duplicates, warnings, missing chunks, and low-quality items | no | supported now | Uses the Stage 7-9 reporting layer |
+| EC-01 | Source-backed search | Найти `экология проект` в корпусе | Local corpus index and saved JSON results | Вернуть top hits с `file`, `document_id`, `section_title`, `snippet`, `score` / `rank` | yes | supported now | Basic retrieval proof |
+| EC-02 | Requirements search | Найти требования для ПДВ / emissions | Documents from client corpus and normative source files | Показать extractive snippets со ссылками на источники | yes | supported now | Requirements must be extracted, not generated |
+| EC-03 | Extractive QA | Какой срок или условие указаны в документе? | Chunk-level corpus content | Короткий ответ строго по источникам | yes | supported now | Если ответа нет, вернуть `нет информации в корпусе` |
+| EC-04 | No-answer case | Есть ли информация про X, если ее нет? | Relevant corpus subset | Явно сказать, что информация отсутствует | yes | supported now | Проверяет честный отказ без hallucination |
+| EC-05 | Calculation inputs | Найти исходные данные для расчета | Text and numeric fragments in docs | Вернуть numbers/fragments и candidate table previews со ссылками | yes | supported now / diagnostics | Stage 23 adds read-only table evidence evaluation; no automatic calculations |
+| EC-06 | Audit visibility | Документ без chunks должен быть отмечен audit | Batch corpus outputs and audit report | Попасть в problem documents / audit summary | no | supported now | Linked to the Stage 7-9 reporting layer |
+| EC-07 | OCR limitation / candidate visibility | Скан или фото документа | JPG / JPEG / PNG / HEIC candidate inputs | Отметить metadata-only fallback, OCR candidates и optional local OCR baseline для standalone images when engine is available | no | Stage 20 / diagnostics | Do not promise scanned PDF OCR; HEIC/HEIF/TIFF/TIF/BMP/WEBP stay unsupported |
+| EC-08 | Table input | XLS / XLSX table-heavy document | Spreadsheet or table-like source | XLS and XLSX supported at baseline level with flattened lexical retrieval plus read-only table evidence candidates | yes | supported now / diagnostics | Row-level chunks and Stage 23 evidence improve source-backed preview; still not table-aware analytics |
+| EC-09 | Summarization | Сделать краткое summary документа | Source document plus request for summary | Future spike only | yes | future | Do not announce ready summarization |
+| EC-10 | Draft generation | Подготовить draft section документации | Project doc context and task brief | Future spike only | yes | future | Do not announce ready LLM generation |
+| EC-11 | Source attribution | Показать, откуда взят ответ | Search hits and chunk references | Ответ должен содержать explicit source references | yes | supported now | Trust criterion for the pilot track |
+| EC-12 | Problem documents | Найти проблемные документы в корпусе | Index, manifest, batch and audit reports | Audit surfaces duplicates, warnings, missing chunks and low-quality items | no | supported now | Uses the Stage 7-9 reporting layer |
+| EC-13 | RAG-ready chunk export/audit | Проверить качество chunks как handoff units | Existing processed JSON / Stage 29.1 chunk export records | Показать chunk text/preview, `filename`, `document_id`, section path, page where available, `content_type`, `quality_flags`, limitations and issue summary | yes | supported now / diagnostics | Stage 29.1/29.2; no embeddings/vector DB/generation |
 
-## Relationship with Stage 11-17
+## Связь со Stage 11-17
 
-- Stage 11 should prove ask / extractive QA with sources on top of the current corpus, without turning it into generation.
-- Stage 12 should test OCR / image intake and separate confirmed support from limitations, especially for scans and phone photos.
+- Stage 11 proves ask / extractive QA with sources поверх текущего корпуса, не превращая это в generation.
+- Stage 12 tests OCR / image intake and separates confirmed support from limitations, especially for scans and phone photos.
 - Stage 13 keeps the historical XLS / tables decision; Stage 14 superseded the old unsupported-XLS state with practical baseline support.
-- Stage 15 should align customer demo readiness, ingestion-search QA, supported formats, and the scenario matrix after XLS support.
-- Stage 16 should treat summarization / draft generation as a future spike, not a baseline claim.
-- Stage 17 should connect the confirmed parts into a prototype integration flow while keeping audit and eval visible.
-- Stage 19.1 adds OCR candidate reporting and read-only visibility, while Stage 20 adds the optional local OCR baseline for standalone images only.
+- Stage 15 aligns customer demo readiness, ingestion-search QA, supported formats and the scenario matrix after XLS support.
+- Stage 16 treats summarization / draft generation as a future spike, not a baseline claim.
+- Stage 17 connects confirmed parts into a prototype integration flow while keeping audit and eval visible.
+- Stage 19.1 adds OCR candidate reporting and read-only visibility, while Stage 20 adds optional local OCR baseline for standalone images only.
 - Stage 21 adds a separate read-only OCR smoke evaluation script for image readiness checks.
-- The Stage 17 demo helper may read the current corpus snapshot, rebuild the index only behind an explicit flag, and show the current baseline honestly.
+- Stage 22/23 add source-backed requirements and table evidence diagnostics without generation or table analytics.
+- Stage 24/25 add QA/retrieval readiness evaluation and evaluator diagnostics without changing production retrieval behavior.
+
+## Текущее состояние после Stage 29.2
+
+- Stage 29.1 adds read-only RAG-ready chunk inspection/export over existing processed JSON.
+- Stage 29.2 adds read-only chunk quality audit over existing processed JSON / exported chunk records.
+- Chunks are now visible and auditable, but they are not yet hardened self-contained RAG handoff units.
+- Stage 30 should harden chunk/source contract for future source-backed handoff.
+- Stage 31 should strengthen table chunk context.
+- Stage 32 should strengthen source location/citation context.
+- These stages should not promise full RAG, semantic retrieval, embeddings/vector DB, LLM generation, scanned PDF OCR or table analytics.
 
 ## Notes on the current baseline
 
-- Stage 7-9 already provide batch reporting, corpus audit, and retrieval quality evaluation.
-- This makes source-backed search and source-backed proof the right immediate pilot direction.
-- OCR, semantic retrieval, vector DB, RAG, and LLM generation remain outside the confirmed baseline; OCR candidate reporting is the current read-only bridge, and the standalone image OCR baseline is optional / local only.
+- Stage 7-9 already provide batch reporting, corpus audit and retrieval quality evaluation.
+- The confirmed direction remains source-backed search, source-backed proof, deterministic extraction/evidence and transparent diagnostics.
+- OCR candidate reporting is the current read-only bridge for image limitations; standalone image OCR baseline is optional / local only.
+- Spreadsheet/table support remains flattened lexical retrieval plus deterministic table evidence, not full table reasoning.
 
 ## Stage 14 note
 
-- EC-08 now reflects practical `.xls` / `.xlsx` support at baseline level.
+- EC-08 reflects practical `.xls` / `.xlsx` support at baseline level.
 - The scenario set still uses flattened lexical retrieval and deterministic table evidence, and does not claim full table reasoning.
 - Row-level spreadsheet chunks and Stage 23 table evidence improve source-backed table row/value discovery without SQL/table analytics or automatic calculations.

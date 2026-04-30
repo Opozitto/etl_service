@@ -19,6 +19,8 @@
 - Table evidence evaluation is available as a read-only readiness layer for finding table candidates, headers, preview rows, and likely calculation input categories; it is not SQL/table analytics and does not perform automatic calculations.
 - Customer demo smoke runner is available as a read-only CLI helper and honestly shows the current baseline limitations.
 - Requirements extraction v1 is available as a deterministic source-backed candidate layer over processed JSON; it extracts snippets with source context and does not provide a legal/compliance guarantee.
+- RAG-ready chunk inspection/export is available as a read-only visibility layer over existing processed JSON; it exposes chunk text/preview, document/source context, conservative `content_type`, `quality_flags`, and limitations for future handoff review.
+- Chunk quality audit is available as a read-only diagnostic layer for chunk completeness/self-containedness/source-context gaps; it reports deterministic issues and recommendations, but does not make the system a RAG implementation.
 
 ## Best shippable baseline
 
@@ -30,6 +32,8 @@
 - optional local OCR baseline for standalone images when a local engine is available.
 - OCR candidate reporting for image-only intake and conservative PDF readiness visibility.
 - deterministic requirements candidate extraction with source context.
+- read-only RAG-ready chunk inspection/export for visibility and handoff diagnostics.
+- read-only chunk quality audit for handoff-readiness diagnostics.
 
 ## What is confirmed, and what is not
 
@@ -44,12 +48,14 @@
   - read-only OCR smoke evaluation script for image readiness checks.
   - deterministic source-backed requirements candidate extraction.
   - deterministic source-backed table evidence evaluation.
+  - read-only RAG-ready chunk inspection/export.
+  - read-only chunk quality audit.
 - Not confirmed:
   - scanned PDF OCR;
   - LLM generation;
   - summarization / draft generation;
   - semantic retrieval;
-  - vector DB;
+  - embeddings/vector DB;
   - full RAG;
   - table-aware analytics;
   - external proprietary APIs.
@@ -63,12 +69,10 @@
 
 ## Next choice
 
-Next recommended: Stage 29.1 RAG-ready chunk inspection/export v1.
+Next recommended: Stage 30 RAG chunk contract hardening v1.
 
 Follow-up sequence:
 
-- Stage 29.2 Chunk quality audit v1.
-- Stage 30 RAG chunk contract hardening v1.
 - Stage 31 Table chunk context v1.
 - Stage 32 Source location/citation hardening.
 - Stage 33 QA evaluator retrieval-loop speed/cache, optional/later and only if speed becomes a blocker after chunk inspection/export and quality audit.
@@ -76,7 +80,9 @@ Follow-up sequence:
 
 This preserves the delivery-first rule: every stage should be demo-ready / shippable, future stages can be dropped without breaking the current baseline, large architecture rewrites stay out of scope, and future AI capabilities remain source-backed / evaluation-visible.
 
-Current chunks are acceptable for lexical search, but weak/partial as self-contained RAG handoff units. The next priority is customer/developer-readable chunk inspection/export, not speed/cache.
+Stage 29.1 and Stage 29.2 closed visibility/export/audit for chunks. Stage 30 is the first production-contract hardening step for chunk payload/source context so future source-backed RAG handoff can rely on stronger units, without claiming full RAG readiness.
+
+Current chunks are acceptable for lexical search and now visible/auditable, but still weak/partial as hardened self-contained RAG handoff units. The next priority is chunk payload/source-context hardening, not another diagnostic script and not speed/cache.
 
 Do not present LLM/RAG, scanned PDF OCR, OCR for scanned PDFs, or table analytics as ready.
 

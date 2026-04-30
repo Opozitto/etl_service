@@ -81,6 +81,9 @@
 - Stage 29.2 reports deterministic issue counts, severity counts, content type counts, text length stats, per-document issue concentration, bounded samples, limitations, and Stage 30/31/32 recommendations.
 - Stage 29.2 writes JSON only by explicit `--output-path`; without it the CLI prints a Russian/mixed technical console summary only.
 - Stage 29.2 does not change ingestion pipeline, production search ranking, `/api/v1/ask`, OCR/scanned PDF OCR, RAG/LLM, embeddings/vector DB, reranking, table analytics, production storage, or external `Example_data`.
+- Stage 29.3 completed as docs-only governance alignment after chunk export/audit.
+- Stage 29.3 records that chunks are now visible through read-only export and auditable through read-only quality diagnostics, but the underlying chunk/source contract still needs hardening.
+- Stage 29.3 sets Stage 30 as a production-contract step for future source-backed RAG handoff, not as another diagnostic script and not as full RAG.
 
 ## next
 
@@ -105,6 +108,7 @@
 - Stage 26 keeps external QA dataset audit separate from processing/eval so Stage 27 can operate only on diagnosed inputs in a temporary workspace.
 - Stage 27 keeps external processing/eval isolated in `.runtime_eval` or another explicit temporary workspace; production storage remains the baseline corpus, not an evaluation scratch area.
 - Stage 29.0 realigns the next work after RAG chunk audit: inspection/export and quality audit come before speed/cache.
+- Stage 29.1/29.2 close the visibility/export/audit layer for chunks; Stage 30 should harden payload/source context so chunks become stronger handoff units without claiming embeddings, vector DB, semantic retrieval, LLM generation, or full RAG.
 
 ## risks
 
@@ -114,7 +118,8 @@
 - OCR is now optional local baseline for standalone images, and candidate reporting remains in place for metadata-only fallback / conservative PDF readiness cases.
 - `HEIC` / `HEIF` / `TIFF` / `TIF` / `BMP` / `WEBP` remain unsupported.
 - LLM / RAG / generation are not implemented.
-- Current chunks are useful for lexical search, but remain weak/partial as self-contained RAG handoff units.
+- Current chunks are useful for lexical search and now visible/auditable, but remain weak/partial as hardened self-contained RAG handoff units.
+- The underlying chunk contract still needs production hardening before it can be treated as a reliable source-backed handoff layer.
 - QA evaluator `--skip-answer-overlap` is intentionally a faster smoke mode; use full/default mode when answer-overlap trend comparison is needed.
 - Stage 26 matching is deterministic and conservative; ambiguous or missing expected documents require review before Stage 27 processing/eval.
 - Stage 27 can process ambiguous candidates only with explicit `--ambiguous-policy all`; because Stage 26 found all expected docs ambiguous on the real dataset, bounded smoke runs with `--max-documents` remain the safer first step.
