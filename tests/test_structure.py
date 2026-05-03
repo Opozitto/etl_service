@@ -175,6 +175,107 @@ def test_heading_only_section_does_not_emit_standalone_text_chunk() -> None:
     assert chunks == []
 
 
+def test_short_final_text_tail_merges_into_previous_chunk_preserving_sources_and_pages() -> None:
+    body_a = "А" * 290
+    body_b = "Б" * 290
+    body_c = "В" * 290
+    tail = "Короткий финальный вывод."
+    extracted = ExtractedDocument(
+        extractor_name="test",
+        text="1. Раздел\n" + "\n".join([body_a, body_b, body_c, tail]),
+        blocks=[
+            RawBlock(kind="paragraph", text="1. Раздел", page_num=1),
+            RawBlock(kind="paragraph", text=body_a, page_num=2),
+            RawBlock(kind="paragraph", text=body_b, page_num=3),
+            RawBlock(kind="paragraph", text=body_c, page_num=4),
+            RawBlock(kind="paragraph", text=tail, page_num=5),
+        ],
+        page_count=5,
+    )
+
+    _sections, _blocks, _tables, _images, chunks = build_structure(extracted)
+    text_chunks = [chunk for chunk in chunks if chunk.content_type == "text"]
+
+    assert len(text_chunks) == 1
+    assert tail in text_chunks[0].text
+    assert text_chunks[0].block_ids == ["blk-1", "blk-2", "blk-3", "blk-4", "blk-5"]
+    assert text_chunks[0].page_start == 1
+    assert text_chunks[0].page_end == 5
+
+
+def test_overlap_without_new_tail_does_not_emit_duplicate_final_chunk() -> None:
+    body_a = "А" * 290
+    body_b = "Б" * 290
+    body_c = "В" * 290
+    extracted = ExtractedDocument(
+        extractor_name="test",
+        text="1. Раздел\n" + "\n".join([body_a, body_b, body_c]),
+        blocks=[
+            RawBlock(kind="paragraph", text="1. Раздел"),
+            RawBlock(kind="paragraph", text=body_a),
+            RawBlock(kind="paragraph", text=body_b),
+            RawBlock(kind="paragraph", text=body_c),
+        ],
+    )
+
+    _sections, _blocks, _tables, _images, chunks = build_structure(extracted)
+    text_chunks = [chunk for chunk in chunks if chunk.content_type == "text"]
+
+    assert len(text_chunks) == 1
+
+
+def test_structural_heading_only_fragment_is_not_emitted_as_text_chunk() -> None:
+    extracted = ExtractedDocument(
+        extractor_name="test",
+        text="ПРИЛОЖЕНИЕ 2\nСправочные данные",
+        blocks=[
+            RawBlock(kind="heading", text="ПРИЛОЖЕНИЕ 2"),
+            RawBlock(kind="heading", text="Справочные данные"),
+        ],
+    )
+
+    _sections, _blocks, _tables, _images, chunks = build_structure(extracted)
+
+    assert chunks == []
+
+
+def test_short_uppercase_root_title_fragment_is_not_emitted_as_text_chunk() -> None:
+    extracted = ExtractedDocument(
+        extractor_name="test",
+        text="ПРОЕКТ",
+        blocks=[RawBlock(kind="paragraph", text="ПРОЕКТ")],
+    )
+
+    _sections, _blocks, _tables, _images, chunks = build_structure(extracted)
+
+    assert chunks == []
+
+
+def test_short_tail_does_not_merge_across_section_boundary() -> None:
+    body_a = "А" * 290
+    body_b = "Б" * 290
+    body_c = "В" * 290
+    extracted = ExtractedDocument(
+        extractor_name="test",
+        text="1. Первый\n...\n2. Второй\nКороткий текст.",
+        blocks=[
+            RawBlock(kind="paragraph", text="1. Первый"),
+            RawBlock(kind="paragraph", text=body_a),
+            RawBlock(kind="paragraph", text=body_b),
+            RawBlock(kind="paragraph", text=body_c),
+            RawBlock(kind="paragraph", text="2. Второй"),
+            RawBlock(kind="paragraph", text="Короткий текст."),
+        ],
+    )
+
+    _sections, _blocks, _tables, _images, chunks = build_structure(extracted)
+    first_chunk = next(chunk for chunk in chunks if chunk.section_title == "1. Первый")
+    second_chunk = next(chunk for chunk in chunks if chunk.section_title == "2. Второй")
+
+    assert "Короткий текст." not in first_chunk.text
+    assert "Короткий текст." in second_chunk.text
+
+
 def test_service_signature_table_is_preserved_as_text_not_table_chunk() -> None:
     extracted = ExtractedDocument(
         extractor_name="test",

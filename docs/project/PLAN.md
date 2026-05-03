@@ -1,6 +1,6 @@
 # PLAN
 
-Stage 1–32 are completed. Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock. Stage 20–25 are completed OCR/readiness/extraction/table/QA-evaluation layers. Stage 26–32 are completed external QA/chunk visibility, audit, chunk contract hardening, table chunk context, and source location/citation hardening stages. Stage 33 splitter structure cleanup and validation closure is completed from the splitter cleanup standpoint. Stage 34.0 text chunk coherence audit/design is completed docs-only; the next recommended stage is Stage 34.1 Text chunk coherence / chunk packing v1. Speed/cache is not the next recommended direction by default.
+Stage 1–32 are completed. Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock. Stage 20–25 are completed OCR/readiness/extraction/table/QA-evaluation layers. Stage 26–32 are completed external QA/chunk visibility, audit, chunk contract hardening, table chunk context, and source location/citation hardening stages. Stage 33 splitter structure cleanup and validation closure is completed from the splitter cleanup standpoint. Stage 34.0 text chunk coherence audit/design is completed docs-only. Stage 34.1 text chunk coherence edge cleanup v1 is completed as a bounded deterministic implementation. Speed/cache is not the next recommended direction by default.
 
 ## Stage 1. Зафиксировать smoke/regression проверки
 
@@ -806,8 +806,34 @@ conda run -n etl_env python -m scripts.validate_splitter_cleanup --input-dir fir
 
 ## Stage 34.1. Text chunk coherence / chunk packing v1
 
-- Статус: recommended next.
+- Статус: completed.
 - Цель: точечно улучшить coherence ordinary text chunks после Stage 34.0 audit, сохранив splitter/search/export/API compatibility.
+- Реализация:
+  - final `flush` больше не эмитит standalone overlap-only chunk без нового текста;
+  - короткий fresh final tail внутри той же section merge-ится в предыдущий ordinary text chunk, если итог остаётся в пределах существующего `max_chars`;
+  - ordered `block_ids`, page range и token estimate обновляются при merge;
+  - structural heading-only fragments и короткие uppercase root-title fragments без body context не эмитятся как ordinary text chunks;
+  - table row-level path `_build_table_row_chunks` не менялся.
+- Fresh validation on `.runtime_eval\stage34_1_final` over the Stage 34.0 explicit 4-file sample:
+  - `documents_processed=4`;
+  - `documents_with_failures=0`;
+  - `total_chunks=6029`;
+  - `toc_parent_violations=0`;
+  - `duplicate_heading_violations=0`;
+  - `heading_only_chunks=0`;
+  - `service_table_suspects=0`;
+  - `real_table_chunks=4008`.
+- Fresh text metrics:
+  - `text_chunks=921`;
+  - `table_chunks=5108`;
+  - `short_text_chunks=25`;
+  - `nonservice_short_text_chunks=21`;
+  - `avg_text_chars=837.34`;
+  - `median_text_chars=887`;
+  - `min_text_chars=20`;
+  - `max_text_chars=1167`;
+  - `single_paragraph_text_chunks=0`;
+  - `one_line_text_chunks=0`.
 - Граница scope: deterministic chunk packing only; no full RAG, LLM generation, embeddings/vector DB, semantic retrieval/reranking, OCR/scanned PDF OCR, speed/cache work, table analytics, or production storage migration.
 
 ## Stage 33.x. QA evaluator retrieval-loop speed/cache

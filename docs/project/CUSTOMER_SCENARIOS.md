@@ -2,7 +2,7 @@
 
 ## Назначение документа
 
-Документ был создан на Stage 10 как docs-level baseline для пользовательских сценариев и минимального evaluation set. Сейчас он актуализируется по мере развития ETL/search/evaluation baseline и отражает текущее состояние после Stage 34.0.
+Документ был создан на Stage 10 как docs-level baseline для пользовательских сценариев и минимального evaluation set. Сейчас он актуализируется по мере развития ETL/search/evaluation baseline и отражает текущее состояние после Stage 34.1.
 
 Сценарии описывают пилотный контур для эколога-проектировщика: source-backed search, extractive QA, extraction/evidence diagnostics, контроль качества корпуса и подготовку chunk handoff для будущего source-backed RAG layer. Документ не объявляет готовыми full RAG, LLM generation, embeddings/vector DB, semantic retrieval, scanned PDF OCR или table analytics.
 
@@ -144,6 +144,13 @@ Stage 34.0 text chunk coherence audit/design:
 - fresh metrics на 4 explicit sample files: `text_chunks=947`, `table_chunks=5114`, `short_text_chunks=29`, `median_text_chars=884`;
 - next recommended Stage 34.1 должен улучшать только deterministic text chunk coherence / chunk packing v1 без full RAG, LLM generation, embeddings/vector DB, semantic retrieval/reranking, OCR/scanned PDF OCR, speed/cache или table analytics.
 
+Stage 34.1 text chunk coherence edge cleanup:
+
+- overlap-only final buffers больше не становятся standalone chunks;
+- короткие final tails внутри той же section могут merge-иться в предыдущий ordinary text chunk с сохранением ordered source blocks и page range;
+- structural heading-only и короткие uppercase root-title fragments без body context не эмитятся как ordinary text chunks;
+- fresh metrics на том же 4-file sample: `text_chunks=921`, `table_chunks=5108`, `nonservice_short_text_chunks=21`, `heading_only_chunks=0`, `real_table_chunks=4008`.
+
 ## Вне текущего подтвержденного baseline
 
 Сейчас вне подтвержденного baseline:
@@ -218,8 +225,9 @@ Stage 34.0 text chunk coherence audit/design:
 - Stage 33.3 reduces title/approval/signature table false positives for newly processed documents while preserving real table chunks.
 - Stage 33.4 closes splitter cleanup validation from the current roadmap standpoint using expanded fresh validation evidence.
 - Stage 34.0 audits text chunk coherence and prepares Stage 34.1 as a bounded deterministic packing stage without changing production behavior.
+- Stage 34.1 implements bounded deterministic text chunk coherence edge cleanup without changing table row-level chunks, API schema, or production storage migration.
 
-## Текущее состояние после Stage 34.0
+## Текущее состояние после Stage 34.1
 
 - Stage 29.1 adds read-only RAG-ready chunk inspection/export over existing processed JSON.
 - Stage 29.2 adds read-only chunk quality audit over existing processed JSON / exported chunk records.
@@ -231,9 +239,10 @@ Stage 34.0 text chunk coherence audit/design:
 - Stage 33.3 strengthens deterministic service/title/approval/signature table false-positive cleanup.
 - Stage 33.4 records expanded fresh validation over 4 `first_test_data` documents with zero failures/warnings and closes Stage 33 from the splitter cleanup standpoint.
 - Stage 34.0 records audit/design for text chunk coherence and recommends Stage 34.1 Text chunk coherence / chunk packing v1.
+- Stage 34.1 reduces short/heading-only text chunk edge cases while preserving table row-level context and compatibility paths.
 - Chunks now have better visibility, stronger metadata/source/location/citation context, and cleaner deterministic section/chunk structure where available.
 - Splitter cleanup is conservative and improves handoff quality, but it is not semantic document understanding.
-- Text chunk coherence remains a bounded next-step concern: improve ordinary text chunks without crossing sections, merging tables, inventing pages, or changing API schema in a breaking way.
+- Text chunk coherence remains bounded and deterministic: ordinary text chunks should not cross sections, merge with tables, invent pages, or change API schema in a breaking way.
 - DOCX page metadata can still be unavailable; diagnostics should show this honestly rather than inventing page context.
 - These stages should not promise full RAG, semantic retrieval, embeddings/vector DB, LLM generation, scanned PDF OCR or table analytics.
 - Next roadmap direction should be selected explicitly, likely customer-facing handoff/reporting over processed corpus, source-backed evidence pack, or final demo/readiness packaging; speed/cache is not the default next step.

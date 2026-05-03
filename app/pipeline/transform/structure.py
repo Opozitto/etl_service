@@ -258,36 +258,82 @@ def _build_section_chunks(
     start_order: int,
     max_chars: int = 1200,
     target_chars: int = 850,
+    short_tail_chars: int = 180,
 ) -> list[Chunk]:
     chunks: list[Chunk] = []
     current_parts: list[str] = []
     current_block_ids: list[str] = []
+    current_fresh_parts: list[str] = []
+    current_fresh_block_ids: list[str] = []
+    current_has_fresh_parts = False
     order = start_order
     heading_context = section.title if section.level > 0 else ""
 
-    def flush() -> None:
-        nonlocal current_parts, current_block_ids, order
+    def flush(*, final: bool = False) -> None:
+        nonlocal current_parts, current_block_ids, current_fresh_parts, current_fresh_block_ids, current_has_fresh_parts, order
+        if final and chunks and not current_has_fresh_parts:
+            current_parts = []
+            current_block_ids = []
+            current_fresh_parts = []
+            current_fresh_block_ids = []
+            current_has_fresh_parts = False
+            return
         chunk_text = normalize_text("\n".join(part for part in current_parts if part).strip())
         chunk_text = _dedupe_repeated_heading_prefix(chunk_text, section.title)
         if not chunk_text:
             current_parts = []
             current_block_ids = []
+            current_fresh_parts = []
+            current_fresh_block_ids = []
+            current_has_fresh_parts = False
             return
         unique_block_ids = list(dict.fromkeys(current_block_ids))
         chunk_blocks = [block for block in section_blocks if block.block_id in set(unique_block_ids)]
-        if _is_heading_only_chunk(chunk_text, section.title, chunk_blocks):
+        if _is_heading_only_chunk(chunk_text, section.title, chunk_blocks) or _is_structural_heading_only_chunk(
+            chunk_text, section.title, chunk_blocks
+        ) or _is_low_value_root_title_chunk(section, chunk_text, chunk_blocks):
             current_parts = []
             current_block_ids = []
+            current_fresh_parts = []
+            current_fresh_block_ids = []
+            current_has_fresh_parts = False
             return
         page_start, page_end = _page_range_from_blocks(chunk_blocks)
         table_id = _table_id_from_blocks(chunk_blocks)
+        content_type = _content_type_from_blocks(chunk_blocks)
+        fresh_tail_text = normalize_text("\n".join(part for part in current_fresh_parts if part).strip())
+        fresh_tail_block_ids = list(dict.fromkeys(current_fresh_block_ids))
+        fresh_tail_blocks = [block for block in section_blocks if block.block_id in set(fresh_tail_block_ids)]
+        fresh_tail_page_start, fresh_tail_page_end = _page_range_from_blocks(fresh_tail_blocks)
+        if (
+            final
+            and chunks
+            and fresh_tail_text
+            and len(fresh_tail_text) < short_tail_chars
+            and content_type == "text"
+            and table_id is None
+            and _can_merge_text_tail(chunks[-1], fresh_tail_text, max_chars)
+        ):
+            _merge_text_tail_into_previous(
+                chunks[-1],
+                fresh_tail_text,
+                fresh_tail_block_ids,
+                fresh_tail_page_start,
+                fresh_tail_page_end,
+            )
+            current_parts = []
+            current_block_ids = []
+            current_fresh_parts = []
+            current_fresh_block_ids = []
+            current_has_fresh_parts = False
+            return
         chunks.append(
             Chunk(
                 chunk_id=f"chk-{next(chunk_counter)}",
                 document_id="",
                 section_id=section.section_id,
                 block_ids=unique_block_ids,
-                content_type=_content_type_from_blocks(chunk_blocks),
+                content_type=content_type,
                 section_title=section.title,
                 section_path=section_path,
                 page_start=page_start,
@@ -303,6 +349,9 @@ def _build_section_chunks(
         overlap_block_ids = current_block_ids[-2:] if len(current_block_ids) > 2 else current_block_ids[-1:]
         current_parts = list(overlap_parts)
         current_block_ids = list(overlap_block_ids)
+        current_fresh_parts = []
+        current_fresh_block_ids = []
+        current_has_fresh_parts = False
 
     for block in section_blocks:
         block_text = normalize_text(block.text or "")
@@ -311,10 +360,16 @@ def _build_section_chunks(
         for part in _split_block_for_chunking(block_text):
             candidate_parts = list(current_parts)
             candidate_ids = list(current_block_ids)
+            candidate_fresh_parts = list(current_fresh_parts)
+            candidate_fresh_ids = list(current_fresh_block_ids)
+            candidate_has_fresh_parts = current_has_fresh_parts
             if not candidate_parts and heading_context:
                 candidate_parts.append(heading_context)
             if not _is_repeated_heading_part(part, heading_context, candidate_parts):
                 candidate_parts.append(part)
+                candidate_fresh_parts.append(part)
+                candidate_fresh_ids.append(block.block_id)
+                candidate_has_fresh_parts = True
             candidate_ids.append(block.block_id)
             candidate_text = normalize_text("\n".join(candidate_parts))
 
@@ -322,20 +377,29 @@ def _build_section_chunks(
                 flush()
                 candidate_parts = list(current_parts)
                 candidate_ids = list(current_block_ids)
+                candidate_fresh_parts = list(current_fresh_parts)
+                candidate_fresh_ids = list(current_fresh_block_ids)
+                candidate_has_fresh_parts = current_has_fresh_parts
                 if not candidate_parts and heading_context:
                     candidate_parts.append(heading_context)
                 if not _is_repeated_heading_part(part, heading_context, candidate_parts):
                     candidate_parts.append(part)
+                    candidate_fresh_parts.append(part)
+                    candidate_fresh_ids.append(block.block_id)
+                    candidate_has_fresh_parts = True
                 candidate_ids.append(block.block_id)
 
             current_parts = candidate_parts
             current_block_ids = candidate_ids
+            current_fresh_parts = candidate_fresh_parts
+            current_fresh_block_ids = candidate_fresh_ids
+            current_has_fresh_parts = candidate_has_fresh_parts
 
             if len(normalize_text("\n".join(current_parts))) >= target_chars:
                 flush()
 
     if current_parts:
-        flush()
+        flush(final=True)
     return chunks
 
 
@@ -502,6 +566,85 @@ def _is_heading_only_chunk(text: str, section_title: str, blocks: list[Block]) -
     if not section_title or _normalized_heading_key(text) != _normalized_heading_key(section_title):
         return False
     return bool(blocks) and all(block.type == "heading" for block in blocks)
+
+
+def _is_structural_heading_only_chunk(text: str, section_title: str, blocks: list[Block]) -> bool:
+    if not blocks or any(block.type not in {"heading"} for block in blocks):
+        return False
+    normalized_text = _normalized_heading_key(text)
+    if not normalized_text:
+        return True
+    normalized_heading = _normalized_heading_key(section_title)
+    if normalized_heading and normalized_text == normalized_heading:
+        return True
+    lines = [line for line in (_normalized_heading_key(part) for part in text.splitlines()) if line]
+    if len(lines) <= 2 and normalized_heading and lines and lines[0] == normalized_heading:
+        return True
+    return len(lines) == 1 and _looks_like_heading_text(text)
+
+
+def _is_low_value_root_title_chunk(section: Section, text: str, blocks: list[Block]) -> bool:
+    if section.level != 0 or not blocks:
+        return False
+    normalized = normalize_text(text)
+    if not normalized or "\n" in normalized:
+        return False
+    if any(block.type in {"table", "image", "list_item"} for block in blocks):
+        return False
+    words = normalized.split()
+    return normalized.isupper() and len(words) <= 3 and len(normalized) <= 60
+
+
+def _looks_like_heading_text(text: str) -> bool:
+    normalized = normalize_text(text)
+    if not normalized:
+        return False
+    if _normalized_heading_key(normalized) in COMMON_STANDALONE_HEADING_TITLES:
+        return True
+    if HEADING_RE.match(normalized):
+        return True
+    return normalized.isupper() and 1 <= len(normalized.split()) <= 12
+
+
+def _can_merge_text_tail(previous: Chunk, tail_text: str, max_chars: int) -> bool:
+    if previous.content_type != "text" or previous.table_id is not None:
+        return False
+    merged_text = _join_chunk_text(previous.text, tail_text)
+    return len(merged_text) <= max_chars
+
+
+def _merge_text_tail_into_previous(
+    previous: Chunk,
+    tail_text: str,
+    tail_block_ids: list[str],
+    tail_page_start: int | None,
+    tail_page_end: int | None,
+) -> None:
+    previous.text = _join_chunk_text(previous.text, tail_text)
+    previous.block_ids = list(dict.fromkeys([*previous.block_ids, *tail_block_ids]))
+    previous.page_start, previous.page_end = _merge_page_ranges(
+        previous.page_start,
+        previous.page_end,
+        tail_page_start,
+        tail_page_end,
+    )
+    previous.token_estimate = estimate_tokens(previous.text)
+
+
+def _join_chunk_text(left: str, right: str) -> str:
+    parts = [part for part in (normalize_text(left), normalize_text(right)) if part]
+    return normalize_text("\n".join(parts))
+
+
+def _merge_page_ranges(
+    left_start: int | None,
+    left_end: int | None,
+    right_start: int | None,
+    right_end: int | None,
+) -> tuple[int | None, int | None]:
+    starts = [page for page in (left_start, right_start) if page is not None]
+    ends = [page for page in (left_end, right_end) if page is not None]
+    return (min(starts) if starts else None, max(ends) if ends else None)
 
 
 def _table_text_from_rows(rows: list[list[str]]) -> str | None:
