@@ -672,6 +672,31 @@ conda run -n etl_env python -m scripts.evaluate_qa_dataset --qa-path "D:\Project
   - DOCX page metadata can still be null and must not be invented;
   - title/signature/service detection is intentionally cautious and may not catch every layout artifact.
 
+## Stage 33.2. Fresh splitter cleanup validation on temporary workspace
+
+- Статус: completed.
+- Цель: дать customer/developer-readable validation workflow, который заново обрабатывает выбранные sample documents в отдельном temporary workspace и оценивает качество Stage 33.1 cleanup на newly processed output, а не на старых `storage/results`.
+- Подтвержденный scope:
+  - CLI `scripts.validate_splitter_cleanup`;
+  - reusable module `app.evaluation.splitter_cleanup_validation`;
+  - fresh processing через `DocumentService(storage_root=...)` в explicit `--workspace-dir`;
+  - input через repeatable `--input-path` или `--input-dir`, с optional `--max-documents`;
+  - JSON report пишется только по явному `--output-path`; без него выводится console summary only;
+  - deterministic metrics для TOC parent violations, duplicate heading text, heading-only chunks, service table suspects, real table chunk preservation и missing page expected limitations.
+- Report contract:
+  - `validation_version: "stage33_2_splitter_cleanup_validation_v1"`;
+  - `summary`, `documents`, `issues`, `limitations`, `warnings`;
+  - issue types: `toc_parent_violation`, `duplicate_heading`, `heading_only_chunk`, `service_table_suspect`, `processing_error`.
+- Граница scope:
+  - validation/evaluation only;
+  - no migration of existing `storage/results`;
+  - no full RAG, LLM generation, embeddings/vector DB, semantic retrieval, reranking, OCR/scanned PDF OCR, speed/cache work or table analytics.
+- Known limitations:
+  - validation is deterministic and conservative, not semantic document understanding;
+  - existing processed JSON remains readable but is not migrated;
+  - DOCX page metadata can still be null and is reported as an expected limitation, not invented;
+  - service/title/signature detection is cautious and may require manual review for unusual layouts.
+
 ## Stage 33.x. QA evaluator retrieval-loop speed/cache
 
 - Статус: distant backlog / optional.

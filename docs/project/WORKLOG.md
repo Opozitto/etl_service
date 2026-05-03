@@ -111,6 +111,12 @@
 - Stage 33.1 cautiously demotes short approval/signature/service-like table blocks to text blocks with metadata marker, while preserving real row-level table chunk behavior.
 - Stage 33.1 improves newly processed chunk `section_path` / handoff cleanliness and keeps old processed JSON readable without storage migration.
 - Stage 33.1 does not add full RAG, LLM generation, embeddings/vector DB, semantic retrieval, reranking, scanned PDF OCR, speed/cache work, table analytics, or production storage migration.
+- Stage 33.2 completed as fresh splitter cleanup validation on a temporary workspace.
+- Stage 33.2 adds `app.evaluation.splitter_cleanup_validation` and CLI `scripts.validate_splitter_cleanup`.
+- Stage 33.2 processes explicit sample input files/directories through `DocumentService(storage_root=...)` into a requested temporary workspace, then validates the newly processed JSON from that workspace instead of reading old production `storage/results`.
+- Stage 33.2 report `stage33_2_splitter_cleanup_validation_v1` counts TOC parent violations, duplicate heading text, heading-only chunks, service table suspects, preserved real table chunks, and expected missing page limitations.
+- Stage 33.2 writes JSON only by explicit `--output-path`; without it the CLI prints a console summary only.
+- Stage 33.2 does not migrate production results, commit runtime artifacts, add RAG/LLM/embeddings/vector DB/semantic retrieval/reranking/OCR/table analytics, or change production search behavior.
 
 ## next
 
@@ -146,6 +152,7 @@
 - Current chunks are useful for lexical search and now carry stronger source/section/page/content/table/location context for future handoff, but this is still not a full RAG implementation.
 - Source/location metadata improved after Stage 30–32, but splitter structure still needs cleanup.
 - Stage 33.1 reduces heading-only chunks, TOC hierarchy leaking into real section paths, duplicate heading text, and obvious short title/signature/service blocks misread as table chunks for newly processed documents.
+- Stage 33.2 validates Stage 33.1 cleanup on freshly processed temporary workspace outputs, not on old `storage/results`.
 - Remaining splitter risk: cleanup is deterministic and conservative, not perfect semantic document understanding.
 - DOCX page metadata can be unavailable; this is an expected limitation and should stay explicit in diagnostics.
 - QA evaluator `--skip-answer-overlap` is intentionally a faster smoke mode; use full/default mode when answer-overlap trend comparison is needed.
