@@ -1,6 +1,6 @@
 # PLAN
 
-Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock. Stage 20–25 are completed OCR/readiness/extraction/table/QA-evaluation layers. Stage 26–32 are completed external QA/chunk visibility, audit, chunk contract hardening, table chunk context, and source location/citation hardening stages. Stage 32 improves source-backed handoff traceability, not full RAG or citation generation.
+Stage 1–32 are completed. Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock. Stage 20–25 are completed OCR/readiness/extraction/table/QA-evaluation layers. Stage 26–32 are completed external QA/chunk visibility, audit, chunk contract hardening, table chunk context, and source location/citation hardening stages. Stage 32 improves source-backed handoff traceability, not full RAG or citation generation. After manual chunk review, speed/cache is no longer the next recommended direction; the next implementation focus is splitter structure quality.
 
 ## Stage 1. Зафиксировать smoke/regression проверки
 
@@ -629,10 +629,48 @@ conda run -n etl_env python -m scripts.evaluate_qa_dataset --qa-path "D:\Project
   - старые index/export/chunk-like records без новых полей остаются читаемыми.
 - Граница scope: source/location/citation metadata hardening only; без full RAG, LLM citation generator, embeddings/vector DB, semantic retrieval, OCR/scanned PDF OCR, reranking или table analytics.
 
-## Stage 33. QA evaluator retrieval-loop speed/cache
+## Stage 33.0. Docs-only splitter roadmap realignment after manual chunk review
 
-- Статус: optional / later.
-- Условие запуска: только если после chunk inspection/export и quality audit скорость снова станет blocker.
+- Статус: completed.
+- Цель: зафиксировать docs-only решение после ручного просмотра `rag_chunks_preview.json` по `test.docx`.
+- Подтвержденный вывод:
+  - Stage 30–32 strengthened metadata/source/location/citation contract for inspection, diagnostics and future source-backed handoff;
+  - current chunks remain acceptable for lexical search;
+  - clean customer/developer-readable handoff still depends on splitter structure cleanup;
+  - speed/cache is no longer the closest recommended stage.
+- Known splitter issues to address next:
+  - TOC / оглавление не должно становиться родителем реальных content sections;
+  - heading-only / short chunks нужно подавлять, объединять с соседним контекстом или явно маркировать как low-value;
+  - duplicate heading text внутри chunks нужно дедуплицировать;
+  - title-page / approval / signature blocks нужно лучше отделять от content/table chunks;
+  - `section_path` должен отражать реальные разделы, а не структуру оглавления;
+  - table-like classification должна быть осторожной;
+  - DOCX page metadata can be unavailable; this limitation must stay explicit rather than invented.
+- Граница scope: docs-only roadmap alignment; без production code, tests, storage, runtime reports или external dataset changes.
+
+## Stage 33.1. Splitter structure cleanup v1
+
+- Статус: next recommended.
+- Цель: улучшить качество структуры `blocks` / `chunks` для более чистого customer/developer-readable handoff, сохранив delivery-first principle.
+- Рекомендуемый scope:
+  - исключить оглавление из роли parent hierarchy для реальных content sections;
+  - подавлять heading-only chunks, объединять их с соседним контекстом или явно маркировать как low-value;
+  - дедуплицировать повтор заголовка внутри chunk text;
+  - лучше отделять title-page / approval / signature / service blocks от content/table chunks;
+  - удерживать `section_path` на реальной структуре разделов, а не на структуре TOC;
+  - сделать table-like classification более осторожной, чтобы title/signature/service blocks не выглядели как table chunks.
+- Вне scope:
+  - full RAG / LLM generation;
+  - embeddings/vector DB / semantic retrieval / reranking;
+  - OCR/scanned PDF OCR;
+  - table analytics / SQL-like table QA / automatic calculations;
+  - production search ranking rewrite.
+
+## Stage 33.x. QA evaluator retrieval-loop speed/cache
+
+- Статус: distant backlog / optional.
+- Условие запуска: только если скорость станет severe operational blocker after splitter structure cleanup and evidence diagnostics.
+- Не является ближайшим recommended stage.
 
 ## Final polish checkpoint
 

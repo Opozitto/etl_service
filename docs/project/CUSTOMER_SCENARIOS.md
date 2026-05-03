@@ -2,7 +2,7 @@
 
 ## Назначение документа
 
-Документ был создан на Stage 10 как docs-level baseline для пользовательских сценариев и минимального evaluation set. Сейчас он актуализируется по мере развития ETL/search/evaluation baseline и отражает текущее состояние после Stage 29.2.
+Документ был создан на Stage 10 как docs-level baseline для пользовательских сценариев и минимального evaluation set. Сейчас он актуализируется по мере развития ETL/search/evaluation baseline и отражает текущее состояние после Stage 32.
 
 Сценарии описывают пилотный контур для эколога-проектировщика: source-backed search, extractive QA, extraction/evidence diagnostics, контроль качества корпуса и подготовку chunk handoff для будущего source-backed RAG layer. Документ не объявляет готовыми full RAG, LLM generation, embeddings/vector DB, semantic retrieval, scanned PDF OCR или table analytics.
 
@@ -110,9 +110,17 @@
 - page where available;
 - `content_type`;
 - `quality_flags`;
+- strengthened source/location/citation fields after Stage 30–32 where available;
 - limitations / handoff notes.
 
-Это diagnostics/handoff visibility после Stage 29.1/29.2. Это не full RAG, не semantic retrieval, не embeddings/vector DB и не generation.
+Это diagnostics/handoff visibility после Stage 29.1/29.2 и metadata/source contract hardening после Stage 30–32. Это не full RAG, не semantic retrieval, не embeddings/vector DB и не generation.
+
+Следующий фокус для handoff quality:
+
+- cleaner section hierarchy;
+- fewer heading-only chunks;
+- less duplicated headings;
+- clearer service/title/signature/table context.
 
 ## Вне текущего подтвержденного baseline
 
@@ -146,7 +154,7 @@
 - У каждого MVP / pilot сценария есть ожидаемый результат, связанный с source-backed behavior.
 - OCR / RAG / LLM generation не объявляются готовыми, если это не подтверждено кодом.
 - Minimal evaluation set покрывает границы supported now / diagnostics / future.
-- Материал связывает исторический Stage 10 baseline с текущим состоянием после Stage 29.2.
+- Материал связывает исторический Stage 10 baseline с текущим состоянием после Stage 32.
 
 ## Minimal evaluation set
 
@@ -166,7 +174,7 @@
 | EC-10 | Draft generation | Подготовить draft section документации | Project doc context and task brief | Future spike only | yes | future | Do not announce ready LLM generation |
 | EC-11 | Source attribution | Показать, откуда взят ответ | Search hits and chunk references | Ответ должен содержать explicit source references | yes | supported now | Trust criterion for the pilot track |
 | EC-12 | Problem documents | Найти проблемные документы в корпусе | Index, manifest, batch and audit reports | Audit surfaces duplicates, warnings, missing chunks and low-quality items | no | supported now | Uses the Stage 7-9 reporting layer |
-| EC-13 | RAG-ready chunk export/audit | Проверить качество chunks как handoff units | Existing processed JSON / Stage 29.1 chunk export records | Показать chunk text/preview, `filename`, `document_id`, section path, page where available, `content_type`, `quality_flags`, limitations and issue summary | yes | supported now / diagnostics | Stage 29.1/29.2; no embeddings/vector DB/generation |
+| EC-13 | RAG-ready chunk export/audit | Проверить качество chunks как handoff units | Existing processed JSON / Stage 29.1 chunk export records | Показать chunk text/preview, `filename`, `document_id`, section path, page where available, `content_type`, `quality_flags`, strengthened source/location/citation fields where available, limitations and issue summary | yes | supported now / diagnostics | Stage 29.1/29.2 plus Stage 30–32 metadata/source hardening; next focus is splitter cleanup, no embeddings/vector DB/generation |
 
 ## Связь со Stage 11-17
 
@@ -180,15 +188,19 @@
 - Stage 21 adds a separate read-only OCR smoke evaluation script for image readiness checks.
 - Stage 22/23 add source-backed requirements and table evidence diagnostics without generation or table analytics.
 - Stage 24/25 add QA/retrieval readiness evaluation and evaluator diagnostics without changing production retrieval behavior.
+- Stage 29.1/29.2 add chunk inspection/export and quality audit for future handoff diagnostics.
+- Stage 30–32 strengthen chunk metadata/source/table/location/citation fields without claiming full RAG.
 
-## Текущее состояние после Stage 29.2
+## Текущее состояние после Stage 32
 
 - Stage 29.1 adds read-only RAG-ready chunk inspection/export over existing processed JSON.
 - Stage 29.2 adds read-only chunk quality audit over existing processed JSON / exported chunk records.
-- Chunks are now visible and auditable, but they are not yet hardened self-contained RAG handoff units.
-- Stage 30 should harden chunk/source contract for future source-backed handoff.
-- Stage 31 should strengthen table chunk context.
-- Stage 32 should strengthen source location/citation context.
+- Stage 30 hardens chunk/source contract for future source-backed handoff.
+- Stage 31 strengthens table chunk context.
+- Stage 32 strengthens source location/citation context.
+- Chunks now have better visibility and stronger metadata/source/location/citation context where available.
+- The next focus is splitter quality cleanup for better handoff: cleaner section hierarchy, fewer heading-only chunks, less duplicated headings, and clearer service/title/table context.
+- DOCX page metadata can still be unavailable; diagnostics should show this honestly rather than inventing page context.
 - These stages should not promise full RAG, semantic retrieval, embeddings/vector DB, LLM generation, scanned PDF OCR or table analytics.
 
 ## Notes on the current baseline

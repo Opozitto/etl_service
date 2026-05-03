@@ -24,6 +24,7 @@
 - Chunk contract hardening v1 is completed: newly processed chunks can carry direct optional source/section/page/content/table context for future source-backed handoff while old processed JSON remains readable.
 - Table chunk context v1 is completed: newly processed row-level table chunks can carry deterministic table title/context, headers, row index, header-to-value pairs, and table shape where available; this improves source-backed handoff readability but is not table analytics.
 - Source location/citation hardening is completed: search/ask/export/audit can surface deterministic source/location hints such as filename, source type, chunk order, section path, page range, block ids, table id/row index, and location/citation labels where existing metadata supports them.
+- Stage 30–32 strengthened the metadata/source contract, but splitter structure quality remains the next work before clean customer/developer-readable handoff.
 
 ## Best shippable baseline
 
@@ -78,18 +79,30 @@
 
 ## Next choice
 
-Next recommended: Stage 33 QA evaluator retrieval-loop speed/cache only if speed becomes a blocker.
+Next recommended: Stage 33.1 Splitter structure cleanup v1.
 
 Follow-up sequence:
 
-- Stage 33 QA evaluator retrieval-loop speed/cache, optional/later and only if speed becomes a blocker after chunk inspection/export, quality audit, and source location/citation hardening.
+- Stage 33.0 docs-only splitter roadmap realignment after manual chunk review, completed.
+- Stage 33.1 Splitter structure cleanup v1, next recommended implementation stage.
+- QA evaluator retrieval-loop speed/cache moves to later/backlog only if it becomes a severe operational blocker.
 - Final polish checkpoint starts only by explicit user command: "стоп, следующий шаг делаем финал".
 
 This preserves the delivery-first rule: every stage should be demo-ready / shippable, future stages can be dropped without breaking the current baseline, large architecture rewrites stay out of scope, and future AI capabilities remain source-backed / evaluation-visible.
 
 Stage 29.1 and Stage 29.2 closed visibility/export/audit for chunks. Stage 30 completed the first production-contract hardening step for chunk payload/source context, Stage 31 improved table chunk readability, and Stage 32 strengthened source location/citation hints for future source-backed handoff, without claiming full RAG readiness or table analytics.
 
-Current chunks are acceptable for lexical search and now stronger as source-backed handoff units. The next optional priority is retrieval-loop speed/cache only if it becomes a blocker; it is not a substitute for RAG, OCR, or table analytics.
+Current chunks are acceptable for lexical search and now carry stronger source/location/citation metadata. The remaining near-term risk is splitter structure quality, not source visibility itself.
+
+Known splitter issues:
+
+- heading-only / short chunks;
+- TOC / оглавление can appear as section parent for real content;
+- duplicate heading text inside chunks;
+- service/title/approval/signature blocks can blur into content/table-like chunks;
+- DOCX page metadata can be unavailable, so page context must not be invented.
+
+The next splitter stage should target cleaner section hierarchy, fewer low-value heading chunks, less duplicated heading text, clearer service/title/signature/table context, and cautious table-like classification.
 
 Do not present LLM/RAG, scanned PDF OCR, OCR for scanned PDFs, or table analytics as ready.
 

@@ -101,10 +101,15 @@
 - Stage 32 labels are deterministic and derived only from available filename/section/table/page fields; they omit page text when page metadata is absent.
 - Stage 32 updates Stage 29.1 export with `chunk_order`, `location_label`, and `citation_label`, and Stage 29.2 audit samples preserve source/location fields for diagnostics.
 - Stage 32 does not add full RAG, LLM citation generation, embeddings/vector DB, semantic retrieval/reranking, OCR/scanned PDF OCR, SQL-like table questions, or table analytics/calculations.
+- Stage 33.0 completed as docs-only splitter roadmap realignment after manual review of `rag_chunks_preview.json` for `test.docx`.
+- Stage 33.0 records that Stage 30–32 improved metadata/source/location/citation contract, but splitter structure still needs cleanup before clean customer/developer-readable handoff.
+- Stage 33.0 moves QA evaluator retrieval-loop speed/cache out of the near-term path; it remains distant backlog / optional only if speed becomes a severe operational blocker.
+- Stage 33.0 does not change production code, tests, storage, external data, runtime artifacts, or splitter behavior itself.
 
 ## next
 
-- Stage 33 QA evaluator retrieval-loop speed/cache, optional/later and only if speed becomes a blocker after chunk inspection/export and quality audit.
+- Stage 33.1 Splitter structure cleanup v1: cleaner section hierarchy, fewer heading-only chunks, less duplicated heading text, clearer service/title/signature/table context, cautious table-like classification.
+- QA evaluator retrieval-loop speed/cache is distant backlog / optional only if speed becomes a severe operational blocker.
 - Final polish checkpoint starts only by explicit user command: "стоп, следующий шаг делаем финал".
 
 ## alignment
@@ -123,6 +128,7 @@
 - Stage 27 keeps external processing/eval isolated in `.runtime_eval` or another explicit temporary workspace; production storage remains the baseline corpus, not an evaluation scratch area.
 - Stage 29.0 realigns the next work after RAG chunk audit: inspection/export and quality audit come before speed/cache.
 - Stage 29.1/29.2 close the visibility/export/audit layer for chunks; Stage 30 hardens payload/source context, Stage 31 improves table chunk context, and Stage 32 strengthens source location/citation hints so chunks become stronger handoff units without claiming embeddings, vector DB, semantic retrieval, LLM generation, table analytics, or full RAG.
+- After manual chunk review, speed/cache is no longer prioritized as the next work; the project continues splitter hardening with structure cleanup first.
 
 ## risks
 
@@ -133,7 +139,9 @@
 - `HEIC` / `HEIF` / `TIFF` / `TIF` / `BMP` / `WEBP` remain unsupported.
 - LLM / RAG / generation are not implemented.
 - Current chunks are useful for lexical search and now carry stronger source/section/page/content/table/location context for future handoff, but this is still not a full RAG implementation.
-- The remaining chunk-context risk is not source visibility itself, but future validation on larger real corpora and consumer-side use of the source-backed handoff contract.
+- Source/location metadata improved after Stage 30–32, but splitter structure still needs cleanup.
+- Heading-only chunks, TOC hierarchy leaking into real section paths, duplicate heading text, and title/signature/service blocks misread as table-like content are the main current quality risks.
+- DOCX page metadata can be unavailable; this is an expected limitation and should stay explicit in diagnostics.
 - QA evaluator `--skip-answer-overlap` is intentionally a faster smoke mode; use full/default mode when answer-overlap trend comparison is needed.
 - Stage 26 matching is deterministic and conservative; ambiguous or missing expected documents require review before Stage 27 processing/eval.
 - Stage 27 can process ambiguous candidates only with explicit `--ambiguous-policy all`; because Stage 26 found all expected docs ambiguous on the real dataset, bounded smoke runs with `--max-documents` remain the safer first step.
