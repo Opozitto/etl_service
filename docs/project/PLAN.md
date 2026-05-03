@@ -1,6 +1,6 @@
 # PLAN
 
-Stage 1–32 are completed. Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock. Stage 20–25 are completed OCR/readiness/extraction/table/QA-evaluation layers. Stage 26–32 are completed external QA/chunk visibility, audit, chunk contract hardening, table chunk context, and source location/citation hardening stages. Stage 32 improves source-backed handoff traceability, not full RAG or citation generation. After manual chunk review, speed/cache is no longer the next recommended direction; the next implementation focus is splitter structure quality.
+Stage 1–32 are completed. Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock. Stage 20–25 are completed OCR/readiness/extraction/table/QA-evaluation layers. Stage 26–32 are completed external QA/chunk visibility, audit, chunk contract hardening, table chunk context, and source location/citation hardening stages. Stage 33 splitter structure cleanup and validation closure is completed from the splitter cleanup standpoint. Speed/cache is not the next recommended direction by default; the next direction should be selected explicitly.
 
 ## Stage 1. Зафиксировать smoke/regression проверки
 
@@ -721,6 +721,44 @@ conda run -n etl_env python -m scripts.evaluate_qa_dataset --qa-path "D:\Project
   - cleanup is deterministic and conservative, not semantic document understanding;
   - existing processed JSON can still contain old table false positives until documents are reprocessed;
   - DOCX page metadata can still be null and is not invented.
+
+## Stage 33.4. Splitter cleanup validation closure docs
+
+- Статус: completed.
+- Цель: docs-only зафиксировать expanded fresh validation evidence после Stage 33.3 и закрыть Stage 33 со стороны splitter cleanup.
+- Evidence run:
+```powershell
+conda run -n etl_env python -m scripts.validate_splitter_cleanup --input-dir first_test_data --workspace-dir .runtime_eval\splitter_stage33_4_workspace_dir --max-documents 4 --output-path .runtime_eval\splitter_stage33_4_report_dir.json
+```
+- Result:
+  - `documents_seen=4`;
+  - `documents_processed=4`;
+  - `documents_with_failures=0`;
+  - `total_chunks=1820`;
+  - `toc_parent_violations=0`;
+  - `duplicate_heading_violations=0`;
+  - `heading_only_chunks=0`;
+  - `service_table_suspects=0`;
+  - `real_table_chunks=984`;
+  - `missing_page_expected_limitations=1426`;
+  - `issues_sample=[]`;
+  - `warnings=[]`.
+- Вывод:
+  - Stage 33 can be considered closed from the splitter cleanup standpoint;
+  - fresh splitter validation remains the evidence layer for newly processed temporary workspace outputs;
+  - production `storage/results` is not migrated and remains outside this evidence source of truth.
+- Remaining limitations:
+  - existing processed JSON is not migrated;
+  - DOCX page metadata may remain null and must not be invented;
+  - deterministic cleanup is not semantic document understanding;
+  - no OCR/scanned PDF OCR;
+  - no full RAG / LLM generation;
+  - no embeddings/vector DB / semantic retrieval / reranking;
+  - no table analytics.
+- Suggested next roadmap direction:
+  - choose explicitly between customer-facing handoff/reporting over processed corpus, source-backed evidence pack, or final demo/readiness packaging;
+  - do not start final polish unless the user explicitly asks for it;
+  - speed/cache stays a later option only if it becomes a severe operational blocker.
 
 ## Stage 33.x. QA evaluator retrieval-loop speed/cache
 

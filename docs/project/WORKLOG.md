@@ -124,9 +124,14 @@
 - Stage 33.3 keeps fresh splitter validation as the evidence layer and leaves old processed JSON unmigrated.
 - Stage 33.3 does not add full RAG, LLM generation, embeddings/vector DB, semantic retrieval/reranking, OCR/scanned PDF OCR, speed/cache work, table analytics, or production storage migration.
 - Stage 33.3 smoke on freshly processed `first_test_data\test.docx` in `.runtime_eval\splitter_stage33_3_workspace_fresh`: `documents_processed=1`, `total_chunks=1426`, `toc_parent_violations=0`, `duplicate_heading_violations=0`, `heading_only_chunks=0`, `service_table_suspects=0`, `real_table_chunks=950`, `missing_page_expected_limitations=1426`.
+- Stage 33.4 completed as splitter cleanup validation closure docs.
+- Stage 33.4 records the expanded fresh validation evidence run on 4 `first_test_data` documents in `.runtime_eval\splitter_stage33_4_workspace_dir`: `documents_seen=4`, `documents_processed=4`, `documents_with_failures=0`, `total_chunks=1820`, `toc_parent_violations=0`, `duplicate_heading_violations=0`, `heading_only_chunks=0`, `service_table_suspects=0`, `real_table_chunks=984`, `missing_page_expected_limitations=1426`, `issues_sample=[]`, `warnings=[]`.
+- Stage 33.4 confirms Stage 33 can be considered closed from the splitter cleanup standpoint.
+- Stage 33.4 is docs-only: no production code, tests, production storage, runtime artifact commits, RAG/LLM/embeddings/vector DB/semantic retrieval/reranking/OCR/speed-cache/table analytics changes.
 
 ## next
 
+- Next direction should be selected explicitly: customer-facing handoff/reporting over processed corpus, source-backed evidence pack, or final demo/readiness packaging.
 - QA evaluator retrieval-loop speed/cache is distant backlog / optional only if speed becomes a severe operational blocker.
 - Final polish checkpoint starts only by explicit user command: "стоп, следующий шаг делаем финал".
 
@@ -146,7 +151,7 @@
 - Stage 27 keeps external processing/eval isolated in `.runtime_eval` or another explicit temporary workspace; production storage remains the baseline corpus, not an evaluation scratch area.
 - Stage 29.0 realigns the next work after RAG chunk audit: inspection/export and quality audit come before speed/cache.
 - Stage 29.1/29.2 close the visibility/export/audit layer for chunks; Stage 30 hardens payload/source context, Stage 31 improves table chunk context, and Stage 32 strengthens source location/citation hints so chunks become stronger handoff units without claiming embeddings, vector DB, semantic retrieval, LLM generation, table analytics, or full RAG.
-- After manual chunk review, speed/cache is no longer prioritized as the next work; the project continues splitter hardening with structure cleanup first.
+- Stage 33.4 closes splitter cleanup validation from the current roadmap standpoint; speed/cache is still not prioritized by default.
 
 ## risks
 
@@ -161,6 +166,7 @@
 - Stage 33.1 reduces heading-only chunks, TOC hierarchy leaking into real section paths, duplicate heading text, and obvious short title/signature/service blocks misread as table chunks for newly processed documents.
 - Stage 33.2 validates splitter cleanup on freshly processed temporary workspace outputs, not on old `storage/results`.
 - Stage 33.3 reduces service/title/approval/signature table false positives while keeping real table chunks available for source-backed handoff.
+- Stage 33.4 expanded validation evidence passed on 4 `first_test_data` documents with zero failures, zero warnings and zero service table suspects.
 - Remaining splitter risk: cleanup is deterministic and conservative, not perfect semantic document understanding.
 - DOCX page metadata can be unavailable; this is an expected limitation and should stay explicit in diagnostics.
 - QA evaluator `--skip-answer-overlap` is intentionally a faster smoke mode; use full/default mode when answer-overlap trend comparison is needed.

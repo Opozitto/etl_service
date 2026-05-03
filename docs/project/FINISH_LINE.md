@@ -27,7 +27,8 @@
 - Stage 33.1 splitter cleanup v1 is completed: newly processed documents get cleaner TOC hierarchy, repeated-heading deduplication, heading-only suppression, and cautious service/title/signature table handling.
 - Stage 33.2 fresh splitter cleanup validation is completed: selected sample documents can be reprocessed into an explicit temporary workspace and evaluated with a deterministic report over newly processed JSON, not old production results.
 - Stage 33.3 service table false-positive cleanup v2 is completed: compact and single-cell title/approval/signature blocks are demoted to readable `service_text` paragraphs, while real table chunks remain preserved.
-- Stage 30–33.3 strengthened the metadata/source/structure/validation contract, but this is still ETL/source-backed handoff readiness rather than full RAG.
+- Stage 33.4 splitter cleanup validation closure is completed: expanded fresh validation on 4 `first_test_data` documents passed with zero failures, zero warnings and zero service table suspects.
+- Stage 30–33.4 strengthened the metadata/source/structure/validation contract, but this is still ETL/source-backed handoff readiness rather than full RAG.
 
 ## Best shippable baseline
 
@@ -46,6 +47,7 @@
 - source location/citation hints for future handoff traceability without LLM citation generation.
 - splitter structure cleanup for cleaner section paths and fewer low-value heading/service chunks in newly processed documents.
 - fresh splitter cleanup validation for temporary workspace outputs without migrating production `storage/results`.
+- Stage 33 closure evidence: 4-document fresh validation over `first_test_data` passed with `documents_with_failures=0`, `service_table_suspects=0`, and `real_table_chunks=984`.
 
 ## What is confirmed, and what is not
 
@@ -67,6 +69,7 @@
   - deterministic source location/citation hardening for search/ask/export/audit handoff visibility.
   - fresh splitter cleanup validation on newly processed temporary workspace outputs.
   - service/title/approval/signature table false-positive cleanup v2 for newly processed documents.
+  - Stage 33 splitter cleanup validation closure over a 4-document fresh sample.
 - Not confirmed:
   - scanned PDF OCR;
   - LLM generation;
@@ -86,7 +89,7 @@
 
 ## Next choice
 
-Next recommended: keep splitter/source-backed handoff quality work bounded, or move to final polish only by explicit user command.
+Next recommended: choose the next direction explicitly. Good candidates are customer-facing handoff/reporting over processed corpus, a source-backed evidence pack, or final demo/readiness packaging. Do not start final polish unless the user explicitly asks for it.
 
 Follow-up sequence:
 
@@ -94,6 +97,7 @@ Follow-up sequence:
 - Stage 33.1 Splitter structure cleanup v1, completed.
 - Stage 33.2 Fresh splitter cleanup validation on temporary workspace, completed.
 - Stage 33.3 Service table false-positive cleanup v2, completed.
+- Stage 33.4 Splitter cleanup validation closure docs, completed.
 - QA evaluator retrieval-loop speed/cache moves to later/backlog only if it becomes a severe operational blocker.
 - Final polish checkpoint starts only by explicit user command: "стоп, следующий шаг делаем финал".
 
@@ -102,7 +106,7 @@ This preserves the delivery-first rule: every stage should be demo-ready / shipp
 Stage 29.1 and Stage 29.2 closed visibility/export/audit for chunks. Stage 30 completed the first production-contract hardening step for chunk payload/source context, Stage 31 improved table chunk readability, and Stage 32 strengthened source location/citation hints for future source-backed handoff, without claiming full RAG readiness or table analytics.
 
 Current chunks are acceptable for lexical search and now carry stronger source/location/citation metadata. Newly processed chunks also have cleaner splitter structure after Stage 33.1 and fewer approval/signature table false positives after Stage 33.3.
-Stage 33.2 adds a bounded validation workflow for proving cleanup on fresh temporary outputs, without migrating old `storage/results`.
+Stage 33.2 adds a bounded validation workflow for proving cleanup on fresh temporary outputs, without migrating old `storage/results`. Stage 33.4 records an expanded 4-document fresh validation run with zero failures/warnings, so Stage 33 is closed from the splitter cleanup standpoint.
 
 Known splitter issues:
 
@@ -112,6 +116,7 @@ Known splitter issues:
 - obvious short, compact and single-cell service/title/approval/signature table-like blocks are demoted conservatively, but unusual layouts can still require review;
 - DOCX page metadata can be unavailable, so page context must not be invented.
 - Stage 33.2 treats null DOCX page metadata as an expected limitation, not a failure.
+- Existing processed JSON is not migrated; cleanup improvements apply to newly processed documents.
 
 Do not present LLM/RAG, scanned PDF OCR, OCR for scanned PDFs, or table analytics as ready.
 

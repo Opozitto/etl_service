@@ -2,7 +2,7 @@
 
 ## Назначение документа
 
-Документ был создан на Stage 10 как docs-level baseline для пользовательских сценариев и минимального evaluation set. Сейчас он актуализируется по мере развития ETL/search/evaluation baseline и отражает текущее состояние после Stage 33.3.
+Документ был создан на Stage 10 как docs-level baseline для пользовательских сценариев и минимального evaluation set. Сейчас он актуализируется по мере развития ETL/search/evaluation baseline и отражает текущее состояние после Stage 33.4.
 
 Сценарии описывают пилотный контур для эколога-проектировщика: source-backed search, extractive QA, extraction/evidence diagnostics, контроль качества корпуса и подготовку chunk handoff для будущего source-backed RAG layer. Документ не объявляет готовыми full RAG, LLM generation, embeddings/vector DB, semantic retrieval, scanned PDF OCR или table analytics.
 
@@ -136,6 +136,7 @@ Stage 33.2 validation:
 - показывает TOC parent violations, duplicate heading text, heading-only chunks, service table suspects, real table chunk preservation и expected missing page limitations;
 - остается deterministic ETL validation, не RAG/LLM/embeddings/vector DB/reranking/OCR/table analytics.
 - после Stage 33.3 используется как evidence layer для проверки service table false-positive cleanup v2 на fresh processing.
+- Stage 33.4 closure evidence: expanded fresh validation on 4 `first_test_data` documents passed with `documents_processed=4`, `documents_with_failures=0`, `service_table_suspects=0`, `real_table_chunks=984`, `issues_sample=[]` and `warnings=[]`.
 
 ## Вне текущего подтвержденного baseline
 
@@ -190,7 +191,7 @@ Stage 33.2 validation:
 | EC-11 | Source attribution | Показать, откуда взят ответ | Search hits and chunk references | Ответ должен содержать explicit source references | yes | supported now | Trust criterion for the pilot track |
 | EC-12 | Problem documents | Найти проблемные документы в корпусе | Index, manifest, batch and audit reports | Audit surfaces duplicates, warnings, missing chunks and low-quality items | no | supported now | Uses the Stage 7-9 reporting layer |
 | EC-13 | RAG-ready chunk export/audit | Проверить качество chunks как handoff units | Existing processed JSON / Stage 29.1 chunk export records | Показать chunk text/preview, `filename`, `document_id`, section path, page where available, `content_type`, `quality_flags`, strengthened source/location/citation fields where available, limitations and issue summary | yes | supported now / diagnostics | Stage 29.1/29.2 plus Stage 30–33.3 metadata/source/splitter hardening; no embeddings/vector DB/generation |
-| EC-14 | Fresh splitter cleanup validation | Проверить Stage 33.1 cleanup на свежей обработке sample documents | Explicit input files/directories plus temporary workspace | Reprocess samples into workspace, then report TOC parent violations, duplicate headings, heading-only chunks, service table suspects, real table chunks and missing page limitations | yes | supported now / diagnostics | Stage 33.2 validates newly processed output; no migration of production `storage/results` |
+| EC-14 | Fresh splitter cleanup validation | Проверить Stage 33 cleanup на свежей обработке sample documents | Explicit input files/directories plus temporary workspace | Reprocess samples into workspace, then report TOC parent violations, duplicate headings, heading-only chunks, service table suspects, real table chunks and missing page limitations | yes | supported now / diagnostics | Stage 33.2 validates newly processed output; Stage 33.4 records 4-document closure evidence; no migration of production `storage/results` |
 
 ## Связь со Stage 11-17
 
@@ -209,8 +210,9 @@ Stage 33.2 validation:
 - Stage 33.1 improves splitter structure for newly processed documents without changing retrieval into semantic/vector/LLM behavior.
 - Stage 33.2 validates splitter cleanup on freshly processed temporary workspace outputs without migrating production storage.
 - Stage 33.3 reduces title/approval/signature table false positives for newly processed documents while preserving real table chunks.
+- Stage 33.4 closes splitter cleanup validation from the current roadmap standpoint using expanded fresh validation evidence.
 
-## Текущее состояние после Stage 33.3
+## Текущее состояние после Stage 33.4
 
 - Stage 29.1 adds read-only RAG-ready chunk inspection/export over existing processed JSON.
 - Stage 29.2 adds read-only chunk quality audit over existing processed JSON / exported chunk records.
@@ -220,10 +222,12 @@ Stage 33.2 validation:
 - Stage 33.1 strengthens splitter structure cleanup v1 for newly processed documents.
 - Stage 33.2 adds fresh splitter cleanup validation on explicit temporary workspace outputs.
 - Stage 33.3 strengthens deterministic service/title/approval/signature table false-positive cleanup.
+- Stage 33.4 records expanded fresh validation over 4 `first_test_data` documents with zero failures/warnings and closes Stage 33 from the splitter cleanup standpoint.
 - Chunks now have better visibility, stronger metadata/source/location/citation context, and cleaner deterministic section/chunk structure where available.
 - Splitter cleanup is conservative and improves handoff quality, but it is not semantic document understanding.
 - DOCX page metadata can still be unavailable; diagnostics should show this honestly rather than inventing page context.
 - These stages should not promise full RAG, semantic retrieval, embeddings/vector DB, LLM generation, scanned PDF OCR or table analytics.
+- Next roadmap direction should be selected explicitly, likely customer-facing handoff/reporting over processed corpus, source-backed evidence pack, or final demo/readiness packaging; speed/cache is not the default next step.
 
 ## Notes on the current baseline
 
