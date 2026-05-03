@@ -122,3 +122,99 @@ def test_table_row_chunk_without_headers_keeps_lexical_values_without_inventing_
     assert "Значения строки: NOx; 10" in table_row_chunk.text
     assert "NOx" in table_row_chunk.text
     assert "10" in table_row_chunk.text
+
+
+def test_toc_heading_does_not_become_parent_for_body_sections() -> None:
+    extracted = ExtractedDocument(
+        extractor_name="test",
+        text="СОДЕРЖАНИЕ\n1. ОБЩИЕ СВЕДЕНИЯ О ПРЕДПРИЯТИИ\nBody",
+        blocks=[
+            RawBlock(kind="paragraph", text="СОДЕРЖАНИЕ"),
+            RawBlock(kind="paragraph", text="1. ОБЩИЕ СВЕДЕНИЯ О ПРЕДПРИЯТИИ"),
+            RawBlock(kind="paragraph", text="Описание предприятия и экологического проекта."),
+        ],
+    )
+
+    sections, _blocks, _tables, _images, chunks = build_structure(extracted)
+    body_section = next(section for section in sections if section.title == "1. ОБЩИЕ СВЕДЕНИЯ О ПРЕДПРИЯТИИ")
+    body_chunk = next(chunk for chunk in chunks if "Описание предприятия" in chunk.text)
+
+    assert body_section.parent_id == "sec-0"
+    assert body_chunk.section_path == ["Document", "1. ОБЩИЕ СВЕДЕНИЯ О ПРЕДПРИЯТИИ"]
+    assert "СОДЕРЖАНИЕ" not in body_chunk.section_path
+
+
+def test_repeated_heading_prefix_is_deduplicated_in_chunk_text() -> None:
+    for heading in ("АННАТОЦИЯ", "ВВЕДЕНИЕ", "1.1 Название"):
+        extracted = ExtractedDocument(
+            extractor_name="test",
+            text=f"{heading}\n{heading}\nBody",
+            blocks=[
+                RawBlock(kind="paragraph", text=heading),
+                RawBlock(kind="paragraph", text=heading),
+                RawBlock(kind="paragraph", text="Полезный текст раздела для handoff."),
+            ],
+        )
+
+        _sections, _blocks, _tables, _images, chunks = build_structure(extracted)
+        chunk = next(item for item in chunks if "Полезный текст" in item.text)
+
+        assert chunk.text.splitlines().count(heading) == 1
+        assert f"{heading}\n{heading}" not in chunk.text
+
+
+def test_heading_only_section_does_not_emit_standalone_text_chunk() -> None:
+    extracted = ExtractedDocument(
+        extractor_name="test",
+        text="ВВЕДЕНИЕ",
+        blocks=[RawBlock(kind="paragraph", text="ВВЕДЕНИЕ")],
+    )
+
+    _sections, _blocks, _tables, _images, chunks = build_structure(extracted)
+
+    assert chunks == []
+
+
+def test_service_signature_table_is_preserved_as_text_not_table_chunk() -> None:
+    extracted = ExtractedDocument(
+        extractor_name="test",
+        text="УТВЕРЖДАЮ\nДолжность Подпись",
+        blocks=[
+            RawBlock(
+                kind="table",
+                data=[["УТВЕРЖДАЮ"], ["Должность", "Подпись", "Ф.И.О."]],
+                text="УТВЕРЖДАЮ\nДолжность | Подпись | Ф.И.О.",
+            ),
+        ],
+    )
+
+    _sections, blocks, tables, _images, chunks = build_structure(extracted)
+
+    assert tables == []
+    assert blocks[0].type == "paragraph"
+    assert blocks[0].metadata["table_classification"] == "service_text"
+    assert all(chunk.content_type != "table_row" for chunk in chunks)
+
+
+def test_real_table_chunk_logic_is_preserved() -> None:
+    extracted = ExtractedDocument(
+        extractor_name="test",
+        text="1. Data\nTable",
+        blocks=[
+            RawBlock(kind="paragraph", text="1. Data"),
+            RawBlock(
+                kind="table",
+                data=[
+                    ["Код", "Вещество", "Выброс"],
+                    ["0301", "Азота диоксид", "0.12"],
+                    ["0330", "Сера диоксид", "0.05"],
+                ],
+                text="Код | Вещество | Выброс\n0301 | Азота диоксид | 0.12\n0330 | Сера диоксид | 0.05",
+            ),
+        ],
+    )
+
+    _sections, _blocks, tables, _images, chunks = build_structure(extracted)
+
+    assert len(tables) == 1
+    assert [chunk.content_type for chunk in chunks].count("table_row") == 2

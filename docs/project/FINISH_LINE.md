@@ -24,7 +24,8 @@
 - Chunk contract hardening v1 is completed: newly processed chunks can carry direct optional source/section/page/content/table context for future source-backed handoff while old processed JSON remains readable.
 - Table chunk context v1 is completed: newly processed row-level table chunks can carry deterministic table title/context, headers, row index, header-to-value pairs, and table shape where available; this improves source-backed handoff readability but is not table analytics.
 - Source location/citation hardening is completed: search/ask/export/audit can surface deterministic source/location hints such as filename, source type, chunk order, section path, page range, block ids, table id/row index, and location/citation labels where existing metadata supports them.
-- Stage 30–32 strengthened the metadata/source contract, but splitter structure quality remains the next work before clean customer/developer-readable handoff.
+- Stage 33.1 splitter cleanup v1 is completed: newly processed documents get cleaner TOC hierarchy, repeated-heading deduplication, heading-only suppression, and cautious service/title/signature table handling.
+- Stage 30–33.1 strengthened the metadata/source/structure contract, but this is still ETL/source-backed handoff readiness rather than full RAG.
 
 ## Best shippable baseline
 
@@ -41,6 +42,7 @@
 - backward-compatible chunk/source context hardening for future source-backed handoff.
 - readable table chunk context for future source-backed handoff without SQL-like QA or calculations.
 - source location/citation hints for future handoff traceability without LLM citation generation.
+- splitter structure cleanup v1 for cleaner section paths and fewer low-value heading/service chunks in newly processed documents.
 
 ## What is confirmed, and what is not
 
@@ -79,12 +81,12 @@
 
 ## Next choice
 
-Next recommended: Stage 33.1 Splitter structure cleanup v1.
+Next recommended: keep splitter/source-backed handoff quality work bounded, or move to final polish only by explicit user command.
 
 Follow-up sequence:
 
 - Stage 33.0 docs-only splitter roadmap realignment after manual chunk review, completed.
-- Stage 33.1 Splitter structure cleanup v1, next recommended implementation stage.
+- Stage 33.1 Splitter structure cleanup v1, completed.
 - QA evaluator retrieval-loop speed/cache moves to later/backlog only if it becomes a severe operational blocker.
 - Final polish checkpoint starts only by explicit user command: "стоп, следующий шаг делаем финал".
 
@@ -92,17 +94,15 @@ This preserves the delivery-first rule: every stage should be demo-ready / shipp
 
 Stage 29.1 and Stage 29.2 closed visibility/export/audit for chunks. Stage 30 completed the first production-contract hardening step for chunk payload/source context, Stage 31 improved table chunk readability, and Stage 32 strengthened source location/citation hints for future source-backed handoff, without claiming full RAG readiness or table analytics.
 
-Current chunks are acceptable for lexical search and now carry stronger source/location/citation metadata. The remaining near-term risk is splitter structure quality, not source visibility itself.
+Current chunks are acceptable for lexical search and now carry stronger source/location/citation metadata. Newly processed chunks also have cleaner splitter structure after Stage 33.1.
 
 Known splitter issues:
 
-- heading-only / short chunks;
-- TOC / оглавление can appear as section parent for real content;
-- duplicate heading text inside chunks;
-- service/title/approval/signature blocks can blur into content/table-like chunks;
+- heading-only / short chunks are reduced but not semantically eliminated;
+- TOC / оглавление no longer intentionally acts as parent for real content in newly processed structure;
+- duplicate heading text is cleaned only for safe normalized-identical heading repeats;
+- obvious short service/title/approval/signature table-like blocks are demoted conservatively, but unusual layouts can still require review;
 - DOCX page metadata can be unavailable, so page context must not be invented.
-
-The next splitter stage should target cleaner section hierarchy, fewer low-value heading chunks, less duplicated heading text, clearer service/title/signature/table context, and cautious table-like classification.
 
 Do not present LLM/RAG, scanned PDF OCR, OCR for scanned PDFs, or table analytics as ready.
 

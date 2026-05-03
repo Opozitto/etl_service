@@ -105,10 +105,15 @@
 - Stage 33.0 records that Stage 30–32 improved metadata/source/location/citation contract, but splitter structure still needs cleanup before clean customer/developer-readable handoff.
 - Stage 33.0 moves QA evaluator retrieval-loop speed/cache out of the near-term path; it remains distant backlog / optional only if speed becomes a severe operational blocker.
 - Stage 33.0 does not change production code, tests, storage, external data, runtime artifacts, or splitter behavior itself.
+- Stage 33.1 completed as Splitter structure cleanup v1.
+- Stage 33.1 keeps TOC / оглавление sections readable but prevents them from becoming hierarchy parents for real body sections.
+- Stage 33.1 deduplicates repeated heading prefixes in chunk text only for normalized-identical heading repeats and suppresses heading-only sections from ordinary text chunk emission.
+- Stage 33.1 cautiously demotes short approval/signature/service-like table blocks to text blocks with metadata marker, while preserving real row-level table chunk behavior.
+- Stage 33.1 improves newly processed chunk `section_path` / handoff cleanliness and keeps old processed JSON readable without storage migration.
+- Stage 33.1 does not add full RAG, LLM generation, embeddings/vector DB, semantic retrieval, reranking, scanned PDF OCR, speed/cache work, table analytics, or production storage migration.
 
 ## next
 
-- Stage 33.1 Splitter structure cleanup v1: cleaner section hierarchy, fewer heading-only chunks, less duplicated heading text, clearer service/title/signature/table context, cautious table-like classification.
 - QA evaluator retrieval-loop speed/cache is distant backlog / optional only if speed becomes a severe operational blocker.
 - Final polish checkpoint starts only by explicit user command: "стоп, следующий шаг делаем финал".
 
@@ -140,7 +145,8 @@
 - LLM / RAG / generation are not implemented.
 - Current chunks are useful for lexical search and now carry stronger source/section/page/content/table/location context for future handoff, but this is still not a full RAG implementation.
 - Source/location metadata improved after Stage 30–32, but splitter structure still needs cleanup.
-- Heading-only chunks, TOC hierarchy leaking into real section paths, duplicate heading text, and title/signature/service blocks misread as table-like content are the main current quality risks.
+- Stage 33.1 reduces heading-only chunks, TOC hierarchy leaking into real section paths, duplicate heading text, and obvious short title/signature/service blocks misread as table chunks for newly processed documents.
+- Remaining splitter risk: cleanup is deterministic and conservative, not perfect semantic document understanding.
 - DOCX page metadata can be unavailable; this is an expected limitation and should stay explicit in diagnostics.
 - QA evaluator `--skip-answer-overlap` is intentionally a faster smoke mode; use full/default mode when answer-overlap trend comparison is needed.
 - Stage 26 matching is deterministic and conservative; ambiguous or missing expected documents require review before Stage 27 processing/eval.

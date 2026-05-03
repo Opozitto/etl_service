@@ -12,6 +12,33 @@ from app.schemas.document import Block, Chunk, ImageInfo, Section, TableCell, Ta
 HEADING_RE = re.compile(r"^(\d+(\.\d+)*\.?|[IVXLC]+\.?)\s+.+$")
 LIST_RE = re.compile(r"^(\-|\*|•|\d+\.)\s+.+$")
 SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?;])\s+")
+SERVICE_HEADING_TITLES = {
+    "содержание",
+    "оглавление",
+    "table of contents",
+}
+COMMON_STANDALONE_HEADING_TITLES = SERVICE_HEADING_TITLES | {
+    "аннатация",
+    "аннатоция",
+    "аннотация",
+    "введение",
+    "заключение",
+    "приложение",
+    "references",
+    "introduction",
+    "conclusion",
+}
+SERVICE_TABLE_TERMS = (
+    "утверждаю",
+    "согласовано",
+    "согласовал",
+    "разработал",
+    "проверил",
+    "подпись",
+    "должность",
+    "ф.и.о",
+    "фио",
+)
 
 
 def classify_text_block(block: RawBlock) -> str:
@@ -21,6 +48,8 @@ def classify_text_block(block: RawBlock) -> str:
     if not text:
         return "text"
     if block.style_hint and "heading" in block.style_hint.lower():
+        return "heading"
+    if _normalized_heading_key(text) in COMMON_STANDALONE_HEADING_TITLES:
         return "heading"
     if HEADING_RE.match(text):
         return "heading"
@@ -79,10 +108,25 @@ def build_structure(
                 page_end=raw.page_num,
             )
             sections.append(section)
-            section_stack.append(section)
+            if not _is_toc_heading(text):
+                section_stack.append(section)
             current_section_id = section.section_id
 
         if kind == "table":
+            if _is_service_table_like_block(raw, text):
+                block = Block(
+                    block_id=f"blk-{next(block_counter)}",
+                    type="paragraph",
+                    order=len(blocks),
+                    text=text or _table_text_from_rows(raw.data or []),
+                    section_id=current_section_id,
+                    page_num=raw.page_num,
+                    metadata={**raw.metadata, "table_classification": "service_text"},
+                )
+                blocks.append(block)
+                _attach_block_to_section(sections, current_section_id, block.block_id, raw.page_num)
+                continue
+
             table_id = f"tbl-{next(table_counter)}"
             rows = raw.data or []
             table = TableData(
@@ -218,12 +262,17 @@ def _build_section_chunks(
     def flush() -> None:
         nonlocal current_parts, current_block_ids, order
         chunk_text = normalize_text("\n".join(part for part in current_parts if part).strip())
+        chunk_text = _dedupe_repeated_heading_prefix(chunk_text, section.title)
         if not chunk_text:
             current_parts = []
             current_block_ids = []
             return
         unique_block_ids = list(dict.fromkeys(current_block_ids))
         chunk_blocks = [block for block in section_blocks if block.block_id in set(unique_block_ids)]
+        if _is_heading_only_chunk(chunk_text, section.title, chunk_blocks):
+            current_parts = []
+            current_block_ids = []
+            return
         page_start, page_end = _page_range_from_blocks(chunk_blocks)
         table_id = _table_id_from_blocks(chunk_blocks)
         chunks.append(
@@ -258,7 +307,8 @@ def _build_section_chunks(
             candidate_ids = list(current_block_ids)
             if not candidate_parts and heading_context:
                 candidate_parts.append(heading_context)
-            candidate_parts.append(part)
+            if not _is_repeated_heading_part(part, heading_context, candidate_parts):
+                candidate_parts.append(part)
             candidate_ids.append(block.block_id)
             candidate_text = normalize_text("\n".join(candidate_parts))
 
@@ -268,7 +318,8 @@ def _build_section_chunks(
                 candidate_ids = list(current_block_ids)
                 if not candidate_parts and heading_context:
                     candidate_parts.append(heading_context)
-                candidate_parts.append(part)
+                if not _is_repeated_heading_part(part, heading_context, candidate_parts):
+                    candidate_parts.append(part)
                 candidate_ids.append(block.block_id)
 
             current_parts = candidate_parts
@@ -413,6 +464,66 @@ def _table_sheet_name(blocks: list[Block], table_block_id: str) -> str:
         if block.block_id == table_block_id:
             return normalize_text(str(block.metadata.get("sheet_name", "")))
     return ""
+
+
+def _normalized_heading_key(text: str) -> str:
+    return normalize_text(text).casefold().strip(" .:;")
+
+
+def _is_toc_heading(text: str) -> bool:
+    return _normalized_heading_key(text) in SERVICE_HEADING_TITLES
+
+
+def _is_repeated_heading_part(part: str, heading_context: str, candidate_parts: list[str]) -> bool:
+    if not heading_context or not candidate_parts:
+        return False
+    return _normalized_heading_key(part) == _normalized_heading_key(heading_context)
+
+
+def _dedupe_repeated_heading_prefix(text: str, heading: str) -> str:
+    if not text:
+        return text
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    if len(lines) < 2:
+        return text
+    heading_key = _normalized_heading_key(heading) or _normalized_heading_key(lines[0])
+    if heading_key and _normalized_heading_key(lines[0]) == heading_key and _normalized_heading_key(lines[1]) == heading_key:
+        return normalize_text("\n".join([lines[0], *lines[2:]]))
+    return text
+
+
+def _is_heading_only_chunk(text: str, section_title: str, blocks: list[Block]) -> bool:
+    if not section_title or _normalized_heading_key(text) != _normalized_heading_key(section_title):
+        return False
+    return bool(blocks) and all(block.type == "heading" for block in blocks)
+
+
+def _table_text_from_rows(rows: list[list[str]]) -> str | None:
+    lines = [" | ".join(normalize_text(cell) for cell in row if normalize_text(cell)) for row in rows]
+    text = normalize_text("\n".join(line for line in lines if line))
+    return text or None
+
+
+def _is_service_table_like_block(block: RawBlock, text: str) -> bool:
+    rows = [
+        [normalize_text(cell) for cell in row if normalize_text(cell)]
+        for row in (block.data or [])
+        if isinstance(row, list)
+    ]
+    rows = [row for row in rows if row]
+    if not rows:
+        return False
+    metadata = block.metadata or {}
+    if metadata.get("sheet_name"):
+        return False
+    n_rows = len(rows)
+    n_cols = max((len(row) for row in rows), default=0)
+    if n_rows >= 3 and n_cols >= 3:
+        return False
+    combined = normalize_text(" ".join([text, _table_text_from_rows(rows) or ""])).casefold()
+    has_service_terms = any(term in combined for term in SERVICE_TABLE_TERMS)
+    mostly_short_cells = sum(1 for row in rows for cell in row if len(cell) <= 40) >= max(1, sum(len(row) for row in rows) - 1)
+    return has_service_terms and mostly_short_cells and n_rows <= 4
 
 
 def _section_paths_by_id(sections: list[Section]) -> dict[str, list[str]]:

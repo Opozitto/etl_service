@@ -650,21 +650,27 @@ conda run -n etl_env python -m scripts.evaluate_qa_dataset --qa-path "D:\Project
 
 ## Stage 33.1. Splitter structure cleanup v1
 
-- Статус: next recommended.
+- Статус: completed.
 - Цель: улучшить качество структуры `blocks` / `chunks` для более чистого customer/developer-readable handoff, сохранив delivery-first principle.
-- Рекомендуемый scope:
-  - исключить оглавление из роли parent hierarchy для реальных content sections;
-  - подавлять heading-only chunks, объединять их с соседним контекстом или явно маркировать как low-value;
-  - дедуплицировать повтор заголовка внутри chunk text;
-  - лучше отделять title-page / approval / signature / service blocks от content/table chunks;
-  - удерживать `section_path` на реальной структуре разделов, а не на структуре TOC;
-  - сделать table-like classification более осторожной, чтобы title/signature/service blocks не выглядели как table chunks.
+- Подтвержденный scope:
+  - TOC / service headings (`СОДЕРЖАНИЕ`, `ОГЛАВЛЕНИЕ`, `TABLE OF CONTENTS`) больше не становятся parent hierarchy для последующих реальных body sections;
+  - типовые standalone headings (`АННАТАЦИЯ` / `АННАТОЦИЯ` / `АННОТАЦИЯ`, `ВВЕДЕНИЕ`, `ЗАКЛЮЧЕНИЕ`) распознаются как headings без широкого fuzzy matching;
+  - repeated heading prefix внутри chunk text дедуплицируется только при normalized-identical совпадении;
+  - heading-only sections не эмитят самостоятельный обычный text chunk без полезного body text;
+  - короткие approval/signature/service-like table blocks сохраняются как text blocks с metadata marker вместо meaningful `TableData` / `table_row` chunks;
+  - реальные таблицы с row/header data сохраняют прежнюю row-level chunk логику;
+  - export/audit/search автоматически получают cleaner `section_path`, fewer heading-only chunks и меньше false table row chunks для newly processed documents.
 - Вне scope:
   - full RAG / LLM generation;
   - embeddings/vector DB / semantic retrieval / reranking;
   - OCR/scanned PDF OCR;
   - table analytics / SQL-like table QA / automatic calculations;
   - production search ranking rewrite.
+- Known limitations:
+  - cleanup conservative and deterministic, not semantic document understanding;
+  - existing processed JSON remains readable but is not migrated;
+  - DOCX page metadata can still be null and must not be invented;
+  - title/signature/service detection is intentionally cautious and may not catch every layout artifact.
 
 ## Stage 33.x. QA evaluator retrieval-loop speed/cache
 
