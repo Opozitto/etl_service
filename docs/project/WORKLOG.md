@@ -117,6 +117,13 @@
 - Stage 33.2 report `stage33_2_splitter_cleanup_validation_v1` counts TOC parent violations, duplicate heading text, heading-only chunks, service table suspects, preserved real table chunks, and expected missing page limitations.
 - Stage 33.2 writes JSON only by explicit `--output-path`; without it the CLI prints a console summary only.
 - Stage 33.2 does not migrate production results, commit runtime artifacts, add RAG/LLM/embeddings/vector DB/semantic retrieval/reranking/OCR/table analytics, or change production search behavior.
+- Stage 33.3 completed as service table false-positive cleanup v2.
+- Stage 33.3 extends deterministic service/title/approval/signature table cleanup for compact and single-cell approval blocks with `"Утверждено"`, `Коммерческий директор`, `(подпись)`, slash placeholders, `2023 г.`, `(число)` and `(месяц)`.
+- Stage 33.3 demotes those false-positive table blocks to readable `paragraph` / `service_text` blocks for newly processed documents instead of creating meaningful `TableData` / `table_row` chunks.
+- Stage 33.3 preserves real tables by keeping spreadsheet `sheet_name`, meaningful row/header data, and substantive DOCX/PDF table chunks out of the approval/signature demotion path.
+- Stage 33.3 keeps fresh splitter validation as the evidence layer and leaves old processed JSON unmigrated.
+- Stage 33.3 does not add full RAG, LLM generation, embeddings/vector DB, semantic retrieval/reranking, OCR/scanned PDF OCR, speed/cache work, table analytics, or production storage migration.
+- Stage 33.3 smoke on freshly processed `first_test_data\test.docx` in `.runtime_eval\splitter_stage33_3_workspace_fresh`: `documents_processed=1`, `total_chunks=1426`, `toc_parent_violations=0`, `duplicate_heading_violations=0`, `heading_only_chunks=0`, `service_table_suspects=0`, `real_table_chunks=950`, `missing_page_expected_limitations=1426`.
 
 ## next
 
@@ -152,7 +159,8 @@
 - Current chunks are useful for lexical search and now carry stronger source/section/page/content/table/location context for future handoff, but this is still not a full RAG implementation.
 - Source/location metadata improved after Stage 30–32, but splitter structure still needs cleanup.
 - Stage 33.1 reduces heading-only chunks, TOC hierarchy leaking into real section paths, duplicate heading text, and obvious short title/signature/service blocks misread as table chunks for newly processed documents.
-- Stage 33.2 validates Stage 33.1 cleanup on freshly processed temporary workspace outputs, not on old `storage/results`.
+- Stage 33.2 validates splitter cleanup on freshly processed temporary workspace outputs, not on old `storage/results`.
+- Stage 33.3 reduces service/title/approval/signature table false positives while keeping real table chunks available for source-backed handoff.
 - Remaining splitter risk: cleanup is deterministic and conservative, not perfect semantic document understanding.
 - DOCX page metadata can be unavailable; this is an expected limitation and should stay explicit in diagnostics.
 - QA evaluator `--skip-answer-overlap` is intentionally a faster smoke mode; use full/default mode when answer-overlap trend comparison is needed.

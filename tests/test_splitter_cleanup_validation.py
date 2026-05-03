@@ -125,6 +125,65 @@ def test_service_table_suspect_flags_short_signature_table_like_chunk() -> None:
     assert module.is_service_table_suspect(service_table)
 
 
+def test_validation_does_not_count_demoted_service_text_as_table_suspect() -> None:
+    module = _load_module()
+    demoted_service_text = _chunk(
+        content_type="text",
+        table_id=None,
+        text=(
+            '"Утверждено" Коммерческий директор ООО «БИЖУ» '
+            "/__________________/ Неизвестный А.Н. (подпись)"
+        ),
+    )
+    report = module.build_validation_report_from_documents([_document(chunks=[demoted_service_text])])
+
+    assert report["summary"]["service_table_suspects"] == 0
+    assert report["issues"] == []
+
+
+def test_validation_still_flags_old_unfixed_approval_signature_table_chunk() -> None:
+    module = _load_module()
+    old_table_chunk = _chunk(
+        content_type="table",
+        table_id="tbl-1",
+        table_headers=[],
+        table_column_values={},
+        row_count=5,
+        column_count=3,
+        text=(
+            '"Утверждено" Коммерческий директор ООО «БИЖУ» '
+            "/__________________/ Неизвестный А.Н. (подпись) "
+            "/_______/ /___________/ 2023 г. (число) (месяц)"
+        ),
+    )
+    report = module.build_validation_report_from_documents([_document(chunks=[old_table_chunk])])
+
+    assert module.is_service_table_suspect(old_table_chunk)
+    assert report["summary"]["service_table_suspects"] == 1
+    assert report["issues"][0]["issue_type"] == "service_table_suspect"
+
+
+def test_validation_does_not_flag_real_registry_table_with_director_terms() -> None:
+    module = _load_module()
+    registry_table_chunk = _chunk(
+        content_type="table",
+        table_id="tbl-1",
+        table_headers=[],
+        table_column_values={},
+        text=(
+            "Реквизиты предприятия\n"
+            "Полное наименование хозяйствующего субъекта | ООО «БИЖУ»\n"
+            "Фамилия и инициалы руководителя хозяйствующего субъекта | "
+            "Коммерческий директор - Неизвестный Артист Народа\n"
+            "Должностное лицо, ответственное за проведение инвентаризации выбросов | Юрист"
+        ),
+    )
+    report = module.build_validation_report_from_documents([_document(chunks=[registry_table_chunk])])
+
+    assert not module.is_service_table_suspect(registry_table_chunk)
+    assert report["summary"]["service_table_suspects"] == 0
+
+
 def test_report_contract_contains_stage33_2_fields() -> None:
     module = _load_module()
     report = module.build_validation_report_from_documents([_document(chunks=[_chunk(page_start=None, page_end=None)])])

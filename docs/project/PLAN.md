@@ -697,6 +697,31 @@ conda run -n etl_env python -m scripts.evaluate_qa_dataset --qa-path "D:\Project
   - DOCX page metadata can still be null and is reported as an expected limitation, not invented;
   - service/title/signature detection is cautious and may require manual review for unusual layouts.
 
+## Stage 33.3. Service table false-positive cleanup v2
+
+- Статус: completed.
+- Цель: точечно доработать deterministic cleanup для title/approval/signature table false positives после fresh validation Stage 33.2, сохранив реальные table chunks.
+- Подтвержденный scope:
+  - single-cell и compact approval/signature/title blocks с `"Утверждено"`, `Коммерческий директор`, `(подпись)`, slash placeholders, `2023 г.`, `(число)` / `(месяц)` демотируются из `table` в readable `paragraph` block с `table_classification: service_text`;
+  - реальные таблицы с row/header context, spreadsheet `sheet_name`, содержательные DOCX/PDF tables и row-level chunks сохраняются;
+  - validation detector согласован с cleanup: demoted service text не считается `service_table_suspect`, но old/unfixed table-like approval chunks остаются warning;
+  - fresh validation remains evidence layer over newly processed temporary workspace outputs.
+- Smoke evidence on `first_test_data\test.docx` in a fresh `.runtime_eval` workspace:
+  - `documents_processed=1`;
+  - `toc_parent_violations=0`;
+  - `duplicate_heading_violations=0`;
+  - `heading_only_chunks=0`;
+  - `service_table_suspects=0`;
+  - `real_table_chunks=950`;
+  - `missing_page_expected_limitations=1426`.
+- Граница scope:
+  - no migration of existing `storage/results`;
+  - no full RAG, LLM generation, embeddings/vector DB, semantic retrieval/reranking, OCR/scanned PDF OCR, speed/cache work or table analytics.
+- Known limitations:
+  - cleanup is deterministic and conservative, not semantic document understanding;
+  - existing processed JSON can still contain old table false positives until documents are reprocessed;
+  - DOCX page metadata can still be null and is not invented.
+
 ## Stage 33.x. QA evaluator retrieval-loop speed/cache
 
 - Статус: distant backlog / optional.

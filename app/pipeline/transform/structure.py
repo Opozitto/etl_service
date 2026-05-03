@@ -30,15 +30,21 @@ COMMON_STANDALONE_HEADING_TITLES = SERVICE_HEADING_TITLES | {
 }
 SERVICE_TABLE_TERMS = (
     "утверждаю",
+    "утверждено",
     "согласовано",
     "согласовал",
     "разработал",
     "проверил",
     "подпись",
     "должность",
+    "коммерческий директор",
     "ф.и.о",
     "фио",
+    "(число)",
+    "(месяц)",
 )
+SIGNATURE_PLACEHOLDER_RE = re.compile(r"/\s*[_-]{3,}\s*/|[_-]{5,}")
+YEAR_LABEL_RE = re.compile(r"\b20\d{2}\s*г\.?", re.IGNORECASE)
 
 
 def classify_text_block(block: RawBlock) -> str:
@@ -518,12 +524,26 @@ def _is_service_table_like_block(block: RawBlock, text: str) -> bool:
         return False
     n_rows = len(rows)
     n_cols = max((len(row) for row in rows), default=0)
-    if n_rows >= 3 and n_cols >= 3:
-        return False
     combined = normalize_text(" ".join([text, _table_text_from_rows(rows) or ""])).casefold()
     has_service_terms = any(term in combined for term in SERVICE_TABLE_TERMS)
     mostly_short_cells = sum(1 for row in rows for cell in row if len(cell) <= 40) >= max(1, sum(len(row) for row in rows) - 1)
-    return has_service_terms and mostly_short_cells and n_rows <= 4
+    if not has_service_terms:
+        return False
+    if mostly_short_cells and n_rows <= 4 and n_cols <= 3:
+        return True
+
+    signature_placeholders = SIGNATURE_PLACEHOLDER_RE.findall(combined)
+    service_signal_count = sum(
+        [
+            any(term in combined for term in ("утверждаю", "утверждено", "согласовано", "согласовал")),
+            "коммерческий директор" in combined,
+            "подпись" in combined,
+            len(signature_placeholders) >= 2,
+            bool(YEAR_LABEL_RE.search(combined)) and ("(число)" in combined or "(месяц)" in combined),
+        ]
+    )
+    compact_block = n_rows <= 8 and len(combined) <= 700
+    return compact_block and service_signal_count >= 3
 
 
 def _section_paths_by_id(sections: list[Section]) -> dict[str, list[str]]:

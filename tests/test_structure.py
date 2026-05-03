@@ -196,6 +196,69 @@ def test_service_signature_table_is_preserved_as_text_not_table_chunk() -> None:
     assert all(chunk.content_type != "table_row" for chunk in chunks)
 
 
+def test_title_approval_signature_table_with_placeholders_is_demoted_to_service_text() -> None:
+    extracted = ExtractedDocument(
+        extractor_name="test",
+        text='ВЕЩЕСТВ В АТМОСФЕРУ\n"Утверждено"\nКоммерческий директор',
+        blocks=[
+            RawBlock(kind="paragraph", text="ВЕЩЕСТВ В АТМОСФЕРУ"),
+            RawBlock(
+                kind="table",
+                data=[
+                    ['"Утверждено"', "", ""],
+                    ["Коммерческий директор ООО «БИЖУ»", "/__________________/", "Неизвестный А.Н."],
+                    ["", "(подпись)", ""],
+                    ["/_______/", "/___________/", "2023 г."],
+                    ["(число)", "(месяц)", ""],
+                ],
+                text=(
+                    '"Утверждено" Коммерческий директор ООО «БИЖУ» '
+                    "/__________________/ Неизвестный А.Н. (подпись) "
+                    "/_______/ /___________/ 2023 г. (число) (месяц)"
+                ),
+            ),
+        ],
+    )
+
+    _sections, blocks, tables, _images, chunks = build_structure(extracted)
+
+    assert tables == []
+    service_block = next(block for block in blocks if block.metadata.get("table_classification") == "service_text")
+    assert service_block.type == "paragraph"
+    assert '"Утверждено"' in (service_block.text or "")
+    assert all(chunk.content_type != "table_row" for chunk in chunks)
+    assert all(chunk.table_id is None for chunk in chunks)
+
+
+def test_single_cell_title_approval_signature_table_is_demoted_to_service_text() -> None:
+    extracted = ExtractedDocument(
+        extractor_name="test",
+        text='"Утверждено" Коммерческий директор',
+        blocks=[
+            RawBlock(
+                kind="table",
+                data=[
+                    [
+                        '"Утверждено" Коммерческий директор ООО «БИЖУ» /__________________/ '
+                        "Неизвестный А.Н. (подпись) /_______/ /___________/ 2023 г. (число) (месяц)"
+                    ]
+                ],
+                text=(
+                    '"Утверждено" Коммерческий директор ООО «БИЖУ» /__________________/ '
+                    "Неизвестный А.Н. (подпись) /_______/ /___________/ 2023 г. (число) (месяц)"
+                ),
+            ),
+        ],
+    )
+
+    _sections, blocks, tables, _images, chunks = build_structure(extracted)
+
+    assert tables == []
+    assert blocks[0].type == "paragraph"
+    assert blocks[0].metadata["table_classification"] == "service_text"
+    assert all(chunk.table_id is None for chunk in chunks)
+
+
 def test_real_table_chunk_logic_is_preserved() -> None:
     extracted = ExtractedDocument(
         extractor_name="test",
@@ -218,3 +281,34 @@ def test_real_table_chunk_logic_is_preserved() -> None:
 
     assert len(tables) == 1
     assert [chunk.content_type for chunk in chunks].count("table_row") == 2
+
+
+def test_real_docx_table_with_service_word_but_row_data_is_preserved() -> None:
+    extracted = ExtractedDocument(
+        extractor_name="test",
+        text="1. Реестр согласования\nTable",
+        blocks=[
+            RawBlock(kind="paragraph", text="1. Реестр согласования"),
+            RawBlock(
+                kind="table",
+                data=[
+                    ["N", "Должность", "Комментарий", "Дата"],
+                    ["1", "Инженер", "Проверил расчет выбросов по разделу 2", "2023-01-10"],
+                    ["2", "Главный специалист", "Согласовал исходные данные по разделу 3", "2023-01-11"],
+                    ["3", "Руководитель проекта", "Принял замечания без подписи в исходном файле", "2023-01-12"],
+                ],
+                text=(
+                    "N | Должность | Комментарий | Дата\n"
+                    "1 | Инженер | Проверил расчет выбросов по разделу 2 | 2023-01-10\n"
+                    "2 | Главный специалист | Согласовал исходные данные по разделу 3 | 2023-01-11\n"
+                    "3 | Руководитель проекта | Принял замечания без подписи в исходном файле | 2023-01-12"
+                ),
+            ),
+        ],
+    )
+
+    _sections, blocks, tables, _images, chunks = build_structure(extracted)
+
+    assert len(tables) == 1
+    assert any(block.type == "table" for block in blocks)
+    assert [chunk.content_type for chunk in chunks].count("table_row") == 3

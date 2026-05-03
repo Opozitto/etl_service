@@ -2,7 +2,7 @@
 
 ## Назначение документа
 
-Документ был создан на Stage 10 как docs-level baseline для пользовательских сценариев и минимального evaluation set. Сейчас он актуализируется по мере развития ETL/search/evaluation baseline и отражает текущее состояние после Stage 33.2.
+Документ был создан на Stage 10 как docs-level baseline для пользовательских сценариев и минимального evaluation set. Сейчас он актуализируется по мере развития ETL/search/evaluation baseline и отражает текущее состояние после Stage 33.3.
 
 Сценарии описывают пилотный контур для эколога-проектировщика: source-backed search, extractive QA, extraction/evidence diagnostics, контроль качества корпуса и подготовку chunk handoff для будущего source-backed RAG layer. Документ не объявляет готовыми full RAG, LLM generation, embeddings/vector DB, semantic retrieval, scanned PDF OCR или table analytics.
 
@@ -113,7 +113,7 @@
 - strengthened source/location/citation fields after Stage 30–32 where available;
 - limitations / handoff notes.
 
-Это diagnostics/handoff visibility после Stage 29.1/29.2, metadata/source contract hardening после Stage 30–32 и splitter cleanup после Stage 33.1. Это не full RAG, не semantic retrieval, не embeddings/vector DB и не generation.
+Это diagnostics/handoff visibility после Stage 29.1/29.2, metadata/source contract hardening после Stage 30–32 и splitter cleanup после Stage 33.1/33.3. Это не full RAG, не semantic retrieval, не embeddings/vector DB и не generation.
 
 Текущий splitter cleanup v1:
 
@@ -123,12 +123,19 @@
 - короткие approval/signature/service-like table blocks осторожно демотируются в text blocks, чтобы не выглядеть meaningful table chunks;
 - реальные table row chunks сохраняются.
 
+Stage 33.3 cleanup v2:
+
+- compact и single-cell title/approval/signature table false positives с `"Утверждено"`, `Коммерческий директор`, `(подпись)`, slash placeholders, `2023 г.`, `(число)` / `(месяц)` демотируются в readable `service_text`;
+- реквизитные и содержательные DOCX/PDF tables, spreadsheet rows и реальные row-level table chunks сохраняются;
+- existing processed JSON не мигрируется, новое поведение применяется к newly processed documents.
+
 Stage 33.2 validation:
 
 - заново обрабатывает выбранные sample documents в explicit temporary workspace;
 - проверяет newly processed JSON, а не старые production `storage/results`;
 - показывает TOC parent violations, duplicate heading text, heading-only chunks, service table suspects, real table chunk preservation и expected missing page limitations;
 - остается deterministic ETL validation, не RAG/LLM/embeddings/vector DB/reranking/OCR/table analytics.
+- после Stage 33.3 используется как evidence layer для проверки service table false-positive cleanup v2 на fresh processing.
 
 ## Вне текущего подтвержденного baseline
 
@@ -182,7 +189,7 @@ Stage 33.2 validation:
 | EC-10 | Draft generation | Подготовить draft section документации | Project doc context and task brief | Future spike only | yes | future | Do not announce ready LLM generation |
 | EC-11 | Source attribution | Показать, откуда взят ответ | Search hits and chunk references | Ответ должен содержать explicit source references | yes | supported now | Trust criterion for the pilot track |
 | EC-12 | Problem documents | Найти проблемные документы в корпусе | Index, manifest, batch and audit reports | Audit surfaces duplicates, warnings, missing chunks and low-quality items | no | supported now | Uses the Stage 7-9 reporting layer |
-| EC-13 | RAG-ready chunk export/audit | Проверить качество chunks как handoff units | Existing processed JSON / Stage 29.1 chunk export records | Показать chunk text/preview, `filename`, `document_id`, section path, page where available, `content_type`, `quality_flags`, strengthened source/location/citation fields where available, limitations and issue summary | yes | supported now / diagnostics | Stage 29.1/29.2 plus Stage 30–33.1 metadata/source/splitter hardening; no embeddings/vector DB/generation |
+| EC-13 | RAG-ready chunk export/audit | Проверить качество chunks как handoff units | Existing processed JSON / Stage 29.1 chunk export records | Показать chunk text/preview, `filename`, `document_id`, section path, page where available, `content_type`, `quality_flags`, strengthened source/location/citation fields where available, limitations and issue summary | yes | supported now / diagnostics | Stage 29.1/29.2 plus Stage 30–33.3 metadata/source/splitter hardening; no embeddings/vector DB/generation |
 | EC-14 | Fresh splitter cleanup validation | Проверить Stage 33.1 cleanup на свежей обработке sample documents | Explicit input files/directories plus temporary workspace | Reprocess samples into workspace, then report TOC parent violations, duplicate headings, heading-only chunks, service table suspects, real table chunks and missing page limitations | yes | supported now / diagnostics | Stage 33.2 validates newly processed output; no migration of production `storage/results` |
 
 ## Связь со Stage 11-17
@@ -201,8 +208,9 @@ Stage 33.2 validation:
 - Stage 30–32 strengthen chunk metadata/source/table/location/citation fields without claiming full RAG.
 - Stage 33.1 improves splitter structure for newly processed documents without changing retrieval into semantic/vector/LLM behavior.
 - Stage 33.2 validates splitter cleanup on freshly processed temporary workspace outputs without migrating production storage.
+- Stage 33.3 reduces title/approval/signature table false positives for newly processed documents while preserving real table chunks.
 
-## Текущее состояние после Stage 33.2
+## Текущее состояние после Stage 33.3
 
 - Stage 29.1 adds read-only RAG-ready chunk inspection/export over existing processed JSON.
 - Stage 29.2 adds read-only chunk quality audit over existing processed JSON / exported chunk records.
@@ -211,6 +219,7 @@ Stage 33.2 validation:
 - Stage 32 strengthens source location/citation context.
 - Stage 33.1 strengthens splitter structure cleanup v1 for newly processed documents.
 - Stage 33.2 adds fresh splitter cleanup validation on explicit temporary workspace outputs.
+- Stage 33.3 strengthens deterministic service/title/approval/signature table false-positive cleanup.
 - Chunks now have better visibility, stronger metadata/source/location/citation context, and cleaner deterministic section/chunk structure where available.
 - Splitter cleanup is conservative and improves handoff quality, but it is not semantic document understanding.
 - DOCX page metadata can still be unavailable; diagnostics should show this honestly rather than inventing page context.

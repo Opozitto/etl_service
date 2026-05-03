@@ -15,17 +15,23 @@ VALIDATION_VERSION = "stage33_2_splitter_cleanup_validation_v1"
 
 TOC_TITLES = {"содержание", "оглавление", "table of contents"}
 BODY_HEADING_RE = re.compile(r"^(\d+(\.\d+)*\.?|[IVXLC]+\.?)\s+\S+", re.IGNORECASE)
+SIGNATURE_PLACEHOLDER_RE = re.compile(r"/\s*[_-]{3,}\s*/|[_-]{5,}")
+YEAR_LABEL_RE = re.compile(r"\b20\d{2}\s*г\.?", re.IGNORECASE)
 SERVICE_TERMS = (
     "утверждаю",
+    "утверждено",
     "согласовано",
     "согласовал",
     "подпись",
     "должность",
+    "коммерческий директор",
     "ф.и.о",
     "фио",
     "разработал",
     "проверил",
     "лист согласования",
+    "(число)",
+    "(месяц)",
     "approval",
     "signature",
 )
@@ -107,6 +113,20 @@ def is_service_text(text: str) -> bool:
     return any(term in normalized for term in SERVICE_TERMS)
 
 
+def service_signature_signal_count(text: str) -> int:
+    normalized = normalize_for_match(text)
+    signature_placeholders = SIGNATURE_PLACEHOLDER_RE.findall(normalized)
+    return sum(
+        [
+            any(term in normalized for term in ("утверждаю", "утверждено", "согласовано", "согласовал")),
+            "коммерческий директор" in normalized,
+            "подпись" in normalized,
+            len(signature_placeholders) >= 2,
+            bool(YEAR_LABEL_RE.search(normalized)) and ("(число)" in normalized or "(месяц)" in normalized),
+        ]
+    )
+
+
 def is_real_table_chunk(item: dict[str, Any]) -> bool:
     content_type = str(item.get("content_type") or "")
     if content_type not in {"table", "table_row"} and not item.get("table_id"):
@@ -132,7 +152,9 @@ def is_service_table_suspect(item: dict[str, Any]) -> bool:
     row_count = item.get("row_count")
     column_count = item.get("column_count")
     has_shape = isinstance(row_count, int) and isinstance(column_count, int)
-    return not has_shape or row_count <= 4 or column_count <= 3
+    if has_shape and (row_count <= 4 or column_count <= 3):
+        return True
+    return service_signature_signal_count(text) >= 3
 
 
 def _list_of_dicts(value: Any) -> list[dict[str, Any]]:
