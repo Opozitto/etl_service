@@ -2,7 +2,7 @@
 
 ## Назначение документа
 
-Документ был создан на Stage 10 как docs-level baseline для пользовательских сценариев и минимального evaluation set. Сейчас он актуализируется по мере развития ETL/search/evaluation baseline и отражает текущее состояние после Stage 33.4.
+Документ был создан на Stage 10 как docs-level baseline для пользовательских сценариев и минимального evaluation set. Сейчас он актуализируется по мере развития ETL/search/evaluation baseline и отражает текущее состояние после Stage 34.0.
 
 Сценарии описывают пилотный контур для эколога-проектировщика: source-backed search, extractive QA, extraction/evidence diagnostics, контроль качества корпуса и подготовку chunk handoff для будущего source-backed RAG layer. Документ не объявляет готовыми full RAG, LLM generation, embeddings/vector DB, semantic retrieval, scanned PDF OCR или table analytics.
 
@@ -138,6 +138,12 @@ Stage 33.2 validation:
 - после Stage 33.3 используется как evidence layer для проверки service table false-positive cleanup v2 на fresh processing.
 - Stage 33.4 closure evidence: expanded fresh validation on 4 `first_test_data` documents passed with `documents_processed=4`, `documents_with_failures=0`, `service_table_suspects=0`, `real_table_chunks=984`, `issues_sample=[]` and `warnings=[]`.
 
+Stage 34.0 text chunk coherence audit/design:
+
+- зафиксировал, что ordinary text chunks уже пакуются section-local deterministic логикой, но короткие title/appendix fragments всё ещё встречаются;
+- fresh metrics на 4 explicit sample files: `text_chunks=947`, `table_chunks=5114`, `short_text_chunks=29`, `median_text_chars=884`;
+- next recommended Stage 34.1 должен улучшать только deterministic text chunk coherence / chunk packing v1 без full RAG, LLM generation, embeddings/vector DB, semantic retrieval/reranking, OCR/scanned PDF OCR, speed/cache или table analytics.
+
 ## Вне текущего подтвержденного baseline
 
 Сейчас вне подтвержденного baseline:
@@ -211,8 +217,9 @@ Stage 33.2 validation:
 - Stage 33.2 validates splitter cleanup on freshly processed temporary workspace outputs without migrating production storage.
 - Stage 33.3 reduces title/approval/signature table false positives for newly processed documents while preserving real table chunks.
 - Stage 33.4 closes splitter cleanup validation from the current roadmap standpoint using expanded fresh validation evidence.
+- Stage 34.0 audits text chunk coherence and prepares Stage 34.1 as a bounded deterministic packing stage without changing production behavior.
 
-## Текущее состояние после Stage 33.4
+## Текущее состояние после Stage 34.0
 
 - Stage 29.1 adds read-only RAG-ready chunk inspection/export over existing processed JSON.
 - Stage 29.2 adds read-only chunk quality audit over existing processed JSON / exported chunk records.
@@ -223,8 +230,10 @@ Stage 33.2 validation:
 - Stage 33.2 adds fresh splitter cleanup validation on explicit temporary workspace outputs.
 - Stage 33.3 strengthens deterministic service/title/approval/signature table false-positive cleanup.
 - Stage 33.4 records expanded fresh validation over 4 `first_test_data` documents with zero failures/warnings and closes Stage 33 from the splitter cleanup standpoint.
+- Stage 34.0 records audit/design for text chunk coherence and recommends Stage 34.1 Text chunk coherence / chunk packing v1.
 - Chunks now have better visibility, stronger metadata/source/location/citation context, and cleaner deterministic section/chunk structure where available.
 - Splitter cleanup is conservative and improves handoff quality, but it is not semantic document understanding.
+- Text chunk coherence remains a bounded next-step concern: improve ordinary text chunks without crossing sections, merging tables, inventing pages, or changing API schema in a breaking way.
 - DOCX page metadata can still be unavailable; diagnostics should show this honestly rather than inventing page context.
 - These stages should not promise full RAG, semantic retrieval, embeddings/vector DB, LLM generation, scanned PDF OCR or table analytics.
 - Next roadmap direction should be selected explicitly, likely customer-facing handoff/reporting over processed corpus, source-backed evidence pack, or final demo/readiness packaging; speed/cache is not the default next step.

@@ -128,10 +128,17 @@
 - Stage 33.4 records the expanded fresh validation evidence run on 4 `first_test_data` documents in `.runtime_eval\splitter_stage33_4_workspace_dir`: `documents_seen=4`, `documents_processed=4`, `documents_with_failures=0`, `total_chunks=1820`, `toc_parent_violations=0`, `duplicate_heading_violations=0`, `heading_only_chunks=0`, `service_table_suspects=0`, `real_table_chunks=984`, `missing_page_expected_limitations=1426`, `issues_sample=[]`, `warnings=[]`.
 - Stage 33.4 confirms Stage 33 can be considered closed from the splitter cleanup standpoint.
 - Stage 33.4 is docs-only: no production code, tests, production storage, runtime artifact commits, RAG/LLM/embeddings/vector DB/semantic retrieval/reranking/OCR/speed-cache/table analytics changes.
+- Stage 34.0 completed as Text chunk coherence audit & implementation plan.
+- Stage 34.0 is audit/design only: no production code behavior changed, no tests changed, no commit/tag created.
+- Stage 34.0 found that ordinary text chunks are produced by `_build_section_chunks`, which already packs section-local text parts around `target_chars=850` / `max_chars=1200`, while table row chunks remain on the separate `_build_table_row_chunks` path.
+- Stage 34.0 fresh temporary workspace metrics on `test.docx`, `test.txt`, `Том 1 Инвентаризация Эко Агро.docx`, `Том 2 ПДВ Эко Агро.docx`: `total_chunks=6061`, `text_chunks=947`, `table_chunks=5114`, `short_text_chunks=29`, `nonservice_short_text_chunks=25`, `avg_text_chars=823.22`, `median_text_chars=884`, `min_text_chars=6`, `max_text_chars=1160`, `single_paragraph_text_chunks=2`, `one_line_text_chunks=2`.
+- Stage 34.0 validation on the same fresh sample had `documents_processed=4`, `documents_with_failures=0`, `toc_parent_violations=0`, `duplicate_heading_violations=0`, `heading_only_chunks=2`, `service_table_suspects=0`, `real_table_chunks=4008`.
+- Stage 34.0 recommends Stage 34.1 Text chunk coherence / chunk packing v1 as a bounded deterministic implementation stage: section-local text packing, no table/text merging, ordered source block union, preserved section/page/source/table compatibility, no API schema break.
+- Stage 34.0 does not add full RAG, LLM generation, embeddings/vector DB, semantic retrieval/reranking, OCR/scanned PDF OCR, speed/cache work, table analytics, or production storage migration.
 
 ## next
 
-- Next direction should be selected explicitly: customer-facing handoff/reporting over processed corpus, source-backed evidence pack, or final demo/readiness packaging.
+- Next recommended direction: Stage 34.1 Text chunk coherence / chunk packing v1.
 - QA evaluator retrieval-loop speed/cache is distant backlog / optional only if speed becomes a severe operational blocker.
 - Final polish checkpoint starts only by explicit user command: "стоп, следующий шаг делаем финал".
 
@@ -152,6 +159,7 @@
 - Stage 29.0 realigns the next work after RAG chunk audit: inspection/export and quality audit come before speed/cache.
 - Stage 29.1/29.2 close the visibility/export/audit layer for chunks; Stage 30 hardens payload/source context, Stage 31 improves table chunk context, and Stage 32 strengthens source location/citation hints so chunks become stronger handoff units without claiming embeddings, vector DB, semantic retrieval, LLM generation, table analytics, or full RAG.
 - Stage 33.4 closes splitter cleanup validation from the current roadmap standpoint; speed/cache is still not prioritized by default.
+- Stage 34.0 confirms the next implementation should stay bounded to deterministic text chunk coherence / packing and should not expand into RAG/LLM/vector/OCR/speed-cache/table analytics.
 
 ## risks
 
@@ -168,6 +176,8 @@
 - Stage 33.3 reduces service/title/approval/signature table false positives while keeping real table chunks available for source-backed handoff.
 - Stage 33.4 expanded validation evidence passed on 4 `first_test_data` documents with zero failures, zero warnings and zero service table suspects.
 - Remaining splitter risk: cleanup is deterministic and conservative, not perfect semantic document understanding.
+- Text chunk coherence risk remains: short/title/appendix fragments still exist in fresh outputs, and chunk packing changes can affect lexical search scoring and snippet precision.
+- Stage 34.1 must preserve table chunks, `section_path`, ordered `source_block_ids`, source/page metadata where available, and backward compatibility for old processed JSON.
 - DOCX page metadata can be unavailable; this is an expected limitation and should stay explicit in diagnostics.
 - QA evaluator `--skip-answer-overlap` is intentionally a faster smoke mode; use full/default mode when answer-overlap trend comparison is needed.
 - Stage 26 matching is deterministic and conservative; ambiguous or missing expected documents require review before Stage 27 processing/eval.

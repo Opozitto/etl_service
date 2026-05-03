@@ -1,6 +1,6 @@
 # PLAN
 
-Stage 1–32 are completed. Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock. Stage 20–25 are completed OCR/readiness/extraction/table/QA-evaluation layers. Stage 26–32 are completed external QA/chunk visibility, audit, chunk contract hardening, table chunk context, and source location/citation hardening stages. Stage 33 splitter structure cleanup and validation closure is completed from the splitter cleanup standpoint. Speed/cache is not the next recommended direction by default; the next direction should be selected explicitly.
+Stage 1–32 are completed. Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock. Stage 20–25 are completed OCR/readiness/extraction/table/QA-evaluation layers. Stage 26–32 are completed external QA/chunk visibility, audit, chunk contract hardening, table chunk context, and source location/citation hardening stages. Stage 33 splitter structure cleanup and validation closure is completed from the splitter cleanup standpoint. Stage 34.0 text chunk coherence audit/design is completed docs-only; the next recommended stage is Stage 34.1 Text chunk coherence / chunk packing v1. Speed/cache is not the next recommended direction by default.
 
 ## Stage 1. Зафиксировать smoke/regression проверки
 
@@ -756,9 +756,59 @@ conda run -n etl_env python -m scripts.validate_splitter_cleanup --input-dir fir
   - no embeddings/vector DB / semantic retrieval / reranking;
   - no table analytics.
 - Suggested next roadmap direction:
-  - choose explicitly between customer-facing handoff/reporting over processed corpus, source-backed evidence pack, or final demo/readiness packaging;
-  - do not start final polish unless the user explicitly asks for it;
+  - Stage 34.0 should audit ordinary text chunk coherence and prepare a bounded deterministic Stage 34.1 design;
   - speed/cache stays a later option only if it becomes a severe operational blocker.
+
+## Stage 34.0. Text chunk coherence audit & implementation plan
+
+- Статус: completed.
+- Цель: docs-only audit/design для следующего этапа улучшения ordinary text chunks как source-backed handoff units после Stage 33 closure.
+- Подтвержденный audit:
+  - text chunks создаются в `app.pipeline.transform.structure._build_section_chunks`;
+  - текущий код уже пакует text parts внутри section с `target_chars=850` и `max_chars=1200`, добавляет heading context один раз и сохраняет overlap после flush;
+  - row-level table chunks создаются отдельно в `_build_table_row_chunks` и не должны смешиваться с text chunks;
+  - `Chunk` contract уже содержит backward-compatible поля `content_type`, `source_type`, `section_title`, `section_path`, `page_start`, `page_end`, `source_filename`, `table_id` и table-specific поля Stage 31;
+  - search/export/audit/API полагаются на `chunk_id`, `order`, `section_path`, `page_start/page_end`, `block_ids`/`source_block_ids`, `table_id`, `table_row_index`, `location_label`/`citation_label`.
+- Fresh metrics on `.runtime_eval\stage34_0` over `test.docx`, `test.txt`, `Том 1 Инвентаризация Эко Агро.docx`, `Том 2 ПДВ Эко Агро.docx`:
+  - splitter validation: `documents_processed=4`, `documents_with_failures=0`, `total_chunks=6061`, `toc_parent_violations=0`, `duplicate_heading_violations=0`, `heading_only_chunks=2`, `service_table_suspects=0`, `real_table_chunks=4008`;
+  - RAG export: `content_type_counts={'table': 1106, 'table_row': 4008, 'text': 947}`;
+  - text-only distribution: `text_chunks=947`, `short_text_chunks=29`, `nonservice_short_text_chunks=25`, `avg_text_chars=823.22`, `median_text_chars=884`, `min_text_chars=6`, `max_text_chars=1160`, `single_paragraph_text_chunks=2`, `one_line_text_chunks=2`, `avg_text_source_blocks=7.67`;
+  - table chunks dominate this fresh sample: `5114/6061`, about `84.38%`.
+- Stage 34.1 recommended design:
+  - keep deterministic text packing inside one section only;
+  - never cross section boundary and never merge table chunks with text chunks;
+  - preserve heading context once, ordered union of source `block_ids`, `section_path`, page range where block metadata has pages, source filename/type, content type, and all table fields compatibility;
+  - bound chunk size around internal target `700–1200` chars without adding CLI/API complexity by default;
+  - suppress or attach low-value heading/title fragments only when deterministic and safe;
+  - keep old processed JSON readable and avoid API schema breaking changes.
+- Risks:
+  - lexical search scores and snippets may change because chunk granularity changes;
+  - longer chunks may be less exact as snippets;
+  - tests assuming exact chunk counts or first hit ordering may need targeted updates;
+  - table row chunks and rich table context must not regress;
+  - `source_block_ids` must stay ordered and trustworthy;
+  - old processed JSON remains old until reprocessed.
+- Acceptance criteria for Stage 34.1:
+  - full local `conda run -n etl_env python -m pytest -q` green, or Codex sandbox limitation explicitly separated from project failures;
+  - fresh splitter validation still has zero TOC parent, duplicate heading and service table failures on bounded sample;
+  - short non-service text chunks decrease, or at minimum no new bad short examples appear;
+  - meaningful section text chunks include coherent neighboring context without crossing sections;
+  - table chunk count/context is not radically degraded;
+  - export/audit/search/API tests stay green;
+  - demo customer flow still passes.
+- Вне scope:
+  - no full RAG / LLM generation;
+  - no embeddings/vector DB / semantic retrieval / reranking;
+  - no OCR/scanned PDF OCR;
+  - no speed/cache work;
+  - no table analytics / SQL-like QA;
+  - no production storage/results migration.
+
+## Stage 34.1. Text chunk coherence / chunk packing v1
+
+- Статус: recommended next.
+- Цель: точечно улучшить coherence ordinary text chunks после Stage 34.0 audit, сохранив splitter/search/export/API compatibility.
+- Граница scope: deterministic chunk packing only; no full RAG, LLM generation, embeddings/vector DB, semantic retrieval/reranking, OCR/scanned PDF OCR, speed/cache work, table analytics, or production storage migration.
 
 ## Stage 33.x. QA evaluator retrieval-loop speed/cache
 
