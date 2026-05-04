@@ -32,6 +32,7 @@
 - Stage 34.1 text chunk coherence edge cleanup v1 is completed: short final tails, overlap-only final buffers and low-value heading/title fragments are handled more conservatively without changing table row chunks or API schema.
 - Stage 34.2 finite finish roadmap lock is completed docs-only: post-Stage 34.1 exact validation and metric reconciliation are recorded, and the remaining route is finite rather than open-ended splitter polishing.
 - Stage 34.3 chunk quality taxonomy normalization/reporting v1 is completed: audit reports now separate raw `content_type`, broad table-linked context, strict `table_row` evidence, `<120` severe short text, `<250` compact evidence taxonomy, and cleanup recommendations.
+- Stage 35 External `Example_data` validation v1 is completed: external dataset audit, temporary workspace processing/eval, QA readiness eval, workflow summary and Stage 34.3 chunk taxonomy can be run reproducibly through `scripts.validate_external_example_data` with JSON reports under `.runtime_eval`.
 - Stage 30–34.3 strengthened the metadata/source/structure/validation/governance contract, but this is still ETL/source-backed handoff readiness rather than full RAG.
 
 ## Best shippable baseline
@@ -58,6 +59,15 @@
 - Stage 34.2 metric reconciliation: raw `content_type` counts were `text=921`, `table=1100`, `table_row=4008`; a broad collector counted `234` text chunks with table links as table chunks, producing collector `text=687` and `table=5342`.
 - Stage 34.2 short-chunk reconciliation: raw text `<250` gives `57` short / `52` nonservice, while raw text `<120` gives `25` short / `21` nonservice; the apparent growth is taxonomy/threshold mismatch, not a direct Stage 34.1 regression.
 - Stage 34.3 reporting makes that reconciliation explicit in JSON/console output: compact `<250` chunks are classified as evidence taxonomy and are not automatic defects; cleanup is reserved for repeated `real_low_value_tail` or other confirmed repeated problems.
+- Stage 35 evidence workflow:
+```powershell
+conda run -n etl_env python -m scripts.validate_external_example_data --dataset-dir D:\Projects\etl_service_backup\Example_data --qa-path "D:\Projects\etl_service_backup\Example_data\[ОТВЕТЫ] Данные для тестирования\test_with_answers.csv" --process --run-eval --run-chunk-quality --clean-workspace
+```
+- Stage 35 expected JSON reports: `.runtime_eval\stage35_external_dataset_audit.json`, `.runtime_eval\stage35_external_workspace_eval.json`, `.runtime_eval\stage35_external_qa_eval.json`, `.runtime_eval\stage35_external_chunk_quality.json`, `.runtime_eval\stage35_external_validation_summary.json`.
+- Stage 35 strict expected-source mode can currently produce `selected=0 processed=0 skipped_ambiguous=7` on real `Example_data` because expected sources are ambiguous; this is dataset/workflow attention, not splitter regression.
+- If `--run-chunk-quality` is requested with zero processed documents, Stage 35 reports `chunk_quality_status=skipped_no_processed_documents` and `status=needs_attention` instead of treating the empty audit as successful cleanup evidence.
+- For exploratory non-empty ETL/chunk validation, use bounded runs with `--source-scope all-supported` and/or `--ambiguous-policy all` plus `--max-documents`.
+- Stage 35 does not commit external dataset files, `.runtime_eval` reports or workspace artifacts; it also does not clean up chunks.
 
 ## What is confirmed, and what is not
 
@@ -84,6 +94,7 @@
   - Stage 34.1 deterministic text chunk coherence edge cleanup v1.
   - Stage 34.2 docs-only finite finish roadmap lock after chunk coherence and metric reconciliation.
   - Stage 34.3 unified chunk quality taxonomy/reporting v1.
+  - Stage 35 external `Example_data` validation v1 through safe temporary workspace and machine-readable reports.
 - Not confirmed:
   - scanned PDF OCR;
   - LLM generation;
@@ -116,8 +127,8 @@ Follow-up sequence:
 - Stage 34.1 Text chunk coherence / chunk packing v1, completed.
 - Stage 34.2 Finite finish roadmap lock after chunk coherence, completed docs-only.
 - Stage 34.3 Chunk quality taxonomy normalization/reporting v1, completed.
-- Stage 35 External `Example_data` validation v1, next as evidence over explicit temporary workspace; external data is not training data and is not committed.
-- Stage 36 Targeted cleanup v2, conditional only if Stage 35 shows repeated real problems.
+- Stage 35 External `Example_data` validation v1, completed as evidence over explicit temporary workspace; external data is not training data and is not committed.
+- Stage 36 Targeted cleanup v2, conditional next only if non-empty Stage 35 processing shows repeated real chunk problems.
 - Stage 37 Optional light OCR handoff polish, droppable and only if time remains.
 - Final delivery preparation after the planned/conditional stages are done or dropped.
 - QA evaluator retrieval-loop speed/cache moves to later/backlog only if it becomes a severe operational blocker.
@@ -129,7 +140,7 @@ Stage 29.1 and Stage 29.2 closed visibility/export/audit for chunks. Stage 30 co
 Current chunks are acceptable for lexical search and now carry stronger source/location/citation metadata. Newly processed chunks also have cleaner splitter structure after Stage 33.1 and fewer approval/signature table false positives after Stage 33.3.
 Stage 33.2 adds a bounded validation workflow for proving cleanup on fresh temporary outputs, without migrating old `storage/results`. Stage 33.4 records an expanded 4-document fresh validation run with zero failures/warnings, so Stage 33 is closed from the splitter cleanup standpoint.
 Stage 34.1 implements the narrow ordinary text chunk coherence cleanup target without full RAG or semantic retrieval.
-Stage 34.2 locks the finite finish route, and Stage 34.3 implements metric taxonomy normalization before any additional cleanup.
+Stage 34.2 locks the finite finish route, Stage 34.3 implements metric taxonomy normalization before any additional cleanup, and Stage 35 validates the external `Example_data` path without committing external/runtime artifacts.
 
 Known splitter issues:
 
@@ -143,7 +154,7 @@ Known splitter issues:
 - Text chunk packing changes can affect lexical scoring/snippet exactness; Stage 34.1 kept the change conservative, but future ranking-sensitive work should compare search/demo outputs carefully.
 - Remaining compact chunks after Stage 34.1 are categorized as title/cover fragments, TOC/list fragments, formula/calculation micro-sections and pollutant/equipment micro-evidence; confirmed real problematic low-value tails were `0` in the inspected exact sample.
 - Stage 34.3 formalizes this in audit reporting: raw `content_type` counts, table-linked counts and strict `table_row` counts are separate; compact `<250` chunks are evidence taxonomy, not automatic defects.
-- No endless splitter polishing: cleanup v2 is not allowed unless Stage 35 external evidence shows repeated real problems.
+- No endless splitter polishing: cleanup v2 is not allowed unless non-empty Stage 35 external evidence shows repeated real problems.
 
 Do not present full RAG, LLM generation, embeddings/vector DB, semantic retrieval/reranking, scanned PDF OCR, embedded DOCX/PDF OCR, speed/cache work, table analytics / SQL-like QA, production UI or external proprietary API as ready or in-scope for the finite finish route.
 

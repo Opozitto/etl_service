@@ -1,6 +1,6 @@
 # PLAN
 
-Stage 1–32 are completed. Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock. Stage 20–25 are completed OCR/readiness/extraction/table/QA-evaluation layers. Stage 26–32 are completed external QA/chunk visibility, audit, chunk contract hardening, table chunk context, and source location/citation hardening stages. Stage 33 splitter structure cleanup and validation closure is completed from the splitter cleanup standpoint. Stage 34.0 text chunk coherence audit/design is completed docs-only. Stage 34.1 text chunk coherence edge cleanup v1 is completed as a bounded deterministic implementation. Stage 34.2 is completed docs-only as the finite finish roadmap lock after Stage 34.1 validation and metric reconciliation. Stage 34.3 chunk quality taxonomy normalization/reporting v1 is completed as audit/reporting normalization. The next stage is Stage 35 External `Example_data` validation v1; speed/cache remains distant backlog only.
+Stage 1–32 are completed. Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock. Stage 20–25 are completed OCR/readiness/extraction/table/QA-evaluation layers. Stage 26–32 are completed external QA/chunk visibility, audit, chunk contract hardening, table chunk context, and source location/citation hardening stages. Stage 33 splitter structure cleanup and validation closure is completed from the splitter cleanup standpoint. Stage 34.0 text chunk coherence audit/design is completed docs-only. Stage 34.1 text chunk coherence edge cleanup v1 is completed as a bounded deterministic implementation. Stage 34.2 is completed docs-only as the finite finish roadmap lock after Stage 34.1 validation and metric reconciliation. Stage 34.3 chunk quality taxonomy normalization/reporting v1 is completed as audit/reporting normalization. Stage 35 External `Example_data` validation v1 is completed as a safe reproducible external evidence workflow. The next stage is conditional Stage 36 Targeted cleanup v2 only if Stage 35 evidence shows repeated real problems; speed/cache remains distant backlog only.
 
 ## Stage 1. Зафиксировать smoke/regression проверки
 
@@ -902,17 +902,41 @@ conda run -n etl_env python -m scripts.validate_splitter_cleanup --input-dir fir
 
 ## Stage 35. External Example_data validation v1
 
-- Статус: planned next.
-- Цель: проверить текущий ETL/source-backed handoff baseline на external `D:\Projects\etl_service_backup\Example_data` как evidence run, без training, без commit external dataset и без production storage migration.
-- Ожидаемый scope:
-  - explicit temporary workspace only;
-  - report validation and chunk taxonomy evidence;
-  - compare repeated real issues against first_test_data evidence;
-  - keep ambiguous/missing source handling conservative.
+- Статус: completed.
+- Цель: проверить текущий ETL/source-backed handoff baseline на external `D:\Projects\etl_service_backup\Example_data` как evidence run, без training, без commit external dataset, без production storage migration и без cleanup.
+- Реализация:
+  - `scripts.validate_external_example_data` связывает существующие audit/workspace/eval/chunk-quality шаги в один Stage 35 workflow;
+  - external QA file читается как CSV/TSV по явному `--qa-path`, включая реальный tab-delimited файл `test_with_answers.csv`;
+  - processing/eval идут только в explicit temporary workspace, по умолчанию `.runtime_eval\stage35_external_workspace`;
+  - default reports пишутся в `.runtime_eval`: `stage35_external_dataset_audit.json`, `stage35_external_workspace_eval.json`, `stage35_external_qa_eval.json`, `stage35_external_chunk_quality.json`, `stage35_external_validation_summary.json`;
+  - chunk quality использует Stage 34.3 taxonomy поверх processed JSON из workspace `results`, включая `raw_content_type_counts`, `table_context_counts`, `strict_table_counts`, `severe_short_text <120`, `compact_text_evidence <250`, `compact_text_taxonomy`, `limitations` и `recommendations`.
+  - если `--run-chunk-quality` запрошен, но strict expected-source mode не обработал ни одного документа, workflow summary ставит `status=needs_attention` и `chunk_quality_status=skipped_no_processed_documents`, а не представляет пустой audit как successful/no-action validation.
+- Основная команда локальной проверки:
+```powershell
+conda run -n etl_env python -m scripts.validate_external_example_data --dataset-dir D:\Projects\etl_service_backup\Example_data --qa-path "D:\Projects\etl_service_backup\Example_data\[ОТВЕТЫ] Данные для тестирования\test_with_answers.csv" --process --run-eval --run-chunk-quality --clean-workspace
+```
+- Более осторожный smoke:
+```powershell
+conda run -n etl_env python -m scripts.validate_external_example_data --dataset-dir D:\Projects\etl_service_backup\Example_data --qa-path "D:\Projects\etl_service_backup\Example_data\[ОТВЕТЫ] Данные для тестирования\test_with_answers.csv" --process --run-eval --run-chunk-quality --clean-workspace --max-documents 5 --max-questions 20
+```
+- Если strict expected-source mode показывает `selected=0 processed=0 skipped_ambiguous>0`, это dataset/workflow attention из-за ambiguous expected sources, not splitter regression. Для exploratory ETL/chunk validation можно запускать bounded non-empty variants:
+```powershell
+conda run -n etl_env python -m scripts.validate_external_example_data --dataset-dir D:\Projects\etl_service_backup\Example_data --qa-path "D:\Projects\etl_service_backup\Example_data\[ОТВЕТЫ] Данные для тестирования\test_with_answers.csv" --source-scope all-supported --process --run-chunk-quality --clean-workspace --max-documents 10
+conda run -n etl_env python -m scripts.validate_external_example_data --dataset-dir D:\Projects\etl_service_backup\Example_data --qa-path "D:\Projects\etl_service_backup\Example_data\[ОТВЕТЫ] Данные для тестирования\test_with_answers.csv" --ambiguous-policy all --process --run-eval --run-chunk-quality --clean-workspace --max-documents 10 --max-questions 20
+```
+- Вне scope:
+  - no splitter/chunk-building changes;
+  - no retrieval ranking changes;
+  - no cleanup of compact chunks during Stage 35;
+  - no full RAG, LLM generation, embeddings/vector DB, semantic retrieval/reranking, scanned PDF OCR, SQL/table analytics, speed-cache or production UI.
+- Интерпретация:
+  - compact `<250` chunks are not automatic defects;
+  - repeated `real_low_value_tail` или другие repeated real problems are candidates for Stage 36 only after non-empty external processing evidence;
+  - ambiguous/missing expected sources remain diagnostics, not automatic fixes.
 
 ## Stage 36. Targeted cleanup v2, only if needed
 
-- Статус: conditional planned.
+- Статус: conditional planned next.
 - Условие запуска: только если Stage 35 покажет repeated real problems, not just metric taxonomy noise or acceptable compact evidence chunks.
 - Возможные targets:
   - title/cover fragments;

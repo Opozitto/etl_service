@@ -155,11 +155,21 @@
 - Stage 34.3 keeps compact `<250` chunks as evidence taxonomy, not automatic defects; cleanup is recommended only for repeated `real_low_value_tail` or other confirmed repeated problems.
 - Stage 34.3 confirms Stage 34.1 remains valid: the discrepancy after Stage 34.1 was taxonomy/reporting mismatch, not a splitter regression.
 - Stage 34.3 does not change splitter/chunk-building logic, production search, API contracts, storage artifacts, RAG/LLM/embeddings/vector DB/semantic retrieval/reranking/OCR/scanned PDF OCR/table analytics.
+- Stage 35 completed as External `Example_data` validation v1.
+- Stage 35 adds `scripts.validate_external_example_data`, a thin orchestration wrapper over the existing external QA dataset audit, temporary workspace processing/eval, QA/retrieval evaluator and Stage 34.3 chunk quality taxonomy.
+- Stage 35 default reports are `.runtime_eval\stage35_external_dataset_audit.json`, `.runtime_eval\stage35_external_workspace_eval.json`, `.runtime_eval\stage35_external_qa_eval.json` and `.runtime_eval\stage35_external_chunk_quality.json`.
+- Stage 35 keeps the external dataset path-only: `D:\Projects\etl_service_backup\Example_data` and the real TSV-named-as-CSV QA file are not copied into the repo and are not committed.
+- Stage 35 processing uses an explicit temporary workspace, defaults to `.runtime_eval\stage35_external_workspace`, and is guarded against production `storage` targets by the existing workspace workflow.
+- Stage 35 writes a workflow summary report `.runtime_eval\stage35_external_validation_summary.json` with `status`, `dataset_audit_status`, `workspace_status`, selected/processed/skipped counts, `qa_eval_status`, `chunk_quality_status`, generated report paths, warnings, recommendations and limitations.
+- Stage 35 reporting polish: if `--run-chunk-quality` is requested after strict expected-source mode selects/processes zero documents, the wrapper reports `status=needs_attention` and `chunk_quality_status=skipped_no_processed_documents` instead of treating the empty Stage 34.3 audit as successful `no_action_needed`.
+- Current real `Example_data` strict expected-source audit can produce `expected_docs unique=7 matched=0 missing=0 ambiguous=7`, then `selected=0 processed=0 skipped_ambiguous=7`; this is dataset/workflow attention from ambiguous expected sources, not splitter regression.
+- For exploratory non-empty ETL/chunk validation, Stage 35 docs recommend bounded `--source-scope all-supported` and/or `--ambiguous-policy all` runs with `--max-documents`.
+- Stage 35 does not change splitter/chunk-building logic, table chunk generation, retrieval ranking, ask generation, OCR behavior, public API, production storage, RAG/LLM/embeddings/vector DB/semantic retrieval/reranking/table analytics/speed-cache/UI.
+- Stage 35 classifies evidence only: compact `<250` chunks are not automatic defects, and repeated `real_low_value_tail` is a Stage 36 candidate only after non-empty external processing evidence rather than a Stage 35 cleanup target.
 
 ## next
 
-- Stage 35 External `Example_data` validation v1 is the next stage as external evidence in an explicit temporary workspace; the dataset is not training data and is not committed.
-- Stage 36 Targeted cleanup v2 runs only if Stage 35 shows repeated real problems, not just metric taxonomy noise or acceptable compact evidence chunks.
+- Stage 36 Targeted cleanup v2 is next only if non-empty Stage 35 external reports show repeated real chunk problems, not ambiguous-source workflow gaps, metric taxonomy noise or acceptable compact evidence chunks.
 - Stage 37 Optional light OCR handoff polish runs only if time remains after planned stages are completed or explicitly dropped.
 - Final delivery preparation follows the finite route; no final polish starts until explicit command or after planned stages are done/dropped.
 - QA evaluator retrieval-loop speed/cache is distant backlog / optional only if speed becomes a severe operational blocker.
@@ -185,6 +195,7 @@
 - Stage 34.1 confirms small deterministic chunk coherence cleanup can reduce short/heading-only edge cases without changing table row-level context or API schema.
 - Stage 34.2 confirms the project now has a finite finish route: taxonomy/reporting, external validation, conditional cleanup only with evidence, optional light OCR handoff polish only if time remains, then final delivery preparation.
 - Stage 34.3 turns the Stage 34.2 reconciliation into explicit machine-readable and console-readable chunk quality taxonomy, without changing chunk-building behavior.
+- Stage 35 makes the external validation route reproducible and machine-readable without committing external data or runtime reports.
 
 ## risks
 
@@ -205,6 +216,8 @@
 - Stage 34.1 must preserve table chunks, `section_path`, ordered `source_block_ids`, source/page metadata where available, and backward compatibility for old processed JSON.
 - Stage 34.2 reduces roadmap risk by forbidding endless splitter polishing: cleanup v2 is conditional on Stage 35 evidence, and metric taxonomy differences must be separated from real chunk regressions.
 - Stage 34.3 reduces reporting risk by making raw content types, table-linked context, strict table rows, and compact evidence buckets visible as different questions.
+- Stage 35 evidence can be affected by ambiguous/missing expected sources in the external QA file; those are reported diagnostics, not automatic processing fixes.
+- A zero-document Stage 35 workspace is not chunk-quality evidence; it requires rerun with bounded exploratory source selection before making Stage 36 cleanup decisions.
 - DOCX page metadata can be unavailable; this is an expected limitation and should stay explicit in diagnostics.
 - QA evaluator `--skip-answer-overlap` is intentionally a faster smoke mode; use full/default mode when answer-overlap trend comparison is needed.
 - Stage 26 matching is deterministic and conservative; ambiguous or missing expected documents require review before Stage 27 processing/eval.
