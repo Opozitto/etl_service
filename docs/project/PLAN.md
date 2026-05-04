@@ -1,6 +1,6 @@
 # PLAN
 
-Stage 1–32 are completed. Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock. Stage 20–25 are completed OCR/readiness/extraction/table/QA-evaluation layers. Stage 26–32 are completed external QA/chunk visibility, audit, chunk contract hardening, table chunk context, and source location/citation hardening stages. Stage 33 splitter structure cleanup and validation closure is completed from the splitter cleanup standpoint. Stage 34.0 text chunk coherence audit/design is completed docs-only. Stage 34.1 text chunk coherence edge cleanup v1 is completed as a bounded deterministic implementation. Speed/cache is not the next recommended direction by default.
+Stage 1–32 are completed. Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock. Stage 20–25 are completed OCR/readiness/extraction/table/QA-evaluation layers. Stage 26–32 are completed external QA/chunk visibility, audit, chunk contract hardening, table chunk context, and source location/citation hardening stages. Stage 33 splitter structure cleanup and validation closure is completed from the splitter cleanup standpoint. Stage 34.0 text chunk coherence audit/design is completed docs-only. Stage 34.1 text chunk coherence edge cleanup v1 is completed as a bounded deterministic implementation. Stage 34.2 is completed docs-only as the finite finish roadmap lock after Stage 34.1 validation and metric reconciliation. The next stage is Stage 34.3 chunk quality taxonomy normalization/reporting v1; speed/cache remains distant backlog only.
 
 ## Stage 1. Зафиксировать smoke/regression проверки
 
@@ -835,6 +835,107 @@ conda run -n etl_env python -m scripts.validate_splitter_cleanup --input-dir fir
   - `single_paragraph_text_chunks=0`;
   - `one_line_text_chunks=0`.
 - Граница scope: deterministic chunk packing only; no full RAG, LLM generation, embeddings/vector DB, semantic retrieval/reranking, OCR/scanned PDF OCR, speed/cache work, table analytics, or production storage migration.
+
+## Stage 34.2. Finite finish roadmap lock after chunk coherence
+
+- Статус: completed / docs-only.
+- Цель: зафиксировать конечную последовательность после Stage 34.1 и audit-only metric reconciliation, чтобы не уйти в бесконечную splitter/chunk polishing петлю.
+- Подтверждено после Stage 34.1:
+  - post-commit exact validation на explicit 4-file sample прошла без failures;
+  - `documents_processed=4`;
+  - `documents_with_failures=0`;
+  - `total_chunks=6029`;
+  - `toc_parent_violations=0`;
+  - `duplicate_heading_violations=0`;
+  - `heading_only_chunks=0`;
+  - `service_table_suspects=0`;
+  - `real_table_chunks=4008`.
+- Audit-only reconciliation показал, что apparent growth of short chunks связан с разной taxonomy, а не с прямой регрессией Stage 34.1:
+  - raw `content_type` counts: `total=6029`, `text=921`, `table=1100`, `table_row=4008`, `table + table_row=5108`;
+  - broad collector относил к table chunks с `table_id`, `table_row_index` или `table_column_values`, даже если `content_type='text'`;
+  - mixed text chunks with `table_id=234`;
+  - `raw text 921 - 234 = collector text 687`;
+  - `raw table-ish 5108 + 234 = collector table 5342`;
+  - `real_table_chunks=4008` означает strict stable `table_row` chunks, а не все table-linked chunks;
+  - short threshold discrepancy: raw `content_type='text'` `<250` gives `57` short / `52` nonservice, while `<120` gives `25` short / `21` nonservice.
+- Remaining compact chunks в inspected exact sample в основном не подтверждены как bad tails:
+  - title/cover fragments;
+  - TOC/list fragments;
+  - formula/calculation micro-sections;
+  - pollutant/equipment micro-evidence;
+  - confirmed real problematic low-value tails: `0`.
+- Вывод:
+  - Stage 34.1 считается валидным;
+  - Stage 34.2 ничего не меняет в production behavior;
+  - Stage 34.3, а не Stage 34.2, является следующим implementation/reporting stage;
+  - cleanup v2 запрещён по умолчанию и допускается только после Stage 35 evidence of repeated real problems.
+- Вне scope для финального маршрута:
+  - full RAG;
+  - LLM generation;
+  - embeddings/vector DB;
+  - semantic retrieval/reranking;
+  - scanned PDF OCR;
+  - embedded DOCX/PDF OCR;
+  - speed/cache work;
+  - table analytics / SQL-like QA;
+  - production UI;
+  - external proprietary API.
+
+## Stage 34.3. Chunk quality taxonomy normalization/reporting v1
+
+- Статус: planned next.
+- Цель: унифицировать chunk metrics/reporting taxonomy после Stage 34.1/34.2, чтобы raw `content_type`, broad table-linked counts, `real_table_chunks`, short thresholds и service/nonservice categories не сравнивались как одно и то же.
+- Ожидаемый scope:
+  - reporting/audit taxonomy only;
+  - clearly separate raw `content_type` counts from table-linked broad collector counts;
+  - show `<120` and `<250` short thresholds explicitly;
+  - keep formula/evidence micro-chunks separate from true low-value tails;
+  - no splitter behavior change unless a later evidence stage requires it.
+
+## Stage 35. External Example_data validation v1
+
+- Статус: planned.
+- Цель: проверить текущий ETL/source-backed handoff baseline на external `D:\Projects\etl_service_backup\Example_data` как evidence run, без training, без commit external dataset и без production storage migration.
+- Ожидаемый scope:
+  - explicit temporary workspace only;
+  - report validation and chunk taxonomy evidence;
+  - compare repeated real issues against first_test_data evidence;
+  - keep ambiguous/missing source handling conservative.
+
+## Stage 36. Targeted cleanup v2, only if needed
+
+- Статус: conditional planned.
+- Условие запуска: только если Stage 35 покажет repeated real problems, not just metric taxonomy noise or acceptable compact evidence chunks.
+- Возможные targets:
+  - title/cover fragments;
+  - TOC/list fragments after title pages;
+  - conservative formula micro-chunk handling only if repeatedly harmful;
+  - other true low-value tails confirmed by external evidence.
+- Запрещено:
+  - broad splitter rewrite;
+  - semantic document understanding claims;
+  - cleanup for one-off cosmetic fragments without repeated evidence.
+
+## Stage 37. Optional light OCR handoff polish, only if time remains
+
+- Статус: optional / droppable.
+- Условие запуска: только если Stage 34.3/35/36 are completed or explicitly dropped and time remains.
+- Цель: лёгкая handoff/readiness polish вокруг уже существующей OCR candidate / standalone image OCR visibility.
+- Вне scope:
+  - scanned PDF OCR;
+  - embedded DOCX/PDF OCR;
+  - layout/table OCR;
+  - production OCR expansion.
+
+## Final delivery preparation
+
+- Статус: planned after Stage 34.3/35 and any explicitly needed conditional stages.
+- Цель: подготовить честный delivery package around confirmed ETL/search/ask/evaluation/chunk handoff baseline.
+- Правила:
+  - no endless splitter polishing;
+  - no cleanup v2 unless Stage 35 evidence shows repeated real issue;
+  - no final polish until explicit command or after planned stages are done/dropped;
+  - keep limitations honest and avoid claiming full RAG, LLM, vector search, scanned PDF OCR or table analytics.
 
 ## Stage 33.x. QA evaluator retrieval-loop speed/cache
 

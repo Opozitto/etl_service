@@ -141,12 +141,22 @@
 - Stage 34.1 does not change the table row-level chunk path and does not add full RAG, LLM generation, embeddings/vector DB, semantic retrieval/reranking, OCR/scanned PDF OCR, speed/cache work, table analytics, or production storage migration.
 - Stage 34.1 fresh validation on the Stage 34.0 explicit 4-file sample in `.runtime_eval\stage34_1_final`: `documents_processed=4`, `documents_with_failures=0`, `total_chunks=6029`, `toc_parent_violations=0`, `duplicate_heading_violations=0`, `heading_only_chunks=0`, `service_table_suspects=0`, `real_table_chunks=4008`.
 - Stage 34.1 fresh text metrics: `text_chunks=921`, `table_chunks=5108`, `short_text_chunks=25`, `nonservice_short_text_chunks=21`, `avg_text_chars=837.34`, `median_text_chars=887`, `min_text_chars=20`, `max_text_chars=1167`, `single_paragraph_text_chunks=0`, `one_line_text_chunks=0`.
+- Stage 34.2 completed as docs-only finite finish roadmap lock after chunk coherence.
+- Stage 34.2 records the post-Stage 34.1 exact validation evidence: `documents_processed=4`, `documents_with_failures=0`, `total_chunks=6029`, `toc_parent_violations=0`, `duplicate_heading_violations=0`, `heading_only_chunks=0`, `service_table_suspects=0`, `real_table_chunks=4008`.
+- Stage 34.2 records the metric reconciliation: raw `content_type` counts are `text=921`, `table=1100`, `table_row=4008`, while a broad collector moved `234` text chunks with table links into table counts, producing collector `text=687` and `table=5342`.
+- Stage 34.2 records the short-threshold discrepancy: raw text `<250` gives `57` short / `52` nonservice, while raw text `<120` gives `25` short / `21` nonservice; therefore the apparent short chunk growth is taxonomy noise, not a direct Stage 34.1 regression.
+- Stage 34.2 records remaining compact chunk categories: title/cover fragments, TOC/list fragments, formula/calculation micro-sections, pollutant/equipment micro-evidence, and `0` confirmed real problematic low-value tails in the inspected exact sample.
+- Stage 34.2 selects the finite plan: Stage 34.3 taxonomy/reporting, Stage 35 external `Example_data` validation, Stage 36 conditional cleanup only if evidence requires it, Stage 37 optional light OCR handoff polish only if time remains, then final delivery preparation.
+- Stage 34.2 is docs-only: no production code, tests, runtime storage, runtime reports, commit or tag changes.
 
 ## next
 
-- Next direction should be selected explicitly after Stage 34.1; keep future work bounded and avoid final polish unless explicitly requested.
+- Stage 34.3 Chunk quality taxonomy normalization/reporting v1 is the next implementation/reporting stage.
+- Stage 35 External `Example_data` validation v1 follows as external evidence in an explicit temporary workspace; the dataset is not training data and is not committed.
+- Stage 36 Targeted cleanup v2 runs only if Stage 35 shows repeated real problems, not just metric taxonomy noise or acceptable compact evidence chunks.
+- Stage 37 Optional light OCR handoff polish runs only if time remains after planned stages are completed or explicitly dropped.
+- Final delivery preparation follows the finite route; no final polish starts until explicit command or after planned stages are done/dropped.
 - QA evaluator retrieval-loop speed/cache is distant backlog / optional only if speed becomes a severe operational blocker.
-- Final polish checkpoint starts only by explicit user command: "стоп, следующий шаг делаем финал".
 
 ## alignment
 
@@ -167,6 +177,7 @@
 - Stage 33.4 closes splitter cleanup validation from the current roadmap standpoint; speed/cache is still not prioritized by default.
 - Stage 34.0 confirms the next implementation should stay bounded to deterministic text chunk coherence / packing and should not expand into RAG/LLM/vector/OCR/speed-cache/table analytics.
 - Stage 34.1 confirms small deterministic chunk coherence cleanup can reduce short/heading-only edge cases without changing table row-level context or API schema.
+- Stage 34.2 confirms the project now has a finite finish route: taxonomy/reporting, external validation, conditional cleanup only with evidence, optional light OCR handoff polish only if time remains, then final delivery preparation.
 
 ## risks
 
@@ -185,6 +196,7 @@
 - Remaining splitter risk: cleanup is deterministic and conservative, not perfect semantic document understanding.
 - Text chunk coherence risk remains: some short title/appendix-like fragments still exist in fresh outputs, and chunk packing changes can affect lexical search scoring and snippet precision.
 - Stage 34.1 must preserve table chunks, `section_path`, ordered `source_block_ids`, source/page metadata where available, and backward compatibility for old processed JSON.
+- Stage 34.2 reduces roadmap risk by forbidding endless splitter polishing: cleanup v2 is conditional on Stage 35 evidence, and metric taxonomy differences must be separated from real chunk regressions.
 - DOCX page metadata can be unavailable; this is an expected limitation and should stay explicit in diagnostics.
 - QA evaluator `--skip-answer-overlap` is intentionally a faster smoke mode; use full/default mode when answer-overlap trend comparison is needed.
 - Stage 26 matching is deterministic and conservative; ambiguous or missing expected documents require review before Stage 27 processing/eval.

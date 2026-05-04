@@ -2,7 +2,7 @@
 
 ## Назначение документа
 
-Документ был создан на Stage 10 как docs-level baseline для пользовательских сценариев и минимального evaluation set. Сейчас он актуализируется по мере развития ETL/search/evaluation baseline и отражает текущее состояние после Stage 34.1.
+Документ был создан на Stage 10 как docs-level baseline для пользовательских сценариев и минимального evaluation set. Сейчас он актуализируется по мере развития ETL/search/evaluation baseline и отражает текущее состояние после Stage 34.1 / Stage 34.2.
 
 Сценарии описывают пилотный контур для эколога-проектировщика: source-backed search, extractive QA, extraction/evidence diagnostics, контроль качества корпуса и подготовку chunk handoff для будущего source-backed RAG layer. Документ не объявляет готовыми full RAG, LLM generation, embeddings/vector DB, semantic retrieval, scanned PDF OCR или table analytics.
 
@@ -151,6 +151,20 @@ Stage 34.1 text chunk coherence edge cleanup:
 - structural heading-only и короткие uppercase root-title fragments без body context не эмитятся как ordinary text chunks;
 - fresh metrics на том же 4-file sample: `text_chunks=921`, `table_chunks=5108`, `nonservice_short_text_chunks=21`, `heading_only_chunks=0`, `real_table_chunks=4008`.
 
+Stage 34.2 finite finish roadmap lock:
+
+- post-commit exact validation после Stage 34.1 подтвердила `documents_processed=4`, `documents_with_failures=0`, `total_chunks=6029`, `toc_parent_violations=0`, `duplicate_heading_violations=0`, `heading_only_chunks=0`, `service_table_suspects=0`, `real_table_chunks=4008`;
+- audit-only reconciliation объяснил, что apparent growth of short chunks связан с разной taxonomy: raw `content_type` counts were `text=921`, `table=1100`, `table_row=4008`, while broad collector moved `234` text chunks with table links into table counts;
+- short threshold mismatch also matters: raw text `<250` gives `57` short / `52` nonservice, while raw text `<120` gives `25` short / `21` nonservice;
+- remaining compact chunks are categorized as title/cover fragments, TOC/list fragments, formula/calculation micro-sections, and pollutant/equipment micro-evidence; confirmed real problematic low-value tails were `0` in the inspected exact sample;
+- next customer-facing handoff improvement is unified chunk quality taxonomy/reporting, not more splitter polishing by default.
+
+Planned external evidence:
+
+- Stage 35 will validate against external `Example_data` in an explicit temporary workspace;
+- `Example_data` is external evidence only, not training data, not copied into the repository and not committed;
+- cleanup v2 is allowed only if that external validation shows repeated real problems.
+
 ## Вне текущего подтвержденного baseline
 
 Сейчас вне подтвержденного baseline:
@@ -165,6 +179,7 @@ Stage 34.1 text chunk coherence edge cleanup:
 - HEIC как готовый intake path;
 - XLS/XLSX table intelligence beyond the current baseline;
 - SQL/table analytics или automatic calculations;
+- production UI;
 - external proprietary APIs.
 
 ## Ожидаемые результаты документа
@@ -226,8 +241,13 @@ Stage 34.1 text chunk coherence edge cleanup:
 - Stage 33.4 closes splitter cleanup validation from the current roadmap standpoint using expanded fresh validation evidence.
 - Stage 34.0 audits text chunk coherence and prepares Stage 34.1 as a bounded deterministic packing stage without changing production behavior.
 - Stage 34.1 implements bounded deterministic text chunk coherence edge cleanup without changing table row-level chunks, API schema, or production storage migration.
+- Stage 34.2 locks the finite finish route after chunk coherence and metric reconciliation.
+- Stage 34.3 is the next planned customer-facing handoff improvement: unified chunk quality taxonomy/reporting.
+- Stage 35 plans external `Example_data` validation as evidence only; it is not training and not committed.
+- Stage 36 cleanup v2 is conditional on repeated real problems in Stage 35 evidence.
+- Stage 37 light OCR handoff polish is optional and only if time remains.
 
-## Текущее состояние после Stage 34.1
+## Текущее состояние после Stage 34.1 / Stage 34.2
 
 - Stage 29.1 adds read-only RAG-ready chunk inspection/export over existing processed JSON.
 - Stage 29.2 adds read-only chunk quality audit over existing processed JSON / exported chunk records.
@@ -240,12 +260,16 @@ Stage 34.1 text chunk coherence edge cleanup:
 - Stage 33.4 records expanded fresh validation over 4 `first_test_data` documents with zero failures/warnings and closes Stage 33 from the splitter cleanup standpoint.
 - Stage 34.0 records audit/design for text chunk coherence and recommends Stage 34.1 Text chunk coherence / chunk packing v1.
 - Stage 34.1 reduces short/heading-only text chunk edge cases while preserving table row-level context and compatibility paths.
+- Stage 34.2 records exact post-commit validation and reconciles raw `content_type`, broad table-linked collector counts and short threshold differences.
+- Stage 34.2 confirms Stage 34.1 is valid and not a direct short-chunk regression.
+- Stage 34.2 selects a finite route: Stage 34.3 taxonomy/reporting, Stage 35 external validation, Stage 36 conditional cleanup, Stage 37 optional light OCR handoff polish, then final delivery preparation.
 - Chunks now have better visibility, stronger metadata/source/location/citation context, and cleaner deterministic section/chunk structure where available.
 - Splitter cleanup is conservative and improves handoff quality, but it is not semantic document understanding.
 - Text chunk coherence remains bounded and deterministic: ordinary text chunks should not cross sections, merge with tables, invent pages, or change API schema in a breaking way.
+- Unified chunk quality taxonomy/reporting is the next customer-facing handoff improvement because it separates real problems from metric/taxonomy noise.
 - DOCX page metadata can still be unavailable; diagnostics should show this honestly rather than inventing page context.
 - These stages should not promise full RAG, semantic retrieval, embeddings/vector DB, LLM generation, scanned PDF OCR or table analytics.
-- Next roadmap direction should be selected explicitly, likely customer-facing handoff/reporting over processed corpus, source-backed evidence pack, or final demo/readiness packaging; speed/cache is not the default next step.
+- Speed/cache is not the default next step, and there is no endless splitter polishing by default.
 
 ## Notes on the current baseline
 
