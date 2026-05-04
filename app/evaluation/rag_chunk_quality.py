@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import statistics
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
@@ -10,11 +11,71 @@ from typing import Any
 from app.evaluation.rag_chunk_export import build_export_report, normalize_text
 
 
-AUDIT_VERSION = "stage29_2_rag_chunk_quality_audit_v1"
+AUDIT_VERSION = "stage34_3_chunk_quality_taxonomy_reporting_v1"
 
-DEFAULT_SHORT_THRESHOLD = 80
+DEFAULT_SHORT_THRESHOLD = 120
 DEFAULT_LONG_THRESHOLD = 3000
+COMPACT_TEXT_THRESHOLD = 250
 DEFAULT_SAMPLE_LIMIT_PER_ISSUE = 5
+
+RAW_CONTENT_TYPES = ("text", "table", "table_row", "image")
+COMPACT_TAXONOMY_BUCKETS = (
+    "title_or_cover_fragment",
+    "toc_or_list_fragment",
+    "formula_or_calculation_micro_evidence",
+    "pollutant_or_equipment_micro_evidence",
+    "real_low_value_tail",
+    "service_or_boilerplate",
+    "other_compact_text",
+)
+TOC_LIST_RE = re.compile(r"(^|\s)(\d+(\.\d+){1,}\.?)\s+\S+|\.{3,}\s*\d+\s*$", re.IGNORECASE)
+FORMULA_RE = re.compile(r"[=<>±×*/]|(\b\d+([.,]\d+)?\s*(мг/м3|мг/м³|т/год|г/с|кг/ч|м3/ч|м³/ч)\b)", re.IGNORECASE)
+BODY_HEADING_RE = re.compile(r"^(\d+(\.\d+)*\.?|[IVXLC]+\.?)\s+\S+", re.IGNORECASE)
+POLLUTANT_SYMBOL_RE = re.compile(r"\b(nox|so2|co)\b", re.IGNORECASE)
+SERVICE_TERMS = (
+    "утверждаю",
+    "утверждено",
+    "согласовано",
+    "согласовал",
+    "подпись",
+    "должность",
+    "коммерческий директор",
+    "ф.и.о",
+    "фио",
+    "разработал",
+    "проверил",
+    "лист согласования",
+    "(число)",
+    "(месяц)",
+    "approval",
+    "signature",
+)
+FORMULA_TERMS = (
+    "расчет",
+    "расчёт",
+    "формула",
+    "коэффициент",
+    "удельн",
+    "мг/м3",
+    "мг/м³",
+    "т/год",
+    "г/с",
+)
+POLLUTANT_EQUIPMENT_TERMS = (
+    "вещество",
+    "загрязняющ",
+    "источник",
+    "выброс",
+    "оборудование",
+    "котел",
+    "котёл",
+    "труба",
+    "пыль",
+    "оксид",
+    "диоксид",
+    "азот",
+    "сера",
+)
 
 ISSUE_DETAILS: dict[str, dict[str, str]] = {
     "empty_or_whitespace_text": {
@@ -90,6 +151,151 @@ def _filename(item: dict[str, Any]) -> str:
 
 def _content_type(item: dict[str, Any]) -> str:
     return str(item.get("content_type") or "unknown")
+
+
+def _normalize_for_match(value: Any) -> str:
+    return re.sub(r"\s+", " ", str(value or "").replace("\u00a0", " ")).strip().casefold()
+
+
+def _has_table_row_index(item: dict[str, Any]) -> bool:
+    return item.get("table_row_index") is not None
+
+
+def _has_table_column_values(item: dict[str, Any]) -> bool:
+    value = item.get("table_column_values")
+    return bool(value) if isinstance(value, dict | list | tuple) else value is not None
+
+
+def _has_any_table_context(item: dict[str, Any]) -> bool:
+    return bool(item.get("table_id")) or _has_table_row_index(item) or _has_table_column_values(item)
+
+
+def _is_service_or_boilerplate(item: dict[str, Any], text: str) -> bool:
+    flags = set(item.get("quality_flags") or [])
+    content_type = _content_type(item)
+    normalized = _normalize_for_match(text)
+    if content_type == "service_text" or "service_text" in flags or "service_or_boilerplate" in flags:
+        return True
+    if any(term in normalized for term in SERVICE_TERMS):
+        return True
+    return False
+
+
+def _compact_text_bucket(item: dict[str, Any], *, compact_threshold: int = COMPACT_TEXT_THRESHOLD) -> str | None:
+    if _content_type(item) != "text":
+        return None
+    text = _chunk_text(item)
+    if not text or len(text) >= compact_threshold:
+        return None
+
+    normalized = _normalize_for_match(text)
+    words = re.findall(r"\w+", text, flags=re.UNICODE)
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+
+    if _is_service_or_boilerplate(item, text):
+        return "service_or_boilerplate"
+    if "содержание" in normalized or "оглавление" in normalized or "table of contents" in normalized:
+        return "toc_or_list_fragment"
+    if TOC_LIST_RE.search(text) or sum(1 for line in lines if BODY_HEADING_RE.match(line)) >= 2:
+        return "toc_or_list_fragment"
+    if FORMULA_RE.search(normalized) or any(term in normalized for term in FORMULA_TERMS):
+        return "formula_or_calculation_micro_evidence"
+    if POLLUTANT_SYMBOL_RE.search(normalized) or any(term in normalized for term in POLLUTANT_EQUIPMENT_TERMS):
+        return "pollutant_or_equipment_micro_evidence"
+    if len(words) <= 8 and (text.isupper() or _normalize_for_match(item.get("section_title")) == normalized.strip(" .:;")):
+        return "title_or_cover_fragment"
+    if len(text) < DEFAULT_SHORT_THRESHOLD:
+        return "real_low_value_tail"
+    return "other_compact_text"
+
+
+def _raw_content_type_counts(items: list[dict[str, Any]]) -> dict[str, int]:
+    raw_counts = Counter(_content_type(item) for item in items)
+    result = {content_type: raw_counts.get(content_type, 0) for content_type in RAW_CONTENT_TYPES}
+    unknown_count = raw_counts.get("unknown", 0)
+    other_count = sum(count for content_type, count in raw_counts.items() if content_type not in RAW_CONTENT_TYPES and content_type != "unknown")
+    if unknown_count:
+        result["unknown"] = unknown_count
+    if other_count:
+        result["other"] = other_count
+    return result
+
+
+def _table_context_counts(items: list[dict[str, Any]]) -> dict[str, int]:
+    return {
+        "chunks_with_table_id": sum(1 for item in items if item.get("table_id")),
+        "chunks_with_table_row_index": sum(1 for item in items if _has_table_row_index(item)),
+        "chunks_with_table_column_values": sum(1 for item in items if _has_table_column_values(item)),
+        "mixed_text_with_table_context": sum(
+            1 for item in items if _content_type(item) == "text" and _has_any_table_context(item)
+        ),
+    }
+
+
+def _strict_table_counts(items: list[dict[str, Any]]) -> dict[str, int]:
+    table_row_items = [item for item in items if _content_type(item) == "table_row"]
+    return {
+        "strict_table_row_chunks": len(table_row_items),
+        "strict_table_row_chunks_with_column_values": sum(1 for item in table_row_items if _has_table_column_values(item)),
+        "strict_table_row_chunks_with_rich_row_context": sum(1 for item in table_row_items if _has_rich_table_context(item)),
+    }
+
+
+def _short_text_thresholds(items: list[dict[str, Any]], *, severe_threshold: int) -> dict[str, Any]:
+    severe_items = [
+        item for item in items if _content_type(item) == "text" and _chunk_text(item) and len(_chunk_text(item)) < severe_threshold
+    ]
+    compact_items = [
+        item
+        for item in items
+        if _content_type(item) == "text" and _chunk_text(item) and len(_chunk_text(item)) < COMPACT_TEXT_THRESHOLD
+    ]
+
+    def summarize(short_items: list[dict[str, Any]]) -> dict[str, int]:
+        service = sum(1 for item in short_items if _is_service_or_boilerplate(item, _chunk_text(item)))
+        return {"total": len(short_items), "service": service, "nonservice": len(short_items) - service}
+
+    return {
+        "severe_short_text": {
+            "threshold_chars": severe_threshold,
+            "description": "text chunks shorter than 120 chars by default; potential micro-fragments.",
+            **summarize(severe_items),
+        },
+        "compact_text_evidence": {
+            "threshold_chars": COMPACT_TEXT_THRESHOLD,
+            "description": "text chunks shorter than 250 chars; compact evidence is not automatically a defect.",
+            **summarize(compact_items),
+        },
+    }
+
+
+def _compact_text_taxonomy(items: list[dict[str, Any]]) -> dict[str, Any]:
+    bucket_counts = Counter()
+    for item in items:
+        bucket = _compact_text_bucket(item)
+        if bucket:
+            bucket_counts[bucket] += 1
+    buckets = {bucket: bucket_counts.get(bucket, 0) for bucket in COMPACT_TAXONOMY_BUCKETS}
+    return {
+        "threshold_chars": COMPACT_TEXT_THRESHOLD,
+        "buckets": buckets,
+        "note": "Compact chunks can be useful formula, calculation, pollutant, equipment, TOC/list or title evidence; only repeated real_low_value_tail needs cleanup review.",
+    }
+
+
+def _quality_recommendations(short_metrics: dict[str, Any], taxonomy: dict[str, Any]) -> list[str]:
+    buckets = taxonomy["buckets"]
+    severe_nonservice = short_metrics["severe_short_text"]["nonservice"]
+    recommendations: list[str] = []
+    if buckets["real_low_value_tail"] == 0 and severe_nonservice <= 5:
+        recommendations.append("no_action_needed")
+    if buckets["real_low_value_tail"]:
+        recommendations.append("inspect_examples")
+        recommendations.append("targeted_splitter_cleanup_only_if_repeated")
+    recommendations.append("do_not_merge_table_chunks_with_text_chunks")
+    recommendations.append("keep_table_path_separate")
+    recommendations.append("keep_audit_deterministic_read_only")
+    return recommendations
 
 
 def _is_heading_only_or_low_context(text: str, content_type: str, short_threshold: int) -> bool:
@@ -297,8 +503,14 @@ def build_quality_audit_from_items(
     ]
 
     samples = [sample for issue_code in ISSUE_DETAILS for sample in per_issue_samples.get(issue_code, [])]
+    raw_content_type_counts = _raw_content_type_counts(items)
+    table_context_counts = _table_context_counts(items)
+    strict_table_counts = _strict_table_counts(items)
+    short_text_thresholds = _short_text_thresholds(items, severe_threshold=short_threshold)
+    compact_text_taxonomy = _compact_text_taxonomy(items)
     summary = {
         "audit_version": AUDIT_VERSION,
+        "documents_processed": documents_with_chunks if documents_with_chunks is not None else len(document_map),
         "documents_seen": documents_seen if documents_seen is not None else len(document_map),
         "documents_with_chunks": documents_with_chunks if documents_with_chunks is not None else len(document_map),
         "total_chunks": total_chunks if total_chunks is not None else len(items),
@@ -306,6 +518,11 @@ def build_quality_audit_from_items(
         "issue_counts": dict(sorted(issue_counts.items())),
         "severity_counts": dict(sorted(severity_counts.items())),
         "content_type_counts": dict(sorted(content_type_counts.items())),
+        "raw_content_type_counts": raw_content_type_counts,
+        "table_context_counts": table_context_counts,
+        "strict_table_counts": strict_table_counts,
+        "short_text_thresholds": short_text_thresholds,
+        "compact_text_taxonomy": compact_text_taxonomy,
         "average_text_chars": round(sum(text_lengths) / len(text_lengths), 2) if text_lengths else 0,
         "median_text_chars": statistics.median(text_lengths) if text_lengths else 0,
         "min_text_chars": min(text_lengths) if text_lengths else 0,
@@ -322,16 +539,16 @@ def build_quality_audit_from_items(
         "top_issue_documents": top_issue_documents,
     }
 
-    recommendations = [
-        "Stage 30: harden chunk contract with explicit source, section, page and content_type fields.",
-        "Stage 31: improve table chunk context and readability without adding table analytics/calculations.",
-        "Stage 32: harden source location/citation metadata for future source-backed handoff.",
-        "Keep this audit deterministic/read-only; it does not claim full RAG readiness.",
-    ]
+    recommendations = _quality_recommendations(short_text_thresholds, compact_text_taxonomy)
     limitations = [
         "Audit reads existing processed JSON/export records only and does not fix chunking behavior.",
         "Heuristics are deterministic and conservative; they do not perform semantic or ML quality evaluation.",
         "No OCR, LLM generation, embeddings, vector DB, reranking or table analytics are performed.",
+        "Raw content_type counts and broad table-linked counts answer different questions.",
+        "content_type='text' with table context is not an ordinary text chunk.",
+        "content_type='table_row' is the strict stable row-level table evidence count.",
+        "Compact text chunks below 250 chars are evidence taxonomy candidates, not automatic defects.",
+        "Real cleanup is needed only for repeated real_low_value_tail or other confirmed repeated problems.",
     ]
     if warnings:
         limitations.append("Some processed JSON files could not be read; see warnings.")
@@ -352,7 +569,15 @@ def build_quality_audit_from_items(
             "include_samples": include_samples,
         },
         "summary": summary,
+        "documents_processed": summary["documents_processed"],
+        "total_chunks": summary["total_chunks"],
+        "raw_content_type_counts": raw_content_type_counts,
+        "table_context_counts": table_context_counts,
+        "strict_table_counts": strict_table_counts,
+        "short_text_thresholds": short_text_thresholds,
+        "compact_text_taxonomy": compact_text_taxonomy,
         "issues": issues,
+        "issues_sample": samples,
         "documents": documents,
         "samples": samples,
         "recommendations": recommendations,
@@ -404,7 +629,7 @@ def write_quality_audit_report(path: Path, report: dict[str, Any]) -> None:
 
 def print_console_summary(report: dict[str, Any], output_path: Path | None = None) -> None:
     summary = report["summary"]
-    print("Stage 29.2 chunk quality audit")
+    print("Stage 34.3 chunk quality taxonomy audit")
     print(f"audit_version={report['audit_version']}")
     print(
         "documents_seen={documents_seen} documents_with_chunks={documents_with_chunks} "
@@ -412,7 +637,23 @@ def print_console_summary(report: dict[str, Any], output_path: Path | None = Non
     )
     print(f"issue_counts={summary['issue_counts']}")
     print(f"severity_counts={summary['severity_counts']}")
-    print(f"content_type_counts={summary['content_type_counts']}")
+    print(f"raw_content_type_counts={summary['raw_content_type_counts']}")
+    print(f"table_context_counts={summary['table_context_counts']}")
+    print(f"strict_table_counts={summary['strict_table_counts']}")
+    print(f"legacy_content_type_counts={summary['content_type_counts']}")
+    severe = summary["short_text_thresholds"]["severe_short_text"]
+    compact = summary["short_text_thresholds"]["compact_text_evidence"]
+    print(
+        "severe_short_text<{threshold_chars}: total={total} service={service} nonservice={nonservice}".format(
+            **severe
+        )
+    )
+    print(
+        "compact_text_evidence<{threshold_chars}: total={total} service={service} nonservice={nonservice}".format(
+            **compact
+        )
+    )
+    print(f"compact_text_taxonomy={summary['compact_text_taxonomy']['buckets']}")
     print(
         "text_chars avg={average_text_chars} median={median_text_chars} "
         "min={min_text_chars} max={max_text_chars}".format(**summary)
@@ -426,6 +667,14 @@ def print_console_summary(report: dict[str, Any], output_path: Path | None = Non
                     **document
                 )
             )
-    print("limitations: read-only audit; no RAG/LLM/embeddings/vector DB/reranking/OCR/table analytics.")
+    print("recommendations:")
+    for recommendation in report["recommendations"]:
+        print(f"- {recommendation}")
+    print("limitations:")
+    print("- raw content_type counts and broad table-linked counts answer different questions.")
+    print("- content_type='text' with table context is not an ordinary text chunk.")
+    print("- content_type='table_row' is strict stable row-level table evidence.")
+    print("- compact <250 chunks can be useful evidence; they are not automatic defects.")
+    print("- read-only audit; no RAG/LLM/embeddings/vector DB/reranking/OCR/table analytics.")
     if output_path:
         print(f"json_report_path={output_path}")

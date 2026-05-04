@@ -2,7 +2,7 @@
 
 ## Назначение документа
 
-Документ был создан на Stage 10 как docs-level baseline для пользовательских сценариев и минимального evaluation set. Сейчас он актуализируется по мере развития ETL/search/evaluation baseline и отражает текущее состояние после Stage 34.1 / Stage 34.2.
+Документ был создан на Stage 10 как docs-level baseline для пользовательских сценариев и минимального evaluation set. Сейчас он актуализируется по мере развития ETL/search/evaluation baseline и отражает текущее состояние после Stage 34.3.
 
 Сценарии описывают пилотный контур для эколога-проектировщика: source-backed search, extractive QA, extraction/evidence diagnostics, контроль качества корпуса и подготовку chunk handoff для будущего source-backed RAG layer. Документ не объявляет готовыми full RAG, LLM generation, embeddings/vector DB, semantic retrieval, scanned PDF OCR или table analytics.
 
@@ -159,9 +159,18 @@ Stage 34.2 finite finish roadmap lock:
 - remaining compact chunks are categorized as title/cover fragments, TOC/list fragments, formula/calculation micro-sections, and pollutant/equipment micro-evidence; confirmed real problematic low-value tails were `0` in the inspected exact sample;
 - next customer-facing handoff improvement is unified chunk quality taxonomy/reporting, not more splitter polishing by default.
 
+Stage 34.3 chunk quality taxonomy/reporting:
+
+- audit report now separates raw `content_type` counts from broad table-linked counts and strict `content_type='table_row'` evidence;
+- `content_type='text'` with `table_id`, `table_row_index` or `table_column_values` is reported as mixed text-with-table context, not ordinary text;
+- short metrics are normalized into `severe_short_text <120` and `compact_text_evidence <250`, each split into `total`, `service`, and `nonservice`;
+- compact `<250` chunks are classified into deterministic evidence buckets, including formula/calculation micro-evidence and pollutant/equipment micro-evidence, and are not automatic defects;
+- recommendations stay conservative: no cleanup is needed unless `real_low_value_tail` or another real problem repeats;
+- splitter/chunk-building logic did not change, so Stage 34.1 remains valid and the discrepancy is treated as taxonomy/reporting issue, not splitter regression.
+
 Planned external evidence:
 
-- Stage 35 will validate against external `Example_data` in an explicit temporary workspace;
+- Stage 35 is the next stage and will validate against external `Example_data` in an explicit temporary workspace;
 - `Example_data` is external evidence only, not training data, not copied into the repository and not committed;
 - cleanup v2 is allowed only if that external validation shows repeated real problems.
 
@@ -218,7 +227,7 @@ Planned external evidence:
 | EC-10 | Draft generation | Подготовить draft section документации | Project doc context and task brief | Future spike only | yes | future | Do not announce ready LLM generation |
 | EC-11 | Source attribution | Показать, откуда взят ответ | Search hits and chunk references | Ответ должен содержать explicit source references | yes | supported now | Trust criterion for the pilot track |
 | EC-12 | Problem documents | Найти проблемные документы в корпусе | Index, manifest, batch and audit reports | Audit surfaces duplicates, warnings, missing chunks and low-quality items | no | supported now | Uses the Stage 7-9 reporting layer |
-| EC-13 | RAG-ready chunk export/audit | Проверить качество chunks как handoff units | Existing processed JSON / Stage 29.1 chunk export records | Показать chunk text/preview, `filename`, `document_id`, section path, page where available, `content_type`, `quality_flags`, strengthened source/location/citation fields where available, limitations and issue summary | yes | supported now / diagnostics | Stage 29.1/29.2 plus Stage 30–33.3 metadata/source/splitter hardening; no embeddings/vector DB/generation |
+| EC-13 | RAG-ready chunk export/audit | Проверить качество chunks как handoff units | Existing processed JSON / Stage 29.1 chunk export records | Показать chunk text/preview, `filename`, `document_id`, section path, page where available, raw `content_type`, table-linked context, strict table-row evidence, compact chunk taxonomy, `quality_flags`, strengthened source/location/citation fields where available, limitations and recommendations | yes | supported now / diagnostics | Stage 29.1/29.2 plus Stage 30–34.3 metadata/source/splitter/taxonomy hardening; no embeddings/vector DB/generation |
 | EC-14 | Fresh splitter cleanup validation | Проверить Stage 33 cleanup на свежей обработке sample documents | Explicit input files/directories plus temporary workspace | Reprocess samples into workspace, then report TOC parent violations, duplicate headings, heading-only chunks, service table suspects, real table chunks and missing page limitations | yes | supported now / diagnostics | Stage 33.2 validates newly processed output; Stage 33.4 records 4-document closure evidence; no migration of production `storage/results` |
 
 ## Связь со Stage 11-17
@@ -242,12 +251,12 @@ Planned external evidence:
 - Stage 34.0 audits text chunk coherence and prepares Stage 34.1 as a bounded deterministic packing stage without changing production behavior.
 - Stage 34.1 implements bounded deterministic text chunk coherence edge cleanup without changing table row-level chunks, API schema, or production storage migration.
 - Stage 34.2 locks the finite finish route after chunk coherence and metric reconciliation.
-- Stage 34.3 is the next planned customer-facing handoff improvement: unified chunk quality taxonomy/reporting.
-- Stage 35 plans external `Example_data` validation as evidence only; it is not training and not committed.
+- Stage 34.3 implements the customer-facing handoff improvement: unified chunk quality taxonomy/reporting.
+- Stage 35 is next and plans external `Example_data` validation as evidence only; it is not training and not committed.
 - Stage 36 cleanup v2 is conditional on repeated real problems in Stage 35 evidence.
 - Stage 37 light OCR handoff polish is optional and only if time remains.
 
-## Текущее состояние после Stage 34.1 / Stage 34.2
+## Текущее состояние после Stage 34.3
 
 - Stage 29.1 adds read-only RAG-ready chunk inspection/export over existing processed JSON.
 - Stage 29.2 adds read-only chunk quality audit over existing processed JSON / exported chunk records.
@@ -262,11 +271,13 @@ Planned external evidence:
 - Stage 34.1 reduces short/heading-only text chunk edge cases while preserving table row-level context and compatibility paths.
 - Stage 34.2 records exact post-commit validation and reconciles raw `content_type`, broad table-linked collector counts and short threshold differences.
 - Stage 34.2 confirms Stage 34.1 is valid and not a direct short-chunk regression.
-- Stage 34.2 selects a finite route: Stage 34.3 taxonomy/reporting, Stage 35 external validation, Stage 36 conditional cleanup, Stage 37 optional light OCR handoff polish, then final delivery preparation.
+- Stage 34.3 turns that reconciliation into explicit audit JSON/console reporting for raw `content_type`, broad table-linked counts, strict `table_row` evidence, short thresholds and compact chunk taxonomy.
+- Stage 34.3 confirms compact `<250` chunks are evidence taxonomy, not automatic defects, and does not change splitter/chunk-building logic.
+- Stage 34.3 selects the next concrete step: Stage 35 external validation, then Stage 36 conditional cleanup only if evidence requires it, Stage 37 optional light OCR handoff polish, then final delivery preparation.
 - Chunks now have better visibility, stronger metadata/source/location/citation context, and cleaner deterministic section/chunk structure where available.
 - Splitter cleanup is conservative and improves handoff quality, but it is not semantic document understanding.
 - Text chunk coherence remains bounded and deterministic: ordinary text chunks should not cross sections, merge with tables, invent pages, or change API schema in a breaking way.
-- Unified chunk quality taxonomy/reporting is the next customer-facing handoff improvement because it separates real problems from metric/taxonomy noise.
+- Unified chunk quality taxonomy/reporting is now available and separates real problems from metric/taxonomy noise.
 - DOCX page metadata can still be unavailable; diagnostics should show this honestly rather than inventing page context.
 - These stages should not promise full RAG, semantic retrieval, embeddings/vector DB, LLM generation, scanned PDF OCR or table analytics.
 - Speed/cache is not the default next step, and there is no endless splitter polishing by default.

@@ -25,6 +25,7 @@ def main(argv: Sequence[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Read-only RAG chunk quality audit")
     parser.add_argument("--results-dir", default="storage/results", help="Directory with processed StructuredDocument JSON")
     parser.add_argument("--output-path", help="Optional path to save JSON audit report")
+    parser.add_argument("--json-report-path", help="Alias for --output-path")
     parser.add_argument("--max-documents", type=non_negative_int, help="Limit number of processed JSON documents")
     parser.add_argument(
         "--max-chunks-per-document",
@@ -52,7 +53,8 @@ def main(argv: Sequence[str] | None = None) -> None:
     except ValueError as exc:
         raise SystemExit(str(exc)) from exc
 
-    output_path = Path(args.output_path).resolve() if args.output_path else None
+    selected_output_path = args.output_path or args.json_report_path
+    output_path = Path(selected_output_path).resolve() if selected_output_path else None
     if output_path:
         write_quality_audit_report(output_path, report)
     print_console_summary(report, output_path=output_path)

@@ -148,11 +148,17 @@
 - Stage 34.2 records remaining compact chunk categories: title/cover fragments, TOC/list fragments, formula/calculation micro-sections, pollutant/equipment micro-evidence, and `0` confirmed real problematic low-value tails in the inspected exact sample.
 - Stage 34.2 selects the finite plan: Stage 34.3 taxonomy/reporting, Stage 35 external `Example_data` validation, Stage 36 conditional cleanup only if evidence requires it, Stage 37 optional light OCR handoff polish only if time remains, then final delivery preparation.
 - Stage 34.2 is docs-only: no production code, tests, runtime storage, runtime reports, commit or tag changes.
+- Stage 34.3 completed as Chunk quality taxonomy normalization/reporting v1.
+- Stage 34.3 updates `app.evaluation.rag_chunk_quality` and `scripts.audit_rag_chunks` so reports show raw `content_type` counts separately from broad table-linked counts and strict `content_type='table_row'` evidence.
+- Stage 34.3 normalizes short text reporting into `severe_short_text <120` and `compact_text_evidence <250`, both split into `total`, `service`, and `nonservice`.
+- Stage 34.3 adds conservative deterministic compact text buckets: title/cover, TOC/list, formula/calculation micro-evidence, pollutant/equipment micro-evidence, service/boilerplate, real low-value tails, and other compact text.
+- Stage 34.3 keeps compact `<250` chunks as evidence taxonomy, not automatic defects; cleanup is recommended only for repeated `real_low_value_tail` or other confirmed repeated problems.
+- Stage 34.3 confirms Stage 34.1 remains valid: the discrepancy after Stage 34.1 was taxonomy/reporting mismatch, not a splitter regression.
+- Stage 34.3 does not change splitter/chunk-building logic, production search, API contracts, storage artifacts, RAG/LLM/embeddings/vector DB/semantic retrieval/reranking/OCR/scanned PDF OCR/table analytics.
 
 ## next
 
-- Stage 34.3 Chunk quality taxonomy normalization/reporting v1 is the next implementation/reporting stage.
-- Stage 35 External `Example_data` validation v1 follows as external evidence in an explicit temporary workspace; the dataset is not training data and is not committed.
+- Stage 35 External `Example_data` validation v1 is the next stage as external evidence in an explicit temporary workspace; the dataset is not training data and is not committed.
 - Stage 36 Targeted cleanup v2 runs only if Stage 35 shows repeated real problems, not just metric taxonomy noise or acceptable compact evidence chunks.
 - Stage 37 Optional light OCR handoff polish runs only if time remains after planned stages are completed or explicitly dropped.
 - Final delivery preparation follows the finite route; no final polish starts until explicit command or after planned stages are done/dropped.
@@ -178,6 +184,7 @@
 - Stage 34.0 confirms the next implementation should stay bounded to deterministic text chunk coherence / packing and should not expand into RAG/LLM/vector/OCR/speed-cache/table analytics.
 - Stage 34.1 confirms small deterministic chunk coherence cleanup can reduce short/heading-only edge cases without changing table row-level context or API schema.
 - Stage 34.2 confirms the project now has a finite finish route: taxonomy/reporting, external validation, conditional cleanup only with evidence, optional light OCR handoff polish only if time remains, then final delivery preparation.
+- Stage 34.3 turns the Stage 34.2 reconciliation into explicit machine-readable and console-readable chunk quality taxonomy, without changing chunk-building behavior.
 
 ## risks
 
@@ -197,6 +204,7 @@
 - Text chunk coherence risk remains: some short title/appendix-like fragments still exist in fresh outputs, and chunk packing changes can affect lexical search scoring and snippet precision.
 - Stage 34.1 must preserve table chunks, `section_path`, ordered `source_block_ids`, source/page metadata where available, and backward compatibility for old processed JSON.
 - Stage 34.2 reduces roadmap risk by forbidding endless splitter polishing: cleanup v2 is conditional on Stage 35 evidence, and metric taxonomy differences must be separated from real chunk regressions.
+- Stage 34.3 reduces reporting risk by making raw content types, table-linked context, strict table rows, and compact evidence buckets visible as different questions.
 - DOCX page metadata can be unavailable; this is an expected limitation and should stay explicit in diagnostics.
 - QA evaluator `--skip-answer-overlap` is intentionally a faster smoke mode; use full/default mode when answer-overlap trend comparison is needed.
 - Stage 26 matching is deterministic and conservative; ambiguous or missing expected documents require review before Stage 27 processing/eval.

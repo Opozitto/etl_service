@@ -1,6 +1,6 @@
 # PLAN
 
-Stage 1–32 are completed. Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock. Stage 20–25 are completed OCR/readiness/extraction/table/QA-evaluation layers. Stage 26–32 are completed external QA/chunk visibility, audit, chunk contract hardening, table chunk context, and source location/citation hardening stages. Stage 33 splitter structure cleanup and validation closure is completed from the splitter cleanup standpoint. Stage 34.0 text chunk coherence audit/design is completed docs-only. Stage 34.1 text chunk coherence edge cleanup v1 is completed as a bounded deterministic implementation. Stage 34.2 is completed docs-only as the finite finish roadmap lock after Stage 34.1 validation and metric reconciliation. The next stage is Stage 34.3 chunk quality taxonomy normalization/reporting v1; speed/cache remains distant backlog only.
+Stage 1–32 are completed. Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock. Stage 20–25 are completed OCR/readiness/extraction/table/QA-evaluation layers. Stage 26–32 are completed external QA/chunk visibility, audit, chunk contract hardening, table chunk context, and source location/citation hardening stages. Stage 33 splitter structure cleanup and validation closure is completed from the splitter cleanup standpoint. Stage 34.0 text chunk coherence audit/design is completed docs-only. Stage 34.1 text chunk coherence edge cleanup v1 is completed as a bounded deterministic implementation. Stage 34.2 is completed docs-only as the finite finish roadmap lock after Stage 34.1 validation and metric reconciliation. Stage 34.3 chunk quality taxonomy normalization/reporting v1 is completed as audit/reporting normalization. The next stage is Stage 35 External `Example_data` validation v1; speed/cache remains distant backlog only.
 
 ## Stage 1. Зафиксировать smoke/regression проверки
 
@@ -883,18 +883,26 @@ conda run -n etl_env python -m scripts.validate_splitter_cleanup --input-dir fir
 
 ## Stage 34.3. Chunk quality taxonomy normalization/reporting v1
 
-- Статус: planned next.
+- Статус: completed.
 - Цель: унифицировать chunk metrics/reporting taxonomy после Stage 34.1/34.2, чтобы raw `content_type`, broad table-linked counts, `real_table_chunks`, short thresholds и service/nonservice categories не сравнивались как одно и то же.
-- Ожидаемый scope:
+- Реализация:
   - reporting/audit taxonomy only;
-  - clearly separate raw `content_type` counts from table-linked broad collector counts;
-  - show `<120` and `<250` short thresholds explicitly;
-  - keep formula/evidence micro-chunks separate from true low-value tails;
-  - no splitter behavior change unless a later evidence stage requires it.
+  - `scripts.audit_rag_chunks` / `app.evaluation.rag_chunk_quality` теперь явно разделяют raw `content_type` counts, broad table-linked counts и strict `table_row` evidence;
+  - `severe_short_text <120` и `compact_text_evidence <250` показываются отдельно, с `service` / `nonservice`;
+  - compact chunks `<250` классифицируются как evidence taxonomy, а не как автоматический дефект;
+  - buckets: `title_or_cover_fragment`, `toc_or_list_fragment`, `formula_or_calculation_micro_evidence`, `pollutant_or_equipment_micro_evidence`, `real_low_value_tail`, `service_or_boilerplate`, `other_compact_text`;
+  - report limitations/recommendations объясняют, что Stage 34.1 discrepancy была taxonomy/reporting issue, not splitter regression;
+  - splitter/chunk-building logic не менялась.
+- Вне scope:
+  - no full RAG / LLM generation;
+  - no embeddings/vector DB / semantic retrieval / reranking;
+  - no scanned PDF OCR or embedded image OCR;
+  - no SQL/table analytics or automatic calculations;
+  - no production storage migration.
 
 ## Stage 35. External Example_data validation v1
 
-- Статус: planned.
+- Статус: planned next.
 - Цель: проверить текущий ETL/source-backed handoff baseline на external `D:\Projects\etl_service_backup\Example_data` как evidence run, без training, без commit external dataset и без production storage migration.
 - Ожидаемый scope:
   - explicit temporary workspace only;

@@ -27,8 +27,14 @@ def _item(**overrides) -> dict:
         "page_start": 1,
         "page_end": 1,
         "table_id": None,
-        "text": "This is a normal chunk with enough local context for a deterministic audit fixture.",
-        "text_preview": "This is a normal chunk with enough local context for a deterministic audit fixture.",
+        "text": (
+            "This is a normal chunk with enough local context for a deterministic audit fixture. "
+            "It intentionally stays above the severe short text threshold."
+        ),
+        "text_preview": (
+            "This is a normal chunk with enough local context for a deterministic audit fixture. "
+            "It intentionally stays above the severe short text threshold."
+        ),
         "quality_flags": [],
         "handoff_notes": [],
     }
@@ -77,7 +83,7 @@ def test_audit_builds_from_synthetic_export_records() -> None:
 
     report = module.build_quality_audit_from_items([_item()])
 
-    assert report["audit_version"] == "stage29_2_rag_chunk_quality_audit_v1"
+    assert report["audit_version"] == "stage34_3_chunk_quality_taxonomy_reporting_v1"
     assert report["summary"]["audited_chunks"] == 1
     assert report["summary"]["documents_seen"] == 1
     assert report["summary"]["documents_with_chunks"] == 1
@@ -220,7 +226,10 @@ def test_cli_does_not_write_output_without_explicit_output_path(tmp_path: Path, 
     cli.main(["--results-dir", str(results_dir)])
     captured = capsys.readouterr()
 
-    assert "Stage 29.2 chunk quality audit" in captured.out
+    assert "Stage 34.3 chunk quality taxonomy audit" in captured.out
+    assert "raw_content_type_counts=" in captured.out
+    assert "table_context_counts=" in captured.out
+    assert "compact_text_taxonomy=" in captured.out
     assert not list(tmp_path.glob("*.json"))
     assert not (tmp_path / ".runtime_eval").exists()
 
@@ -235,7 +244,7 @@ def test_cli_writes_json_report_with_explicit_output_path(tmp_path: Path) -> Non
     cli.main(["--results-dir", str(results_dir), "--output-path", str(output_path), "--include-samples"])
     report = json.loads(output_path.read_text(encoding="utf-8"))
 
-    assert report["audit_version"] == "stage29_2_rag_chunk_quality_audit_v1"
+    assert report["audit_version"] == "stage34_3_chunk_quality_taxonomy_reporting_v1"
     assert report["summary"]["documents_seen"] == 1
     assert report["summary"]["audited_chunks"] == 1
     assert "summary" in report
@@ -251,9 +260,8 @@ def test_report_recommendations_and_limitations_are_present() -> None:
 
     report = module.build_quality_audit_from_items([_item()])
 
-    assert any("Stage 30" in recommendation for recommendation in report["recommendations"])
-    assert any("Stage 31" in recommendation for recommendation in report["recommendations"])
-    assert any("Stage 32" in recommendation for recommendation in report["recommendations"])
+    assert "keep_audit_deterministic_read_only" in report["recommendations"]
+    assert not any(recommendation.startswith("Stage ") for recommendation in report["recommendations"])
     assert any("No OCR" in limitation for limitation in report["limitations"])
 
 
@@ -297,3 +305,133 @@ def test_rich_stage31_table_context_is_not_flagged_as_poor_table_context() -> No
 
     assert "table_like_text_without_rich_context" not in report["summary"]["issue_counts"]
     assert report["summary"]["table_like_chunk_count"] == 1
+
+
+def test_raw_content_type_counts_are_separate_from_table_context_counts() -> None:
+    module = _load_quality_module()
+
+    report = module.build_quality_audit_from_items(
+        [
+            _item(chunk_id="text", content_type="text"),
+            _item(chunk_id="mixed", content_type="text", table_id="tbl-1", table_row_index=2),
+            _item(chunk_id="row", content_type="table_row", table_id="tbl-1", table_row_index=3),
+            _item(chunk_id="table", content_type="table", table_id="tbl-2"),
+            _item(chunk_id="image", content_type="image"),
+        ]
+    )
+
+    assert report["raw_content_type_counts"]["text"] == 2
+    assert report["raw_content_type_counts"]["table"] == 1
+    assert report["raw_content_type_counts"]["table_row"] == 1
+    assert report["raw_content_type_counts"]["image"] == 1
+    assert report["table_context_counts"]["chunks_with_table_id"] == 3
+    assert report["table_context_counts"]["chunks_with_table_row_index"] == 2
+    assert report["table_context_counts"]["mixed_text_with_table_context"] == 1
+
+
+def test_table_row_chunks_are_counted_as_strict_table_evidence() -> None:
+    module = _load_quality_module()
+
+    report = module.build_quality_audit_from_items(
+        [
+            _item(content_type="table", table_id="tbl-1"),
+            _item(
+                content_type="table_row",
+                table_id="tbl-1",
+                table_row_index=1,
+                table_column_values={"Вещество": "NOx"},
+                table_headers=["Вещество"],
+                table_context="Таблица 1",
+            ),
+        ]
+    )
+
+    assert report["strict_table_counts"]["strict_table_row_chunks"] == 1
+    assert report["strict_table_counts"]["strict_table_row_chunks_with_column_values"] == 1
+    assert report["strict_table_counts"]["strict_table_row_chunks_with_rich_row_context"] == 1
+
+
+def test_severe_short_text_and_compact_text_evidence_are_distinct() -> None:
+    module = _load_quality_module()
+
+    report = module.build_quality_audit_from_items(
+        [
+            _item(chunk_id="severe", text="Короткий хвост", text_preview="Короткий хвост"),
+            _item(
+                chunk_id="compact",
+                text="Компактный фрагмент с расчетом выбросов 12,5 т/год для источника.",
+                text_preview="Компактный фрагмент с расчетом выбросов 12,5 т/год для источника.",
+            ),
+            _item(chunk_id="normal", text="Длинный " * 40, text_preview="Длинный " * 40),
+        ],
+    )
+
+    severe = report["short_text_thresholds"]["severe_short_text"]
+    compact = report["short_text_thresholds"]["compact_text_evidence"]
+
+    assert severe["threshold_chars"] == 120
+    assert compact["threshold_chars"] == 250
+    assert severe["total"] == 2
+    assert compact["total"] == 2
+
+
+def test_compact_formula_and_pollutant_evidence_are_not_low_value_tail() -> None:
+    module = _load_quality_module()
+
+    report = module.build_quality_audit_from_items(
+        [
+            _item(
+                chunk_id="formula",
+                text="Расчет M = C * Q, выброс 0,12 г/с.",
+                text_preview="Расчет M = C * Q, выброс 0,12 г/с.",
+            ),
+            _item(
+                chunk_id="pollutant",
+                text="Загрязняющее вещество NOx, источник выброса труба котла.",
+                text_preview="Загрязняющее вещество NOx, источник выброса труба котла.",
+            ),
+        ]
+    )
+    buckets = report["compact_text_taxonomy"]["buckets"]
+
+    assert buckets["formula_or_calculation_micro_evidence"] == 1
+    assert buckets["pollutant_or_equipment_micro_evidence"] == 1
+    assert buckets["real_low_value_tail"] == 0
+
+
+def test_toc_list_fragment_is_classified_separately() -> None:
+    module = _load_quality_module()
+
+    report = module.build_quality_audit_from_items(
+        [_item(text="1.2.3 Расчет выбросов ................ 15", text_preview="1.2.3 Расчет выбросов ................ 15")]
+    )
+
+    assert report["compact_text_taxonomy"]["buckets"]["toc_or_list_fragment"] == 1
+    assert report["compact_text_taxonomy"]["buckets"]["real_low_value_tail"] == 0
+
+
+def test_real_low_value_tail_is_short_nonservice_without_useful_signals() -> None:
+    module = _load_quality_module()
+
+    report = module.build_quality_audit_from_items([_item(text="остаток", text_preview="остаток")])
+
+    buckets = report["compact_text_taxonomy"]["buckets"]
+    assert buckets["real_low_value_tail"] == 1
+    assert report["short_text_thresholds"]["severe_short_text"]["nonservice"] == 1
+
+
+def test_recommendations_do_not_request_cleanup_without_low_value_tails() -> None:
+    module = _load_quality_module()
+
+    report = module.build_quality_audit_from_items(
+        [
+            _item(text="Расчет M = C * Q, выброс 0,12 г/с.", text_preview="Расчет M = C * Q, выброс 0,12 г/с."),
+            _item(
+                text="Загрязняющее вещество NOx, источник выброса труба котла.",
+                text_preview="Загрязняющее вещество NOx, источник выброса труба котла.",
+            ),
+        ]
+    )
+
+    assert "no_action_needed" in report["recommendations"]
+    assert "targeted_splitter_cleanup_only_if_repeated" not in report["recommendations"]
