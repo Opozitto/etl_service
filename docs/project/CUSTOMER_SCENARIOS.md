@@ -234,7 +234,7 @@ Stage 36 targeted external chunk tail inspection:
 - У каждого MVP / pilot сценария есть ожидаемый результат, связанный с source-backed behavior.
 - OCR / RAG / LLM generation не объявляются готовыми, если это не подтверждено кодом.
 - Minimal evaluation set покрывает границы supported now / diagnostics / future.
-- Материал связывает исторический Stage 10 baseline с текущим состоянием после Stage 32.
+- Материал связывает исторический Stage 10 baseline с текущим состоянием после Stage 37.
 
 ## Minimal evaluation set
 

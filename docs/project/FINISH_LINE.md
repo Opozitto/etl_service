@@ -168,7 +168,7 @@ Stage 29.1 and Stage 29.2 closed visibility/export/audit for chunks. Stage 30 co
 Current chunks are acceptable for lexical search and now carry stronger source/location/citation metadata. Newly processed chunks also have cleaner splitter structure after Stage 33.1 and fewer approval/signature table false positives after Stage 33.3.
 Stage 33.2 adds a bounded validation workflow for proving cleanup on fresh temporary outputs, without migrating old `storage/results`. Stage 33.4 records an expanded 4-document fresh validation run with zero failures/warnings, so Stage 33 is closed from the splitter cleanup standpoint.
 Stage 34.1 implements the narrow ordinary text chunk coherence cleanup target without full RAG or semantic retrieval.
-Stage 34.2 locks the finite finish route, Stage 34.3 implements metric taxonomy normalization before any additional cleanup, Stage 35 validates the external `Example_data` path without committing external/runtime artifacts, and Stage 37 closes the optional OCR handoff polish.
+Stage 34.2 locks the finite finish route, Stage 34.3 implements metric taxonomy normalization before any additional cleanup, Stage 35 validates the external `Example_data` path without committing external/runtime artifacts, Stage 36 closes the targeted compact tail cleanup decision as no cleanup needed now, and Stage 37 closes the optional OCR handoff polish.
 
 Known splitter issues:
 

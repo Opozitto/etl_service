@@ -936,7 +936,7 @@ conda run -n etl_env python -m scripts.validate_external_example_data --dataset-
 
 ## Stage 36. Targeted external chunk tail inspection / cleanup decision v1
 
-- Статус: completed / ready for commit.
+- Статус: completed.
 - Цель: получить customer/developer-readable evidence по compact taxonomy samples из Stage 34.3, особенно `real_low_value_tail`, без broad splitter cleanup и без blind tuning.
 - Реализация reporting/CLI:
   - `scripts.audit_rag_chunks` поддерживает opt-in taxonomy samples через `--include-samples`, `--sample-limit` и `--sample-buckets`;
