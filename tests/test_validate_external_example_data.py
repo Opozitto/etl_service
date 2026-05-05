@@ -95,6 +95,9 @@ def test_stage35_process_eval_and_chunk_quality_use_workspace_results(tmp_path: 
         max_documents=1,
         max_questions=1,
         clean_workspace=True,
+        include_chunk_samples=True,
+        chunk_quality_sample_limit=1,
+        chunk_quality_sample_buckets={"real_low_value_tail"},
     )
 
     assert list((workspace_dir / "results").glob("*.json"))
@@ -108,6 +111,10 @@ def test_stage35_process_eval_and_chunk_quality_use_workspace_results(tmp_path: 
     assert chunk_report["stage35_report_version"] == "stage35_external_example_data_validation_v1"
     assert "raw_content_type_counts" in chunk_report
     assert "compact_text_taxonomy" in chunk_report
+    assert chunk_report["config"]["sample_limit"] == 1
+    assert chunk_report["config"]["sample_buckets"] == ["real_low_value_tail"]
+    assert "samples" in chunk_report["compact_text_taxonomy"]
+    assert len(chunk_report["compact_text_taxonomy"]["samples"]["real_low_value_tail"]) <= 1
     assert chunk_report["summary"]["audited_chunks"] >= 1
     assert not (tmp_path / "storage").exists()
     get_settings.cache_clear()

@@ -182,6 +182,96 @@ def test_samples_are_limited_per_issue() -> None:
     assert len(short_samples) == 2
 
 
+def test_compact_taxonomy_samples_are_absent_by_default() -> None:
+    module = _load_quality_module()
+
+    report = module.build_quality_audit_from_items([_item(text="остаток", text_preview="остаток")])
+
+    assert "samples" not in report["compact_text_taxonomy"]
+    assert report["compact_text_taxonomy"]["buckets"]["real_low_value_tail"] == 1
+
+
+def test_compact_taxonomy_samples_appear_when_requested() -> None:
+    module = _load_quality_module()
+
+    report = module.build_quality_audit_from_items(
+        [_item(text="остаток", text_preview="остаток", title="Fixture title")],
+        include_samples=True,
+        sample_buckets={"real_low_value_tail"},
+    )
+
+    samples = report["compact_text_taxonomy"]["samples"]["real_low_value_tail"]
+    assert len(samples) == 1
+    assert samples[0]["bucket"] == "real_low_value_tail"
+    assert samples[0]["document_title"] == "Fixture title"
+    assert samples[0]["reason_codes"] == ["short_nonservice_without_known_signal"]
+
+
+def test_compact_taxonomy_sample_limit_is_respected() -> None:
+    module = _load_quality_module()
+    items = [_item(chunk_id=f"tail-{index}", text=f"остаток {index}", text_preview=f"остаток {index}") for index in range(4)]
+
+    report = module.build_quality_audit_from_items(
+        items,
+        include_samples=True,
+        sample_limit=2,
+        sample_buckets={"real_low_value_tail"},
+    )
+
+    assert report["compact_text_taxonomy"]["buckets"]["real_low_value_tail"] == 4
+    assert len(report["compact_text_taxonomy"]["samples"]["real_low_value_tail"]) == 2
+
+
+def test_compact_taxonomy_sample_buckets_filter_works() -> None:
+    module = _load_quality_module()
+
+    report = module.build_quality_audit_from_items(
+        [
+            _item(chunk_id="tail", text="остаток", text_preview="остаток"),
+            _item(
+                chunk_id="formula",
+                text="Расчет M = C * Q, выброс 0,12 г/с.",
+                text_preview="Расчет M = C * Q, выброс 0,12 г/с.",
+            ),
+        ],
+        include_samples=True,
+        sample_buckets={"real_low_value_tail"},
+    )
+
+    samples = report["compact_text_taxonomy"]["samples"]
+    assert len(samples["real_low_value_tail"]) == 1
+    assert samples["formula_or_calculation_micro_evidence"] == []
+
+
+def test_compact_taxonomy_sample_preview_is_bounded() -> None:
+    module = _load_quality_module()
+    text = "compact text without known signal " * 5
+
+    report = module.build_quality_audit_from_items(
+        [_item(text=text, text_preview=text)],
+        include_samples=True,
+        sample_limit=1,
+        text_preview_chars=20,
+    )
+
+    sample = report["compact_text_taxonomy"]["samples"]["other_compact_text"][0]
+    assert sample["char_length"] == len(text.strip())
+    assert len(sample["preview"]) == 20
+
+
+def test_compact_taxonomy_counts_are_unchanged_by_samples() -> None:
+    module = _load_quality_module()
+    items = [
+        _item(text="остаток", text_preview="остаток"),
+        _item(text="Расчет M = C * Q, выброс 0,12 г/с.", text_preview="Расчет M = C * Q, выброс 0,12 г/с."),
+    ]
+
+    without_samples = module.build_quality_audit_from_items(items)
+    with_samples = module.build_quality_audit_from_items(items, include_samples=True, sample_limit=1)
+
+    assert with_samples["compact_text_taxonomy"]["buckets"] == without_samples["compact_text_taxonomy"]["buckets"]
+
+
 def test_samples_preserve_source_location_fields() -> None:
     module = _load_quality_module()
 

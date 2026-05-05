@@ -166,11 +166,25 @@
 - For exploratory non-empty ETL/chunk validation, Stage 35 docs recommend bounded `--source-scope all-supported` and/or `--ambiguous-policy all` runs with `--max-documents`.
 - Stage 35 does not change splitter/chunk-building logic, table chunk generation, retrieval ranking, ask generation, OCR behavior, public API, production storage, RAG/LLM/embeddings/vector DB/semantic retrieval/reranking/table analytics/speed-cache/UI.
 - Stage 35 classifies evidence only: compact `<250` chunks are not automatic defects, and repeated `real_low_value_tail` is a Stage 36 candidate only after non-empty external processing evidence rather than a Stage 35 cleanup target.
+- Stage 36 starts as targeted external chunk tail inspection / cleanup decision v1, not as splitter cleanup.
+- Stage 36 reporting adds opt-in compact taxonomy samples for `scripts.audit_rag_chunks` via `--include-samples`, `--sample-limit` and `--sample-buckets`.
+- Stage 36 wrapper passthrough adds `--chunk-quality-include-samples`, `--chunk-quality-sample-limit` and `--chunk-quality-sample-buckets` to `scripts.validate_external_example_data`.
+- Stage 36 sample records are bounded and include source/document/chunk/section/page/block/table context, bounded `preview`, `char_length`, `reason_codes`, `matched_terms`, `quality_flags` and `handoff_notes`; full chunk content is not exported for this evidence path.
+- External exploratory evidence from Stage 35 remains small (`real_low_value_tail=3`, `severe_short_text=5`, `compact_text_evidence=6`), so broad splitter cleanup is still not justified.
+- Stage 36 local external inspection completed on `Example_data` after the sample export update.
+- Stage 36 local workflow still reports `status=needs_attention`, with `dataset_audit_status=needs_attention`, `workspace_status=needs_attention`, and `qa_eval_status=None`; this remains external dataset/workflow classification, not a claim that QA/dataset status is fully OK.
+- Stage 36 chunk quality status is `ok` over `9` processed documents and `2145` chunks.
+- Stage 36 chunk taxonomy evidence: raw content types `text=399`, `table=228`, `table_row=1518`, `image=0`; strict table row chunks `1518`, with `1503` carrying column values and `1518` carrying rich row context.
+- Stage 36 compact evidence stayed very small: `severe_short_text total=5`, `compact_text_evidence total=6`, compact taxonomy `pollutant_or_equipment_micro_evidence=3`, `real_low_value_tail=3`, all other compact buckets `0`.
+- Stage 36 `real_low_value_tail` samples all came from one document, `4 Площадка №1 Выгрузка (пшеница)`, and look like isolated table/layout-derived text fragments: `chk-3`, `chk-7`, `chk-8`.
+- Stage 36 `pollutant_or_equipment_micro_evidence` samples are acceptable compact evidence with source/equipment/emission terms such as `источник`, `труба`, `выброс`, not cleanup targets.
+- Stage 36 final decision: sample export works, splitter cleanup was not performed, and cleanup is not needed now because the evidence is small, bounded and document-local rather than a repeated cross-document structural defect.
 
 ## next
 
-- Stage 36 Targeted cleanup v2 is next only if non-empty Stage 35 external reports show repeated real chunk problems, not ambiguous-source workflow gaps, metric taxonomy noise or acceptable compact evidence chunks.
+- Stage 36 is completed / ready for commit as inspection/reporting plus cleanup decision: cleanup not needed now.
 - Stage 37 Optional light OCR handoff polish runs only if time remains after planned stages are completed or explicitly dropped.
+- Otherwise the next step is final delivery preparation.
 - Final delivery preparation follows the finite route; no final polish starts until explicit command or after planned stages are done/dropped.
 - QA evaluator retrieval-loop speed/cache is distant backlog / optional only if speed becomes a severe operational blocker.
 
@@ -196,6 +210,7 @@
 - Stage 34.2 confirms the project now has a finite finish route: taxonomy/reporting, external validation, conditional cleanup only with evidence, optional light OCR handoff polish only if time remains, then final delivery preparation.
 - Stage 34.3 turns the Stage 34.2 reconciliation into explicit machine-readable and console-readable chunk quality taxonomy, without changing chunk-building behavior.
 - Stage 35 makes the external validation route reproducible and machine-readable without committing external data or runtime reports.
+- Stage 36 makes compact taxonomy sample inspection reproducible and machine-readable without changing splitter/chunk-building behavior.
 
 ## risks
 
@@ -218,6 +233,8 @@
 - Stage 34.3 reduces reporting risk by making raw content types, table-linked context, strict table rows, and compact evidence buckets visible as different questions.
 - Stage 35 evidence can be affected by ambiguous/missing expected sources in the external QA file; those are reported diagnostics, not automatic processing fixes.
 - A zero-document Stage 35 workspace is not chunk-quality evidence; it requires rerun with bounded exploratory source selection before making Stage 36 cleanup decisions.
+- Stage 36 sample export improved evidence readability and the local `Example_data` inspection closed the current cleanup decision as no cleanup needed now.
+- Future cleanup should only be considered if repeated tails appear across more documents/corpora.
 - DOCX page metadata can be unavailable; this is an expected limitation and should stay explicit in diagnostics.
 - QA evaluator `--skip-answer-overlap` is intentionally a faster smoke mode; use full/default mode when answer-overlap trend comparison is needed.
 - Stage 26 matching is deterministic and conservative; ambiguous or missing expected documents require review before Stage 27 processing/eval.

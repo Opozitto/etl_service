@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Sequence
 
 from app.evaluation.rag_chunk_quality import (
+    COMPACT_TAXONOMY_BUCKETS,
     DEFAULT_LONG_THRESHOLD,
     DEFAULT_SAMPLE_LIMIT_PER_ISSUE,
     DEFAULT_SHORT_THRESHOLD,
@@ -19,6 +20,14 @@ def non_negative_int(value: str) -> int:
     if parsed < 0:
         raise argparse.ArgumentTypeError("must be greater than or equal to 0")
     return parsed
+
+
+def sample_buckets(value: str) -> set[str]:
+    buckets = {bucket.strip() for bucket in value.split(",") if bucket.strip()}
+    unknown = sorted(buckets.difference(COMPACT_TAXONOMY_BUCKETS))
+    if unknown:
+        raise argparse.ArgumentTypeError(f"unknown compact taxonomy buckets: {', '.join(unknown)}")
+    return buckets
 
 
 def main(argv: Sequence[str] | None = None) -> None:
@@ -37,6 +46,12 @@ def main(argv: Sequence[str] | None = None) -> None:
     parser.add_argument("--long-threshold", type=non_negative_int, default=DEFAULT_LONG_THRESHOLD)
     parser.add_argument("--sample-limit-per-issue", type=non_negative_int, default=DEFAULT_SAMPLE_LIMIT_PER_ISSUE)
     parser.add_argument("--include-samples", action="store_true", help="Include bounded sample chunks in JSON report")
+    parser.add_argument("--sample-limit", type=non_negative_int, help="Limit samples per compact taxonomy bucket")
+    parser.add_argument(
+        "--sample-buckets",
+        type=sample_buckets,
+        help="Comma-separated compact taxonomy buckets to sample, for example real_low_value_tail,other_compact_text",
+    )
     args = parser.parse_args(argv)
 
     try:
@@ -49,6 +64,8 @@ def main(argv: Sequence[str] | None = None) -> None:
             long_threshold=args.long_threshold,
             sample_limit_per_issue=args.sample_limit_per_issue,
             include_samples=args.include_samples,
+            sample_limit=args.sample_limit,
+            sample_buckets=args.sample_buckets,
         )
     except ValueError as exc:
         raise SystemExit(str(exc)) from exc

@@ -1,6 +1,6 @@
 # PLAN
 
-Stage 1–32 are completed. Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock. Stage 20–25 are completed OCR/readiness/extraction/table/QA-evaluation layers. Stage 26–32 are completed external QA/chunk visibility, audit, chunk contract hardening, table chunk context, and source location/citation hardening stages. Stage 33 splitter structure cleanup and validation closure is completed from the splitter cleanup standpoint. Stage 34.0 text chunk coherence audit/design is completed docs-only. Stage 34.1 text chunk coherence edge cleanup v1 is completed as a bounded deterministic implementation. Stage 34.2 is completed docs-only as the finite finish roadmap lock after Stage 34.1 validation and metric reconciliation. Stage 34.3 chunk quality taxonomy normalization/reporting v1 is completed as audit/reporting normalization. Stage 35 External `Example_data` validation v1 is completed as a safe reproducible external evidence workflow. The next stage is conditional Stage 36 Targeted cleanup v2 only if Stage 35 evidence shows repeated real problems; speed/cache remains distant backlog only.
+Stage 1–32 are completed. Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock. Stage 20–25 are completed OCR/readiness/extraction/table/QA-evaluation layers. Stage 26–32 are completed external QA/chunk visibility, audit, chunk contract hardening, table chunk context, and source location/citation hardening stages. Stage 33 splitter structure cleanup and validation closure is completed from the splitter cleanup standpoint. Stage 34.0 text chunk coherence audit/design is completed docs-only. Stage 34.1 text chunk coherence edge cleanup v1 is completed as a bounded deterministic implementation. Stage 34.2 is completed docs-only as the finite finish roadmap lock after Stage 34.1 validation and metric reconciliation. Stage 34.3 chunk quality taxonomy normalization/reporting v1 is completed as audit/reporting normalization. Stage 35 External `Example_data` validation v1 is completed as a safe reproducible external evidence workflow. Stage 36 targeted external chunk tail inspection / cleanup decision v1 is completed as inspection/reporting plus docs-only cleanup decision; splitter cleanup is not justified by current evidence. The next step is Stage 37 optional light OCR handoff polish only if time remains, otherwise final delivery preparation; speed/cache remains distant backlog only.
 
 ## Stage 1. Зафиксировать smoke/regression проверки
 
@@ -934,17 +934,48 @@ conda run -n etl_env python -m scripts.validate_external_example_data --dataset-
   - repeated `real_low_value_tail` или другие repeated real problems are candidates for Stage 36 only after non-empty external processing evidence;
   - ambiguous/missing expected sources remain diagnostics, not automatic fixes.
 
-## Stage 36. Targeted cleanup v2, only if needed
+## Stage 36. Targeted external chunk tail inspection / cleanup decision v1
 
-- Статус: conditional planned next.
-- Условие запуска: только если Stage 35 покажет repeated real problems, not just metric taxonomy noise or acceptable compact evidence chunks.
-- Возможные targets:
-  - title/cover fragments;
-  - TOC/list fragments after title pages;
-  - conservative formula micro-chunk handling only if repeatedly harmful;
-  - other true low-value tails confirmed by external evidence.
+- Статус: completed / ready for commit.
+- Цель: получить customer/developer-readable evidence по compact taxonomy samples из Stage 34.3, особенно `real_low_value_tail`, без broad splitter cleanup и без blind tuning.
+- Реализация reporting/CLI:
+  - `scripts.audit_rag_chunks` поддерживает opt-in taxonomy samples через `--include-samples`, `--sample-limit` и `--sample-buckets`;
+  - `scripts.validate_external_example_data` прокидывает эти настройки в chunk quality report через `--chunk-quality-include-samples`, `--chunk-quality-sample-limit` и `--chunk-quality-sample-buckets`;
+  - samples bounded и не включают full chunk content; preview ограничивается `--text-preview-chars`.
+- Expected JSON fields:
+  - `compact_text_taxonomy.buckets`;
+  - `compact_text_taxonomy.samples.<bucket>[]`;
+  - sample fields include `bucket`, `document_id`, `document_title`, `filename`, `source_filename`, `chunk_id`, `chunk_order`, `content_type`, `section_id`, `section_title`, `section_path`, `page_start`, `page_end`, `source_block_ids`, `table_id`, `table_row_index`, `has_table_column_values`, `has_table_context`, `location_label`, `citation_label`, `char_length`, `preview`, `reason_codes`, `matched_terms`, `quality_flags`, `handoff_notes`.
+- Локальная команда Stage 36 inspection:
+```powershell
+conda run -n etl_env python -m scripts.validate_external_example_data --dataset-dir D:\Projects\etl_service_backup\Example_data --qa-path "D:\Projects\etl_service_backup\Example_data\[ОТВЕТЫ] Данные для тестирования\test_with_answers.csv" --source-scope all-supported --ambiguous-policy all --process --run-chunk-quality --clean-workspace --max-documents 10 --chunk-quality-include-samples --chunk-quality-sample-limit 5 --chunk-quality-sample-buckets real_low_value_tail --chunk-quality-report-path .runtime_eval\stage36_external_chunk_quality_samples.json --workflow-report-path .runtime_eval\stage36_external_validation_summary.json
+```
+- Local external inspection evidence:
+  - `workflow status=needs_attention`, `dataset_audit_status=needs_attention`, `workspace_status=needs_attention`, `qa_eval_status=None`;
+  - `chunk_quality_status=ok`;
+  - `documents_processed=9`;
+  - `total_chunks=2145`;
+  - raw content types: `text=399`, `table=228`, `table_row=1518`, `image=0`;
+  - table context remains strong and separate: `chunks_with_table_id=1969`, `chunks_with_table_row_index=1518`, `chunks_with_table_column_values=1503`, `mixed_text_with_table_context=223`;
+  - strict table evidence: `strict_table_row_chunks=1518`, `strict_table_row_chunks_with_column_values=1503`, `strict_table_row_chunks_with_rich_row_context=1518`;
+  - `severe_short_text`: `total=5`, `service=0`, `nonservice=5`;
+  - `compact_text_evidence`: `total=6`, `service=0`, `nonservice=6`;
+  - compact taxonomy: `pollutant_or_equipment_micro_evidence=3`, `real_low_value_tail=3`, all other compact buckets `0`.
+- Sample interpretation:
+  - all `real_low_value_tail` samples came from one document, `4 Площадка №1 Выгрузка (пшеница)`;
+  - samples `chk-3`, `chk-7`, `chk-8` look like isolated table/layout-derived text fragments from section titles such as `6005 Неорганизованнный`, `6010 Неорганизованнный`, and `1 Стоянкаспецтехники1250 (открытая)`;
+  - `pollutant_or_equipment_micro_evidence` samples are acceptable compact evidence with source/equipment/emission terms such as `источник`, `труба`, `выброс`, not cleanup targets.
+- Решение по cleanup:
+  - Stage 36 sample export works;
+  - broad splitter cleanup is not justified;
+  - only `3` `real_low_value_tail` candidates were found out of `2145` chunks, all document-local;
+  - this is small, bounded, document-local evidence, not a repeated cross-document structural defect;
+  - splitter cleanup was not performed and is not needed now;
+  - future cleanup should be considered only if repeated tails appear across more documents/corpora.
 - Запрещено:
   - broad splitter rewrite;
+  - table/text chunk merging;
+  - weakening `table_row` chunks;
   - semantic document understanding claims;
   - cleanup for one-off cosmetic fragments without repeated evidence.
 
@@ -961,11 +992,11 @@ conda run -n etl_env python -m scripts.validate_external_example_data --dataset-
 
 ## Final delivery preparation
 
-- Статус: planned after Stage 34.3/35 and any explicitly needed conditional stages.
+- Статус: planned after Stage 36, or after Stage 37 if the optional OCR handoff polish is explicitly used.
 - Цель: подготовить честный delivery package around confirmed ETL/search/ask/evaluation/chunk handoff baseline.
 - Правила:
   - no endless splitter polishing;
-  - no cleanup v2 unless Stage 35 evidence shows repeated real issue;
+  - no cleanup v2 unless future evidence shows repeated real issue across more documents/corpora;
   - no final polish until explicit command or after planned stages are done/dropped;
   - keep limitations honest and avoid claiming full RAG, LLM, vector search, scanned PDF OCR or table analytics.
 

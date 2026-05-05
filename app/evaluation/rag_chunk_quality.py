@@ -181,32 +181,55 @@ def _is_service_or_boilerplate(item: dict[str, Any], text: str) -> bool:
     return False
 
 
-def _compact_text_bucket(item: dict[str, Any], *, compact_threshold: int = COMPACT_TEXT_THRESHOLD) -> str | None:
+def _compact_text_bucket_details(
+    item: dict[str, Any],
+    *,
+    compact_threshold: int = COMPACT_TEXT_THRESHOLD,
+) -> tuple[str | None, list[str], list[str]]:
     if _content_type(item) != "text":
-        return None
+        return None, [], []
     text = _chunk_text(item)
     if not text or len(text) >= compact_threshold:
-        return None
+        return None, [], []
 
     normalized = _normalize_for_match(text)
     words = re.findall(r"\w+", text, flags=re.UNICODE)
     lines = [line.strip() for line in text.splitlines() if line.strip()]
 
     if _is_service_or_boilerplate(item, text):
-        return "service_or_boilerplate"
+        matched_terms = [term for term in SERVICE_TERMS if term in normalized]
+        return "service_or_boilerplate", ["service_or_boilerplate_signal"], matched_terms
     if "содержание" in normalized or "оглавление" in normalized or "table of contents" in normalized:
-        return "toc_or_list_fragment"
+        matched_terms = [
+            term
+            for term in ("содержание", "оглавление", "table of contents")
+            if term in normalized
+        ]
+        return "toc_or_list_fragment", ["toc_heading_signal"], matched_terms
     if TOC_LIST_RE.search(text) or sum(1 for line in lines if BODY_HEADING_RE.match(line)) >= 2:
-        return "toc_or_list_fragment"
+        return "toc_or_list_fragment", ["toc_list_pattern"], []
     if FORMULA_RE.search(normalized) or any(term in normalized for term in FORMULA_TERMS):
-        return "formula_or_calculation_micro_evidence"
+        matched_terms = [term for term in FORMULA_TERMS if term in normalized]
+        reason_codes = ["formula_or_calculation_signal"]
+        if FORMULA_RE.search(normalized):
+            reason_codes.append("formula_pattern")
+        return "formula_or_calculation_micro_evidence", reason_codes, matched_terms
     if POLLUTANT_SYMBOL_RE.search(normalized) or any(term in normalized for term in POLLUTANT_EQUIPMENT_TERMS):
-        return "pollutant_or_equipment_micro_evidence"
+        matched_terms = [term for term in POLLUTANT_EQUIPMENT_TERMS if term in normalized]
+        reason_codes = ["pollutant_or_equipment_signal"]
+        if POLLUTANT_SYMBOL_RE.search(normalized):
+            reason_codes.append("pollutant_symbol")
+        return "pollutant_or_equipment_micro_evidence", reason_codes, matched_terms
     if len(words) <= 8 and (text.isupper() or _normalize_for_match(item.get("section_title")) == normalized.strip(" .:;")):
-        return "title_or_cover_fragment"
+        return "title_or_cover_fragment", ["title_or_section_title_signal"], []
     if len(text) < DEFAULT_SHORT_THRESHOLD:
-        return "real_low_value_tail"
-    return "other_compact_text"
+        return "real_low_value_tail", ["short_nonservice_without_known_signal"], []
+    return "other_compact_text", ["compact_text_without_known_signal"], []
+
+
+def _compact_text_bucket(item: dict[str, Any], *, compact_threshold: int = COMPACT_TEXT_THRESHOLD) -> str | None:
+    bucket, _, _ = _compact_text_bucket_details(item, compact_threshold=compact_threshold)
+    return bucket
 
 
 def _raw_content_type_counts(items: list[dict[str, Any]]) -> dict[str, int]:
@@ -269,18 +292,85 @@ def _short_text_thresholds(items: list[dict[str, Any]], *, severe_threshold: int
     }
 
 
-def _compact_text_taxonomy(items: list[dict[str, Any]]) -> dict[str, Any]:
+def _compact_taxonomy_sample_from_item(
+    item: dict[str, Any],
+    *,
+    bucket: str,
+    reason_codes: list[str],
+    matched_terms: list[str],
+    text_preview_chars: int,
+) -> dict[str, Any]:
+    text = _chunk_text(item)
+    return {
+        "bucket": bucket,
+        "document_id": item.get("document_id") or "",
+        "document_title": item.get("title") or item.get("document_title") or "",
+        "filename": _filename(item),
+        "source_filename": item.get("source_filename") or item.get("filename") or "",
+        "chunk_id": item.get("chunk_id") or "",
+        "order": item.get("order"),
+        "chunk_order": item.get("chunk_order") if item.get("chunk_order") is not None else item.get("order"),
+        "content_type": _content_type(item),
+        "section_id": item.get("section_id"),
+        "section_title": item.get("section_title"),
+        "section_path": list(item.get("section_path") or []),
+        "page_start": item.get("page_start"),
+        "page_end": item.get("page_end"),
+        "source_block_ids": list(item.get("source_block_ids") or []),
+        "table_id": item.get("table_id"),
+        "table_row_index": item.get("table_row_index"),
+        "has_table_column_values": _has_table_column_values(item),
+        "has_table_context": _has_any_table_context(item),
+        "location_label": item.get("location_label"),
+        "citation_label": item.get("citation_label"),
+        "char_length": len(text),
+        "preview": text[:text_preview_chars],
+        "reason_codes": reason_codes,
+        "matched_terms": matched_terms,
+        "quality_flags": sorted(item.get("quality_flags") or []),
+        "handoff_notes": list(item.get("handoff_notes") or []),
+    }
+
+
+def _compact_text_taxonomy(
+    items: list[dict[str, Any]],
+    *,
+    include_samples: bool = False,
+    sample_limit: int = DEFAULT_SAMPLE_LIMIT_PER_ISSUE,
+    sample_buckets: set[str] | None = None,
+    text_preview_chars: int = 300,
+) -> dict[str, Any]:
     bucket_counts = Counter()
+    samples: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for item in items:
-        bucket = _compact_text_bucket(item)
+        bucket, reason_codes, matched_terms = _compact_text_bucket_details(item)
         if bucket:
             bucket_counts[bucket] += 1
+            if (
+                include_samples
+                and (sample_buckets is None or bucket in sample_buckets)
+                and len(samples[bucket]) < sample_limit
+            ):
+                samples[bucket].append(
+                    _compact_taxonomy_sample_from_item(
+                        item,
+                        bucket=bucket,
+                        reason_codes=reason_codes,
+                        matched_terms=matched_terms,
+                        text_preview_chars=text_preview_chars,
+                    )
+                )
     buckets = {bucket: bucket_counts.get(bucket, 0) for bucket in COMPACT_TAXONOMY_BUCKETS}
-    return {
+    result: dict[str, Any] = {
         "threshold_chars": COMPACT_TEXT_THRESHOLD,
         "buckets": buckets,
         "note": "Compact chunks can be useful formula, calculation, pollutant, equipment, TOC/list or title evidence; only repeated real_low_value_tail needs cleanup review.",
     }
+    if include_samples:
+        result["samples"] = {bucket: samples.get(bucket, []) for bucket in COMPACT_TAXONOMY_BUCKETS}
+        result["sample_limit"] = sample_limit
+        result["sample_buckets"] = sorted(sample_buckets) if sample_buckets is not None else "all"
+    return result
 
 
 def _quality_recommendations(short_metrics: dict[str, Any], taxonomy: dict[str, Any]) -> list[str]:
@@ -409,6 +499,8 @@ def build_quality_audit_from_items(
     long_threshold: int = DEFAULT_LONG_THRESHOLD,
     sample_limit_per_issue: int = DEFAULT_SAMPLE_LIMIT_PER_ISSUE,
     include_samples: bool = False,
+    sample_limit: int | None = None,
+    sample_buckets: set[str] | None = None,
     warnings: list[str] | None = None,
 ) -> dict[str, Any]:
     _non_negative(max_documents, "max_documents")
@@ -417,8 +509,15 @@ def build_quality_audit_from_items(
     _positive_or_zero(short_threshold, "short_threshold")
     _positive_or_zero(long_threshold, "long_threshold")
     _positive_or_zero(sample_limit_per_issue, "sample_limit_per_issue")
+    if sample_limit is not None:
+        _positive_or_zero(sample_limit, "sample_limit")
+    if sample_buckets is not None:
+        unknown_buckets = sorted(sample_buckets.difference(COMPACT_TAXONOMY_BUCKETS))
+        if unknown_buckets:
+            raise ValueError(f"unknown compact taxonomy sample buckets: {', '.join(unknown_buckets)}")
     if long_threshold < short_threshold:
         raise ValueError("long_threshold must be greater than or equal to short_threshold")
+    resolved_sample_limit = sample_limit if sample_limit is not None else sample_limit_per_issue
 
     normalized_texts = [_chunk_text(item) for item in items if _chunk_text(item)]
     text_counts = Counter(normalized_texts)
@@ -507,7 +606,13 @@ def build_quality_audit_from_items(
     table_context_counts = _table_context_counts(items)
     strict_table_counts = _strict_table_counts(items)
     short_text_thresholds = _short_text_thresholds(items, severe_threshold=short_threshold)
-    compact_text_taxonomy = _compact_text_taxonomy(items)
+    compact_text_taxonomy = _compact_text_taxonomy(
+        items,
+        include_samples=include_samples,
+        sample_limit=resolved_sample_limit,
+        sample_buckets=sample_buckets,
+        text_preview_chars=text_preview_chars,
+    )
     summary = {
         "audit_version": AUDIT_VERSION,
         "documents_processed": documents_with_chunks if documents_with_chunks is not None else len(document_map),
@@ -566,6 +671,8 @@ def build_quality_audit_from_items(
             "short_threshold": short_threshold,
             "long_threshold": long_threshold,
             "sample_limit_per_issue": sample_limit_per_issue,
+            "sample_limit": resolved_sample_limit,
+            "sample_buckets": sorted(sample_buckets) if sample_buckets is not None else None,
             "include_samples": include_samples,
         },
         "summary": summary,
@@ -596,6 +703,8 @@ def build_quality_audit_report(
     long_threshold: int = DEFAULT_LONG_THRESHOLD,
     sample_limit_per_issue: int = DEFAULT_SAMPLE_LIMIT_PER_ISSUE,
     include_samples: bool = False,
+    sample_limit: int | None = None,
+    sample_buckets: set[str] | None = None,
 ) -> dict[str, Any]:
     export_report = build_export_report(
         results_dir,
@@ -618,6 +727,8 @@ def build_quality_audit_report(
         long_threshold=long_threshold,
         sample_limit_per_issue=sample_limit_per_issue,
         include_samples=include_samples,
+        sample_limit=sample_limit,
+        sample_buckets=sample_buckets,
         warnings=list(export_report.get("warnings") or []),
     )
 

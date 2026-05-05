@@ -5,7 +5,11 @@ import json
 from pathlib import Path
 from typing import Any, Sequence
 
-from app.evaluation.rag_chunk_quality import build_quality_audit_report, write_quality_audit_report
+from app.evaluation.rag_chunk_quality import (
+    COMPACT_TAXONOMY_BUCKETS,
+    build_quality_audit_report,
+    write_quality_audit_report,
+)
 from scripts import audit_external_qa_dataset, evaluate_external_qa_workspace
 
 
@@ -53,6 +57,8 @@ def run_validation(
     encoding: str | None = None,
     delimiter: str | None = None,
     include_chunk_samples: bool = False,
+    chunk_quality_sample_limit: int | None = None,
+    chunk_quality_sample_buckets: set[str] | None = None,
 ) -> dict[str, Any]:
     dataset_dir = _resolve(dataset_dir)
     qa_path = _resolve(qa_path)
@@ -140,6 +146,8 @@ def run_validation(
                 results_dir,
                 max_documents=max_documents,
                 include_samples=include_chunk_samples,
+                sample_limit=chunk_quality_sample_limit,
+                sample_buckets=chunk_quality_sample_buckets,
             )
             chunk_quality_report["stage35_report_version"] = REPORT_VERSION
             write_quality_audit_report(chunk_quality_report_path, chunk_quality_report)
@@ -219,6 +227,21 @@ def positive_int(value: str) -> int:
     return evaluate_external_qa_workspace.positive_int(value)
 
 
+def non_negative_int(value: str) -> int:
+    parsed = int(value)
+    if parsed < 0:
+        raise argparse.ArgumentTypeError("must be greater than or equal to 0")
+    return parsed
+
+
+def sample_buckets(value: str) -> set[str]:
+    buckets = {bucket.strip() for bucket in value.split(",") if bucket.strip()}
+    unknown = sorted(buckets.difference(COMPACT_TAXONOMY_BUCKETS))
+    if unknown:
+        raise argparse.ArgumentTypeError(f"unknown compact taxonomy buckets: {', '.join(unknown)}")
+    return buckets
+
+
 def print_summary(summary: dict[str, Any]) -> None:
     print("Stage 35 External Example_data validation")
     print(f"report_version={summary['report_version']}")
@@ -277,6 +300,13 @@ def main(argv: Sequence[str] | None = None) -> None:
     parser.add_argument("--encoding", help="Optional QA CSV/TSV encoding override")
     parser.add_argument("--delimiter", help="Optional QA CSV/TSV delimiter override: tab/tsv/t/\\t, semicolon, comma, pipe")
     parser.add_argument("--include-chunk-samples", action="store_true")
+    parser.add_argument("--chunk-quality-include-samples", action="store_true")
+    parser.add_argument("--chunk-quality-sample-limit", type=non_negative_int)
+    parser.add_argument(
+        "--chunk-quality-sample-buckets",
+        type=sample_buckets,
+        help="Comma-separated compact taxonomy buckets to sample, for example real_low_value_tail,other_compact_text",
+    )
     args = parser.parse_args(argv)
 
     try:
@@ -302,7 +332,9 @@ def main(argv: Sequence[str] | None = None) -> None:
             report_detail_level=args.report_detail_level,
             encoding=args.encoding,
             delimiter=args.delimiter,
-            include_chunk_samples=args.include_chunk_samples,
+            include_chunk_samples=args.include_chunk_samples or args.chunk_quality_include_samples,
+            chunk_quality_sample_limit=args.chunk_quality_sample_limit,
+            chunk_quality_sample_buckets=args.chunk_quality_sample_buckets,
         )
     except ValueError as exc:
         raise SystemExit(str(exc)) from exc
