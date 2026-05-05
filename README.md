@@ -148,7 +148,7 @@ OCR для standalone `jpg`/`jpeg`/`png` теперь optional local baseline: �
 `pdf` без meaningful extracted text / chunks по-прежнему может быть conservatively отмечен как `possible_scanned_pdf` / OCR candidate, но страницы не рендерятся в изображения и OCR для scanned PDF не запускается.
 `HEIC`/`HEIF`/`TIFF`/`TIF`/`BMP`/`WEBP` по-прежнему остаются неподдерживаемыми image-like форматами.
 Read-only audit и customer demo runner теперь показывают summary по OCR candidates и OCR-used documents без изменения storage.
-Для ручной проверки OCR engine можно использовать `conda run -n etl_env python -m scripts.check_ocr`.
+Для ручной проверки OCR engine и установленных language packs можно использовать `conda run -n etl_env python -m scripts.check_ocr`.
 
 ### OCR smoke/eval
 
@@ -157,11 +157,16 @@ Read-only audit и customer demo runner теперь показывают summar
 ```bash
 conda run -n etl_env python -m scripts.evaluate_ocr
 conda run -n etl_env python -m scripts.evaluate_ocr --input-dir first_test_data --json-report-path tmp/ocr_smoke_report.json
+conda run -n etl_env python -m scripts.evaluate_ocr --input-dir first_test_data --json-report-path tmp/ocr_smoke_report.json --language rus+eng
 ```
 
 Этот script читает входные image samples, использует Stage 20 OCR adapter и не пишет в `storage/index`, `storage/results` или `storage/uploads`.
-Это smoke/eval слой для проверки readiness, а не production OCR quality guarantee.
-Scanned PDF OCR в Stage 21 не входит.
+`--language` задаёт Tesseract language config для smoke/eval; для русских документов рекомендуется `--language rus+eng`, если эти language packs установлены.
+Это smoke/eval слой для проверки readiness, а не production OCR quality guarantee: качество зависит от изображения, установленных языков Tesseract, preprocessing и будущего OCR module design.
+Scanned PDF OCR и OCR embedded images inside DOCX/PDF не входят в baseline; external/proprietary OCR API не используются.
+Будущий OCR module должен сохранять provenance: source path/name, page, artifact/image id, OCR engine/version, language config, confidence if available, processing timestamp и source modality.
+OCR-derived chunks в будущем должны быть явно отмечены как OCR-derived evidence и не смешиваться молча с обычным text layer.
+Table OCR не должен выдаваться за structured table extraction без отдельной layout/table model.
 
 ## Поддержка DOC
 

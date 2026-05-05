@@ -44,7 +44,7 @@ def _preview_text(text: str, limit: int = PREVIEW_LENGTH) -> str:
     return f"{normalized[: max(0, limit - 3)].rstrip()}..."
 
 
-def _build_unsupported_record(path: Path, engine_name: str) -> dict:
+def _build_unsupported_record(path: Path, engine_name: str, ocr_language: str | None) -> dict:
     suffix = path.suffix.lower()
     if suffix == PDF_SUFFIX:
         status = "skipped_pdf_out_of_scope"
@@ -62,14 +62,15 @@ def _build_unsupported_record(path: Path, engine_name: str) -> dict:
         "text_length": 0,
         "text_preview": "",
         "engine": engine_name,
+        "ocr_language": ocr_language,
         "elapsed_ms": None,
         "notes": notes,
     }
 
 
-def _build_ocr_record(path: Path, adapter: LocalOCRAdapter) -> dict:
+def _build_ocr_record(path: Path, adapter: LocalOCRAdapter, ocr_language: str | None) -> dict:
     started = time.perf_counter()
-    result = adapter.run(path)
+    result = adapter.run(path, language=ocr_language) if ocr_language else adapter.run(path)
     elapsed_ms = round((time.perf_counter() - started) * 1000.0, 2)
     text = normalize_text(result.text or "")
     text_length = len(text)
@@ -85,12 +86,13 @@ def _build_ocr_record(path: Path, adapter: LocalOCRAdapter) -> dict:
         "text_length": text_length,
         "text_preview": text_preview,
         "engine": result.engine or adapter.engine_name,
+        "ocr_language": ocr_language,
         "elapsed_ms": elapsed_ms,
         "notes": notes,
     }
 
 
-def build_report(input_dir: Path, adapter: LocalOCRAdapter | None = None) -> dict:
+def build_report(input_dir: Path, adapter: LocalOCRAdapter | None = None, ocr_language: str | None = None) -> dict:
     adapter = adapter or LocalOCRAdapter()
     input_dir = input_dir.resolve()
     files = _candidate_files(input_dir)
@@ -104,13 +106,13 @@ def build_report(input_dir: Path, adapter: LocalOCRAdapter | None = None) -> dic
         suffix = path.suffix.lower()
         if suffix in SUPPORTED_SUFFIXES:
             supported_count += 1
-            records.append(_build_ocr_record(path, adapter))
+            records.append(_build_ocr_record(path, adapter, ocr_language))
         elif suffix in UNSUPPORTED_SUFFIXES:
             unsupported_count += 1
-            records.append(_build_unsupported_record(path, adapter.engine_name))
+            records.append(_build_unsupported_record(path, adapter.engine_name, ocr_language))
         elif suffix == PDF_SUFFIX:
             pdf_count += 1
-            records.append(_build_unsupported_record(path, adapter.engine_name))
+            records.append(_build_unsupported_record(path, adapter.engine_name, ocr_language))
 
     success_text_lengths = [record["text_length"] for record in records if record["ocr_status"] == "success" and record["ocr_used"]]
     status_counts = Counter(record["ocr_status"] for record in records)
@@ -133,10 +135,11 @@ def build_report(input_dir: Path, adapter: LocalOCRAdapter | None = None) -> dic
         "input_dir": str(input_dir),
         "engine": adapter.engine_name,
         "engine_available": summary["engine_available"],
+        "ocr_language": ocr_language,
         "stage": "Stage 21 OCR smoke evaluation",
         "scope_note": (
             "Read-only smoke/eval layer for OCR readiness, not a production OCR quality guarantee. "
-            "Scanned PDF OCR is out of scope for Stage 21."
+            "Standalone jpg/jpeg/png only; scanned PDF OCR and embedded image OCR are out of scope."
         ),
         "summary": summary,
         "files": records,
@@ -148,6 +151,7 @@ def print_report(report: dict) -> None:
     print("OCR smoke/eval report")
     print(f"Input dir: {report['input_dir']}")
     print(f"Engine: {report['engine']} | available: {'yes' if report['engine_available'] else 'no'}")
+    print(f"OCR language: {report['ocr_language'] or 'tesseract default'}")
     print(
         "Summary: total_images_seen={total} supported_images={supported} unsupported_image_like_files={unsupported} "
         "pdf_out_of_scope={pdf} success={success} empty={empty} failed={failed} unavailable={unavailable} "
@@ -168,11 +172,13 @@ def print_report(report: dict) -> None:
     for record in report["files"]:
         print(
             "- {filename} | ext={extension} | status={ocr_status} | used={ocr_used} | text_length={text_length} "
-            "| preview={text_preview!r} | engine={engine} | elapsed_ms={elapsed_ms} | notes={notes}".format(
+            "| preview={text_preview!r} | engine={engine} | ocr_language={ocr_language} | elapsed_ms={elapsed_ms} "
+            "| notes={notes}".format(
                 **record
             )
         )
-    print("Scanned PDF OCR is out of scope for Stage 21.")
+    print("Scanned PDF OCR is out of scope.")
+    print("Embedded image OCR inside DOCX/PDF is out of scope.")
     print("This is a smoke/eval layer, not a production OCR quality guarantee.")
 
 
@@ -183,10 +189,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="Directory with sample image files. Defaults to first_test_data when available.",
     )
     parser.add_argument("--json-report-path", help="Optional path to save the JSON OCR smoke report")
+    parser.add_argument(
+        "--language",
+        help="Optional Tesseract language config, for example rus+eng. Defaults to Tesseract default behavior.",
+    )
     args = parser.parse_args(argv)
 
     input_dir = Path(args.input_dir).resolve() if args.input_dir else _default_input_dir()
-    report = build_report(input_dir)
+    report = build_report(input_dir, ocr_language=args.language)
     print_report(report)
 
     if args.json_report_path:

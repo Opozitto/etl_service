@@ -95,6 +95,7 @@ def test_evaluate_ocr_reports_success_and_writes_json_only_when_requested(
     assert report["stage"] == "Stage 21 OCR smoke evaluation"
     assert report["engine"] == "tesseract"
     assert report["engine_available"] is True
+    assert report["ocr_language"] is None
     assert report["summary"] == {
         "total_images_seen": 2,
         "supported_images": 1,
@@ -116,6 +117,7 @@ def test_evaluate_ocr_reports_success_and_writes_json_only_when_requested(
     assert files["photo.jpg"]["text_length"] == 28
     assert files["photo.jpg"]["text_preview"] == "OCR extracted text for smoke"
     assert files["photo.jpg"]["engine"] == "tesseract"
+    assert files["photo.jpg"]["ocr_language"] is None
     assert files["photo.jpg"]["elapsed_ms"] >= 0
     assert files["scan.heic"]["ocr_status"] == "unsupported_image_like"
     assert files["scan.heic"]["ocr_used"] is False
@@ -125,6 +127,56 @@ def test_evaluate_ocr_reports_success_and_writes_json_only_when_requested(
 
     after_storage = _snapshot_files(storage_root)
     assert after_storage == before_storage
+
+    get_settings.cache_clear()
+
+
+def test_evaluate_ocr_passes_language_and_writes_it_to_report(
+    monkeypatch,
+    tmp_path: Path,
+    capsys,
+) -> None:
+    input_dir = tmp_path / "samples"
+    _write_bytes(input_dir / "photo.jpg", b"jpg")
+    report_path = tmp_path / "reports" / "ocr_report.json"
+    seen_languages: list[str | None] = []
+
+    monkeypatch.setenv("ETL_STORAGE_DIR", str(tmp_path / "storage"))
+    get_settings.cache_clear()
+    module = _load_module()
+
+    monkeypatch.setattr(module.LocalOCRAdapter, "is_available", lambda self: True)
+
+    def _fake_run(self, path, language=None):
+        seen_languages.append(language)
+        return OCRResult(
+            text="Справка о количестве источников выбросов",
+            engine="tesseract",
+            success=True,
+            status="success",
+        )
+
+    monkeypatch.setattr(module.LocalOCRAdapter, "run", _fake_run)
+
+    exit_code = module.main(
+        [
+            "--input-dir",
+            str(input_dir),
+            "--json-report-path",
+            str(report_path),
+            "--language",
+            "rus+eng",
+        ]
+    )
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert seen_languages == ["rus+eng"]
+    assert "OCR language: rus+eng" in captured.out
+
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    assert report["ocr_language"] == "rus+eng"
+    assert report["files"][0]["ocr_language"] == "rus+eng"
 
     get_settings.cache_clear()
 

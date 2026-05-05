@@ -98,7 +98,7 @@ class LocalOCRAdapter:
             status="success",
         )
 
-    def run(self, path: Path) -> OCRResult:
+    def run(self, path: Path, language: str | None = None) -> OCRResult:
         if not self.is_available():
             return OCRResult(
                 text="",
@@ -109,8 +109,11 @@ class LocalOCRAdapter:
             )
 
         try:
+            command = [self.engine_command, str(path), "stdout"]
+            if language:
+                command.extend(["-l", language])
             completed = subprocess.run(
-                [self.engine_command, str(path), "stdout"],
+                command,
                 capture_output=True,
                 text=True,
                 check=False,

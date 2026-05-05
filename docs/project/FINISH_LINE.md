@@ -34,6 +34,7 @@
 - Stage 34.3 chunk quality taxonomy normalization/reporting v1 is completed: audit reports now separate raw `content_type`, broad table-linked context, strict `table_row` evidence, `<120` severe short text, `<250` compact evidence taxonomy, and cleanup recommendations.
 - Stage 35 External `Example_data` validation v1 is completed: external dataset audit, temporary workspace processing/eval, QA readiness eval, workflow summary and Stage 34.3 chunk taxonomy can be run reproducibly through `scripts.validate_external_example_data` with JSON reports under `.runtime_eval`.
 - Stage 36 targeted external chunk tail inspection / cleanup decision v1 is completed: compact taxonomy samples can be exported through `scripts.audit_rag_chunks` or the Stage 35 wrapper, local external evidence was inspected, and splitter cleanup is not justified now.
+- Stage 37 optional OCR handoff polish is completed: OCR smoke/eval can pass an explicit Tesseract language config, JSON/console reports include `ocr_language`, and `check_ocr` surfaces installed Tesseract languages when available.
 - Stage 30–34.3 strengthened the metadata/source/structure/validation/governance contract, but this is still ETL/source-backed handoff readiness rather than full RAG.
 
 ## Best shippable baseline
@@ -86,6 +87,12 @@ conda run -n etl_env python -m scripts.validate_external_example_data --dataset-
   - samples `chk-3`, `chk-7`, `chk-8` look like isolated table/layout-derived text fragments, not a repeated cross-document structural defect;
   - `pollutant_or_equipment_micro_evidence` samples are acceptable compact evidence, not cleanup targets.
 - Stage 36 cleanup decision: splitter cleanup was not performed and is not needed now. Future cleanup should only be considered if repeated tails appear across more documents/corpora.
+- Stage 37 OCR smoke commands:
+```powershell
+conda run -n etl_env python -m scripts.check_ocr
+conda run -n etl_env python -m scripts.evaluate_ocr --input-dir <dir> --json-report-path <path> --language rus+eng
+```
+- Stage 37 remains smoke/eval and handoff polish only. OCR quality depends on image quality, installed language packs, preprocessing and future OCR module design. Future OCR provenance should preserve source path/name, page, artifact/image id, engine/version, language config, confidence if available, processing timestamp and source modality; OCR-derived chunks should be marked explicitly as OCR-derived evidence.
 
 ## What is confirmed, and what is not
 
@@ -114,8 +121,10 @@ conda run -n etl_env python -m scripts.validate_external_example_data --dataset-
   - Stage 34.3 unified chunk quality taxonomy/reporting v1.
   - Stage 35 external `Example_data` validation v1 through safe temporary workspace and machine-readable reports.
   - Stage 36 targeted chunk tail sample export and cleanup decision evidence: cleanup not needed now.
+  - Stage 37 language-aware OCR smoke/eval and handoff polish for standalone images.
 - Not confirmed:
   - scanned PDF OCR;
+  - embedded DOCX/PDF image OCR;
   - LLM generation;
   - summarization / draft generation;
   - semantic retrieval;
@@ -133,7 +142,7 @@ conda run -n etl_env python -m scripts.validate_external_example_data --dataset-
 
 ## Next choice
 
-The next direction is selected and finite after Stage 34.2. Keep future work bounded to source-backed/evaluation-visible improvements; do not start final polish until the explicit command or until the planned stages are completed or intentionally dropped.
+The next direction is selected and finite after Stage 37. Keep future work bounded to source-backed/evaluation-visible improvements; final delivery preparation is next when explicitly requested.
 
 Follow-up sequence:
 
@@ -148,8 +157,8 @@ Follow-up sequence:
 - Stage 34.3 Chunk quality taxonomy normalization/reporting v1, completed.
 - Stage 35 External `Example_data` validation v1, completed as evidence over explicit temporary workspace; external data is not training data and is not committed.
 - Stage 36 Targeted external chunk tail inspection / cleanup decision v1, completed; cleanup not needed now based on local sample evidence.
-- Stage 37 Optional light OCR handoff polish, droppable and only if time remains.
-- Final delivery preparation after the planned/conditional stages are done or dropped.
+- Stage 37 Optional light OCR handoff polish, completed.
+- Final delivery preparation after completed Stage 37.
 - QA evaluator retrieval-loop speed/cache moves to later/backlog only if it becomes a severe operational blocker.
 
 This preserves the delivery-first rule: every stage should be demo-ready / shippable, future stages can be dropped without breaking the current baseline, large architecture rewrites stay out of scope, and future AI capabilities remain source-backed / evaluation-visible.
@@ -159,7 +168,7 @@ Stage 29.1 and Stage 29.2 closed visibility/export/audit for chunks. Stage 30 co
 Current chunks are acceptable for lexical search and now carry stronger source/location/citation metadata. Newly processed chunks also have cleaner splitter structure after Stage 33.1 and fewer approval/signature table false positives after Stage 33.3.
 Stage 33.2 adds a bounded validation workflow for proving cleanup on fresh temporary outputs, without migrating old `storage/results`. Stage 33.4 records an expanded 4-document fresh validation run with zero failures/warnings, so Stage 33 is closed from the splitter cleanup standpoint.
 Stage 34.1 implements the narrow ordinary text chunk coherence cleanup target without full RAG or semantic retrieval.
-Stage 34.2 locks the finite finish route, Stage 34.3 implements metric taxonomy normalization before any additional cleanup, and Stage 35 validates the external `Example_data` path without committing external/runtime artifacts.
+Stage 34.2 locks the finite finish route, Stage 34.3 implements metric taxonomy normalization before any additional cleanup, Stage 35 validates the external `Example_data` path without committing external/runtime artifacts, and Stage 37 closes the optional OCR handoff polish.
 
 Known splitter issues:
 

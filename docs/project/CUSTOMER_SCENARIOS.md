@@ -2,7 +2,7 @@
 
 ## Назначение документа
 
-Документ был создан на Stage 10 как docs-level baseline для пользовательских сценариев и минимального evaluation set. Сейчас он актуализируется по мере развития ETL/search/evaluation baseline и отражает текущее состояние после Stage 36 inspection/reporting update.
+Документ был создан на Stage 10 как docs-level baseline для пользовательских сценариев и минимального evaluation set. Сейчас он актуализируется по мере развития ETL/search/evaluation baseline и отражает текущее состояние после Stage 37 OCR handoff polish.
 
 Сценарии описывают пилотный контур для эколога-проектировщика: source-backed search, extractive QA, extraction/evidence diagnostics, контроль качества корпуса и подготовку chunk handoff для будущего source-backed RAG layer. Документ не объявляет готовыми full RAG, LLM generation, embeddings/vector DB, semantic retrieval, scanned PDF OCR или table analytics.
 
@@ -81,12 +81,17 @@
 - metadata-only fallback, если локальный OCR engine недоступен;
 - OCR candidate detection / reporting;
 - optional local OCR baseline для standalone `jpg` / `jpeg` / `png`, если engine доступен;
+- language-aware OCR smoke/eval для standalone images через local Tesseract, включая рекомендуемый `--language rus+eng` для русских документов;
 - scanned PDF OCR не обещается как готовый.
 
 Будущий путь:
 
 - scanned PDF OCR остается вне подтвержденного baseline;
+- embedded image OCR inside DOCX/PDF остается вне подтвержденного baseline;
 - table/table-layout OCR и full document layout analysis остаются вне текущего scope.
+- будущий OCR module должен сохранять provenance: source path/name, page, artifact/image id, OCR engine/version, language config, confidence if available, processing timestamp и source modality;
+- будущие OCR-derived chunks должны быть явно marked as OCR-derived evidence и не смешиваться silently с normal text layer;
+- table OCR не должен выдаваться за structured table extraction без отдельной layout/table model.
 
 ### S7. Summarization / draft generation candidate
 
@@ -243,7 +248,7 @@ Stage 36 targeted external chunk tail inspection:
 | EC-04 | No-answer case | Есть ли информация про X, если ее нет? | Relevant corpus subset | Явно сказать, что информация отсутствует | yes | supported now | Проверяет честный отказ без hallucination |
 | EC-05 | Calculation inputs | Найти исходные данные для расчета | Text and numeric fragments in docs | Вернуть numbers/fragments и candidate table previews со ссылками | yes | supported now / diagnostics | Stage 23 adds read-only table evidence evaluation; no automatic calculations |
 | EC-06 | Audit visibility | Документ без chunks должен быть отмечен audit | Batch corpus outputs and audit report | Попасть в problem documents / audit summary | no | supported now | Linked to the Stage 7-9 reporting layer |
-| EC-07 | OCR limitation / candidate visibility | Скан или фото документа | JPG / JPEG / PNG / HEIC candidate inputs | Отметить metadata-only fallback, OCR candidates и optional local OCR baseline для standalone images when engine is available | no | Stage 20 / diagnostics | Do not promise scanned PDF OCR; HEIC/HEIF/TIFF/TIF/BMP/WEBP stay unsupported |
+| EC-07 | OCR limitation / candidate visibility | Скан или фото документа | JPG / JPEG / PNG / HEIC candidate inputs | Отметить metadata-only fallback, OCR candidates, optional local OCR baseline для standalone images and language-aware smoke/eval when engine/language packs are available | no | Stage 20 / 37 diagnostics | Do not promise scanned PDF OCR or embedded DOCX/PDF image OCR; for Russian smoke use `--language rus+eng`; HEIC/HEIF/TIFF/TIF/BMP/WEBP stay unsupported |
 | EC-08 | Table input | XLS / XLSX table-heavy document | Spreadsheet or table-like source | XLS and XLSX supported at baseline level with flattened lexical retrieval plus read-only table evidence candidates | yes | supported now / diagnostics | Row-level chunks and Stage 23 evidence improve source-backed preview; still not table-aware analytics |
 | EC-09 | Summarization | Сделать краткое summary документа | Source document plus request for summary | Future spike only | yes | future | Do not announce ready summarization |
 | EC-10 | Draft generation | Подготовить draft section документации | Project doc context and task brief | Future spike only | yes | future | Do not announce ready LLM generation |
@@ -278,9 +283,9 @@ Stage 36 targeted external chunk tail inspection:
 - Stage 34.3 implements the customer-facing handoff improvement: unified chunk quality taxonomy/reporting.
 - Stage 35 validates external `Example_data` as evidence only; it is not training and not committed.
 - Stage 36 adds targeted compact taxonomy sample export for cleanup decision evidence and closes the current decision as cleanup not needed now.
-- Stage 37 light OCR handoff polish is optional and only if time remains.
+- Stage 37 adds language-aware OCR smoke/eval and handoff polish for standalone image OCR without claiming production OCR.
 
-## Текущее состояние после Stage 36 inspection/reporting update
+## Текущее состояние после Stage 37 OCR handoff polish
 
 - Stage 29.1 adds read-only RAG-ready chunk inspection/export over existing processed JSON.
 - Stage 29.2 adds read-only chunk quality audit over existing processed JSON / exported chunk records.
@@ -303,7 +308,7 @@ Stage 36 targeted external chunk tail inspection:
 - Stage 36 adds bounded compact taxonomy sample export for `real_low_value_tail` and other selected buckets through audit CLI and external validation wrapper.
 - Stage 36 local external inspection found `3` `real_low_value_tail` candidates out of `2145` chunks, all from one document and consistent with isolated table/layout-derived fragments.
 - Stage 36 does not perform splitter cleanup and closes the current cleanup decision as not needed now.
-- Stage 36 keeps Stage 37 optional light OCR handoff polish and final delivery preparation behind the same finite route.
+- Stage 37 completed optional light OCR handoff polish: `check_ocr` lists available Tesseract languages when possible, `evaluate_ocr` supports `--language`, and Russian OCR smoke/eval should use `--language rus+eng` when language packs are installed.
 - Chunks now have better visibility, stronger metadata/source/location/citation context, and cleaner deterministic section/chunk structure where available.
 - Splitter cleanup is conservative and improves handoff quality, but it is not semantic document understanding.
 - Text chunk coherence remains bounded and deterministic: ordinary text chunks should not cross sections, merge with tables, invent pages, or change API schema in a breaking way.

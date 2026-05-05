@@ -111,6 +111,30 @@ def test_local_ocr_adapter_returns_text_for_success(monkeypatch: pytest.MonkeyPa
     assert result.text == "OCR extracted text"
 
 
+def test_local_ocr_adapter_passes_language_when_provided(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    image_path = tmp_path / "sample.png"
+    image_path.write_bytes(b"fake")
+    captured_command = []
+
+    monkeypatch.setattr("app.pipeline.ocr.shutil.which", lambda _: "tesseract")
+
+    class _CompletedProcess:
+        returncode = 0
+        stdout = "Русский OCR text"
+        stderr = ""
+
+    def _fake_run(command, **kwargs):
+        captured_command.extend(command)
+        return _CompletedProcess()
+
+    monkeypatch.setattr("app.pipeline.ocr.subprocess.run", _fake_run)
+
+    result = LocalOCRAdapter().run(image_path, language="rus+eng")
+
+    assert result.success is True
+    assert captured_command == ["tesseract", str(image_path), "stdout", "-l", "rus+eng"]
+
+
 @pytest.mark.parametrize(
     "side_effect, expected_status, expected_reason",
     [

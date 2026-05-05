@@ -183,7 +183,9 @@
 ## next
 
 - Stage 36 is completed / ready for commit as inspection/reporting plus cleanup decision: cleanup not needed now.
-- Stage 37 Optional light OCR handoff polish runs only if time remains after planned stages are completed or explicitly dropped.
+- Stage 37 Optional light OCR handoff polish completed as language-aware smoke/eval and handoff docs only around the existing standalone image OCR baseline.
+- Stage 37 adds `scripts.check_ocr` language listing, `scripts.evaluate_ocr --language`, JSON/console `ocr_language`, and docs recommending `--language rus+eng` for Russian OCR smoke checks.
+- Stage 37 does not implement scanned PDF OCR, embedded DOCX/PDF image OCR, external/proprietary OCR APIs, table OCR, production OCR expansion, splitter changes, retrieval changes, or table analytics.
 - Otherwise the next step is final delivery preparation.
 - Final delivery preparation follows the finite route; no final polish starts until explicit command or after planned stages are done/dropped.
 - QA evaluator retrieval-loop speed/cache is distant backlog / optional only if speed becomes a severe operational blocker.

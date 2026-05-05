@@ -1,6 +1,6 @@
 # PLAN
 
-Stage 1–32 are completed. Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock. Stage 20–25 are completed OCR/readiness/extraction/table/QA-evaluation layers. Stage 26–32 are completed external QA/chunk visibility, audit, chunk contract hardening, table chunk context, and source location/citation hardening stages. Stage 33 splitter structure cleanup and validation closure is completed from the splitter cleanup standpoint. Stage 34.0 text chunk coherence audit/design is completed docs-only. Stage 34.1 text chunk coherence edge cleanup v1 is completed as a bounded deterministic implementation. Stage 34.2 is completed docs-only as the finite finish roadmap lock after Stage 34.1 validation and metric reconciliation. Stage 34.3 chunk quality taxonomy normalization/reporting v1 is completed as audit/reporting normalization. Stage 35 External `Example_data` validation v1 is completed as a safe reproducible external evidence workflow. Stage 36 targeted external chunk tail inspection / cleanup decision v1 is completed as inspection/reporting plus docs-only cleanup decision; splitter cleanup is not justified by current evidence. The next step is Stage 37 optional light OCR handoff polish only if time remains, otherwise final delivery preparation; speed/cache remains distant backlog only.
+Stage 1–32 are completed. Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock. Stage 20–25 are completed OCR/readiness/extraction/table/QA-evaluation layers. Stage 26–32 are completed external QA/chunk visibility, audit, chunk contract hardening, table chunk context, and source location/citation hardening stages. Stage 33 splitter structure cleanup and validation closure is completed from the splitter cleanup standpoint. Stage 34.0 text chunk coherence audit/design is completed docs-only. Stage 34.1 text chunk coherence edge cleanup v1 is completed as a bounded deterministic implementation. Stage 34.2 is completed docs-only as the finite finish roadmap lock after Stage 34.1 validation and metric reconciliation. Stage 34.3 chunk quality taxonomy normalization/reporting v1 is completed as audit/reporting normalization. Stage 35 External `Example_data` validation v1 is completed as a safe reproducible external evidence workflow. Stage 36 targeted external chunk tail inspection / cleanup decision v1 is completed as inspection/reporting plus docs-only cleanup decision; splitter cleanup is not justified by current evidence. Stage 37 optional OCR handoff polish is completed as language-aware smoke/eval and handoff documentation; final delivery preparation is the next planned step, while speed/cache remains distant backlog only.
 
 ## Stage 1. Зафиксировать smoke/regression проверки
 
@@ -981,18 +981,37 @@ conda run -n etl_env python -m scripts.validate_external_example_data --dataset-
 
 ## Stage 37. Optional light OCR handoff polish, only if time remains
 
-- Статус: optional / droppable.
+- Статус: completed / optional polish.
 - Условие запуска: только если Stage 34.3/35/36 are completed or explicitly dropped and time remains.
 - Цель: лёгкая handoff/readiness polish вокруг уже существующей OCR candidate / standalone image OCR visibility.
+- Реализация Stage 37:
+  - `scripts.check_ocr` показывает optional OCR engine/version и available Tesseract languages через `tesseract --list-langs`, а сбой language listing оформляет как warning;
+  - `scripts.evaluate_ocr` поддерживает optional `--language` и сохраняет выбранный Tesseract language config в console/JSON report как `ocr_language`;
+  - default без `--language` остаётся backward-compatible и использует Tesseract default behavior;
+  - для русских документов рекомендуемый smoke/eval:
+```powershell
+conda run -n etl_env python -m scripts.evaluate_ocr --input-dir <dir> --json-report-path <path> --language rus+eng
+```
+  - проверка engine/languages:
+```powershell
+conda run -n etl_env python -m scripts.check_ocr
+```
+- Handoff note для будущего OCR module:
+  - standalone `jpg` / `jpeg` / `png` OCR остаётся local smoke/baseline, не production OCR guarantee;
+  - OCR text quality зависит от image quality, installed language packs, preprocessing и будущего OCR module design;
+  - future OCR provenance должен сохранять source path/name, page, artifact/image id, OCR engine/version, language config, confidence if available, processing timestamp и source modality;
+  - future OCR-derived chunks должны быть marked as OCR-derived evidence и не смешиваться silently с normal text layer;
+  - table OCR не должен притворяться structured table extraction без отдельной layout/table model.
 - Вне scope:
   - scanned PDF OCR;
   - embedded DOCX/PDF OCR;
   - layout/table OCR;
-  - production OCR expansion.
+  - production OCR expansion;
+  - external/proprietary OCR API.
 
 ## Final delivery preparation
 
-- Статус: planned after Stage 36, or after Stage 37 if the optional OCR handoff polish is explicitly used.
+- Статус: planned after completed Stage 37.
 - Цель: подготовить честный delivery package around confirmed ETL/search/ask/evaluation/chunk handoff baseline.
 - Правила:
   - no endless splitter polishing;
