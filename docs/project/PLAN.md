@@ -1,6 +1,6 @@
 # PLAN
 
-Stage 1–32 are completed. Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock. Stage 20–25 are completed OCR/readiness/extraction/table/QA-evaluation layers. Stage 26–32 are completed external QA/chunk visibility, audit, chunk contract hardening, table chunk context, and source location/citation hardening stages. Stage 33 splitter structure cleanup and validation closure is completed from the splitter cleanup standpoint. Stage 34.0 text chunk coherence audit/design is completed docs-only. Stage 34.1 text chunk coherence edge cleanup v1 is completed as a bounded deterministic implementation. Stage 34.2 is completed docs-only as the finite finish roadmap lock after Stage 34.1 validation and metric reconciliation. Stage 34.3 chunk quality taxonomy normalization/reporting v1 is completed as audit/reporting normalization. Stage 35 External `Example_data` validation v1 is completed as a safe reproducible external evidence workflow. Stage 36 targeted external chunk tail inspection / cleanup decision v1 is completed as inspection/reporting plus docs-only cleanup decision; splitter cleanup is not justified by current evidence. Stage 37 optional OCR handoff polish is completed as language-aware smoke/eval and handoff documentation; final delivery preparation is the next planned step, while speed/cache remains distant backlog only.
+Stage 1–32 are completed. Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock. Stage 20–25 are completed OCR/readiness/extraction/table/QA-evaluation layers. Stage 26–32 are completed external QA/chunk visibility, audit, chunk contract hardening, table chunk context, and source location/citation hardening stages. Stage 33 splitter structure cleanup and validation closure is completed from the splitter cleanup standpoint. Stage 34.0 text chunk coherence audit/design is completed docs-only. Stage 34.1 text chunk coherence edge cleanup v1 is completed as a bounded deterministic implementation. Stage 34.2 is completed docs-only as the finite finish roadmap lock after Stage 34.1 validation and metric reconciliation. Stage 34.3 chunk quality taxonomy normalization/reporting v1 is completed as audit/reporting normalization. Stage 35 External `Example_data` validation v1 is completed as a safe reproducible external evidence workflow. Stage 36 targeted external chunk tail inspection / cleanup decision v1 is completed as inspection/reporting plus docs-only cleanup decision; splitter cleanup is not justified by current evidence. Stage 37 optional OCR handoff polish is completed as language-aware smoke/eval and handoff documentation. Stage 38 final delivery preparation is now locked as a fixed Stage 38.0–38.6 route; Stage 38.0 is docs-only plan lock, and speed/cache remains distant backlog only.
 
 ## Stage 1. Зафиксировать smoke/regression проверки
 
@@ -1009,15 +1009,119 @@ conda run -n etl_env python -m scripts.check_ocr
   - production OCR expansion;
   - external/proprietary OCR API.
 
-## Final delivery preparation
+## Stage 38.0. Final delivery preparation plan lock
 
-- Статус: planned after completed Stage 37.
-- Цель: подготовить честный delivery package around confirmed ETL/search/ask/evaluation/chunk handoff baseline.
-- Правила:
-  - no endless splitter polishing;
-  - no cleanup v2 unless future evidence shows repeated real issue across more documents/corpora;
-  - no final polish until explicit command or after planned stages are done/dropped;
-  - keep limitations honest and avoid claiming full RAG, LLM, vector search, scanned PDF OCR or table analytics.
+- Статус: in progress / docs-only.
+- Цель: зафиксировать конечный маршрут final delivery preparation после Stage 37, чтобы дальше идти строго по шагам.
+- Scope:
+  - docs-only;
+  - no production code changes;
+  - no tests changes;
+  - no production `storage/index`, `storage/results`, `storage/uploads` changes;
+  - no `.runtime_eval` or external dataset artifacts.
+- Критерий завершения:
+  - финальный маршрут Stage 38.1–38.6 записан в управляющих документах;
+  - порядок Stage 38.1–38.6 считается фиксированным и не должен раздуваться без отдельного решения.
+
+## Stage 38.1. Metrics & acceptance criteria documentation
+
+- Статус: planned.
+- Цель: описать метрики качества ETL/RAG-readiness и закрыть пункт ТЗ "метрика определяется исполнителем".
+- Нужно зафиксировать:
+  - processing quality gates;
+  - chunk quality gates;
+  - table extraction / table chunk quality gates;
+  - retrieval / extractive QA quality gates;
+  - OCR smoke gates for the existing standalone image OCR baseline;
+  - operational quality gates for demo/evaluation runs.
+- Scope:
+  - documentation and acceptance criteria only;
+  - no new RAG, LLM generation, semantic retrieval, embeddings/vector DB, scanned PDF OCR, embedded DOCX/PDF OCR, table analytics, production UI or external proprietary APIs.
+- Критерий завершения:
+  - метрики и acceptance criteria можно использовать как финальную checklist основу для delivery verification.
+
+## Stage 38.2. Single-file structure inspector
+
+- Статус: planned.
+- Цель: добавить customer/developer-readable CLI для проверки разбиения произвольного файла.
+- Ожидаемый контур:
+  - input: one explicit file path;
+  - processing only into explicit temporary workspace;
+  - report for manual review of sections, blocks, chunks, tables, images and warnings;
+  - no production storage pollution.
+- Scope:
+  - inspection/handoff tool only;
+  - not a UI, not RAG, not semantic retrieval, not generation.
+- Критерий завершения:
+  - CLI smoke показывает структуру одного файла и оставляет production `storage/*` неизменным.
+
+## Stage 38.3. Operation manuals
+
+- Статус: planned.
+- Цель: подготовить эксплуатационные инструкции без изменения behavior.
+- Нужно оформить:
+  - короткую инструкцию;
+  - среднюю инструкцию с объяснением логики;
+  - подробную инструкцию эксплуатации.
+- Scope:
+  - docs-only;
+  - инструкции должны описывать подтвержденный ETL/search/ask/evaluation/chunk handoff baseline и known limitations.
+- Критерий завершения:
+  - новый участник может воспроизвести setup, demo, smoke/eval и cleanup route без догадок.
+
+## Stage 38.4. Language/comment audit & polish
+
+- Статус: planned.
+- Цель: провести безопасный language/comment audit перед delivery.
+- Порядок:
+  - сначала audit английских комментариев и user-facing text;
+  - переводить только безопасные комментарии, docs/help text и сообщения, где это не ломает contract;
+  - не переводить API/JSON/CLI identifiers, имена тестов, technical symbols, stage names and command names.
+- Scope:
+  - audit first, polish second;
+  - no broad rewrite and no behavior changes.
+- Критерий завершения:
+  - user-facing/help/docs text polished where safe, technical identifiers preserved.
+
+## Stage 38.5. Experiments packaging
+
+- Статус: planned.
+- Цель: честно оформить, как в репозитории представлены эксперименты и evaluation flows.
+- Нужно зафиксировать:
+  - какие scripts/evaluation flows считаются экспериментальными или evidence-oriented;
+  - как они связаны с текущим ETL/search/ask/chunk handoff baseline;
+  - external dataset path-only policy for `D:\Projects\etl_service_backup\Example_data`;
+  - что fake notebook experiments не добавляются.
+- Scope:
+  - packaging/documentation only unless a separate implementation decision is made;
+  - no committed external dataset and no committed runtime reports.
+- Критерий завершения:
+  - experiments/evaluation story можно показать без создания ложных notebook artifacts и без копирования external data.
+
+## Stage 38.6. Final cleanup & verification checklist
+
+- Статус: planned.
+- Цель: выполнить финальную cleanup/verification checklist перед delivery.
+- Checklist должен включать:
+  - full `pytest`;
+  - demo smoke;
+  - API smoke;
+  - OCR smoke;
+  - external validation smoke;
+  - single-file inspector smoke после появления Stage 38.2;
+  - UTF-8 sanity;
+  - `git diff --check`;
+  - cleanup runtime artifacts;
+  - known limitations and next development steps;
+  - final acceptance checklist.
+- Правила cleanup:
+  - runtime cleanup не должен удалять исходники, tests, docs, `first_test_data` или tracked baseline files;
+  - local physical copy of the project is allowed only after cleanup runtime artifacts and clean `git status`.
+- Scope:
+  - no new features;
+  - no final claim of full RAG, LLM generation, semantic retrieval, embeddings/vector DB, scanned PDF OCR, embedded DOCX/PDF OCR, table analytics, production UI or external proprietary APIs.
+- Критерий завершения:
+  - финальная checklist пройдена или явно отмечены подтвержденные ограничения/риски.
 
 ## Stage 33.x. QA evaluator retrieval-loop speed/cache
 

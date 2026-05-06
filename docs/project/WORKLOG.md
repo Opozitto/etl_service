@@ -186,8 +186,17 @@
 - Stage 37 completed and committed as language-aware OCR smoke handoff around the existing standalone image OCR baseline.
 - Stage 37 adds `scripts.check_ocr` language listing, `scripts.evaluate_ocr --language`, JSON/console `ocr_language`, and docs recommending `--language rus+eng` for Russian OCR smoke checks.
 - Stage 37 does not implement scanned PDF OCR, embedded DOCX/PDF image OCR, external/proprietary OCR APIs, table OCR, production OCR expansion, splitter changes, retrieval changes, or table analytics.
-- Current next step: final delivery preparation, after this governance docs normalization.
-- Final delivery preparation follows the finite route; no final polish starts until explicit command or after planned stages are done/dropped.
+- Stage 38.0 started as docs-only final delivery preparation plan lock after completed Stage 37.1 / governance docs normalization.
+- Stage 38.0 scope: docs-only; no production code, tests, production storage, runtime artifacts or external dataset changes.
+- Stage 38.0 locks the final delivery preparation route as Stage 38.1–38.6:
+  - Stage 38.1 Metrics & acceptance criteria documentation;
+  - Stage 38.2 Single-file structure inspector;
+  - Stage 38.3 Operation manuals;
+  - Stage 38.4 Language/comment audit & polish;
+  - Stage 38.5 Experiments packaging;
+  - Stage 38.6 Final cleanup & verification checklist.
+- Current next after Stage 38.0: Stage 38.1 Metrics & acceptance criteria documentation.
+- Final delivery preparation follows the fixed route; it should not expand without a separate decision.
 - QA evaluator retrieval-loop speed/cache is distant backlog / optional only if speed becomes a severe operational blocker.
 
 ## alignment

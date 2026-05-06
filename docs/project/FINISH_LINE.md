@@ -140,9 +140,27 @@ conda run -n etl_env python -m scripts.evaluate_ocr --input-dir <dir> --json-rep
 - check README limitations;
 - make sure storage artifacts are not committed.
 
+## Final delivery preparation lock
+
+Stage 38 is the final delivery preparation route after completed Stage 37.1. It is fixed and should not expand without a separate decision.
+
+- Stage 38.0 Final delivery preparation plan lock: docs-only route lock; no code/tests/storage/runtime/external artifacts.
+- Stage 38.1 Metrics & acceptance criteria documentation: define ETL/RAG-readiness metrics and acceptance criteria, including processing, chunk, table, retrieval/QA, OCR smoke and operational quality gates.
+- Stage 38.2 Single-file structure inspector: CLI inspection/handoff tool for one arbitrary file, processing only in a temporary workspace and reporting sections/blocks/chunks/tables/images/warnings without production storage pollution.
+- Stage 38.3 Operation manuals: short, medium and detailed operation instructions for the confirmed baseline.
+- Stage 38.4 Language/comment audit & polish: audit first, then safe translation/polish of comments/docs/help text; keep API/JSON/CLI identifiers, test names and technical symbols unchanged.
+- Stage 38.5 Experiments packaging: explain repository experiments/evaluation flows, scripts linkage and external dataset path-only policy; do not add fake notebook experiments.
+- Stage 38.6 Final cleanup & verification checklist: full pytest, demo smoke, API smoke, OCR smoke, external validation smoke, single-file inspector smoke after Stage 38.2, UTF-8 sanity, `git diff --check`, cleanup runtime artifacts, known limitations and next development steps, and final acceptance checklist.
+
+Known limitations and next development steps are part of final delivery preparation, not an optional afterthought. The final acceptance checklist is also part of Stage 38.6.
+
+Local physical copy of the project should be made only after runtime artifacts are cleaned and `git status --short` is clean.
+
+Cleanup of the local project folder must not remove source files, tests, docs, `first_test_data` or tracked baseline files.
+
 ## Next choice
 
-The next direction is selected and finite after Stage 37. Keep future work bounded to source-backed/evaluation-visible improvements; final delivery preparation is next when explicitly requested.
+The next direction is selected and finite after Stage 37.1. Keep future work bounded to source-backed/evaluation-visible improvements; Stage 38.0 locks final delivery preparation before Stage 38.1 starts.
 
 Follow-up sequence:
 
@@ -158,7 +176,8 @@ Follow-up sequence:
 - Stage 35 External `Example_data` validation v1, completed as evidence over explicit temporary workspace; external data is not training data and is not committed.
 - Stage 36 Targeted external chunk tail inspection / cleanup decision v1, completed; cleanup not needed now based on local sample evidence.
 - Stage 37 Optional light OCR handoff polish, completed.
-- Final delivery preparation after completed Stage 37.
+- Stage 38.0 Final delivery preparation plan lock, in progress / docs-only.
+- Stage 38.1 Metrics & acceptance criteria documentation, next after Stage 38.0.
 - QA evaluator retrieval-loop speed/cache moves to later/backlog only if it becomes a severe operational blocker.
 
 This preserves the delivery-first rule: every stage should be demo-ready / shippable, future stages can be dropped without breaking the current baseline, large architecture rewrites stay out of scope, and future AI capabilities remain source-backed / evaluation-visible.
