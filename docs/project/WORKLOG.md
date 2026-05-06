@@ -198,6 +198,9 @@
 - Current next after Stage 38.0: Stage 38.1 Metrics & acceptance criteria documentation.
 - Final delivery preparation follows the fixed route; it should not expand without a separate decision.
 - QA evaluator retrieval-loop speed/cache is distant backlog / optional only if speed becomes a severe operational blocker.
+- Stage 38.1 started/prepared as docs-only metrics documentation in `docs/project/METRICS_AND_ACCEPTANCE.md`.
+- Stage 38.1 defines ETL/RAG-readiness quality gates instead of a single generative model accuracy metric: processing, chunk quality, table context, retrieval/source-backed QA, standalone image OCR smoke and operational acceptance.
+- Stage 38.1 keeps scope docs-only: no production code, tests, production storage, runtime artifacts, external dataset, full RAG, LLM generation, semantic retrieval, embeddings/vector DB, scanned PDF OCR, embedded image OCR, table analytics or production UI changes.
 
 ## alignment
 

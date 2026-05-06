@@ -6,6 +6,8 @@
 
 Сценарии описывают пилотный контур для эколога-проектировщика: source-backed search, extractive QA, extraction/evidence diagnostics, контроль качества корпуса и подготовку chunk handoff для будущего source-backed RAG layer. Документ не объявляет готовыми full RAG, LLM generation, embeddings/vector DB, semantic retrieval, scanned PDF OCR или table analytics.
 
+Метрики и acceptance gates для проверки этих сценариев зафиксированы в `docs/project/METRICS_AND_ACCEPTANCE.md`.
+
 ## Основной пользователь
 
 Основной пользователь: эколог-проектировщик.
@@ -245,6 +247,7 @@ Stage 36 targeted external chunk tail inspection:
 
 - Сценарии сформулированы для эколога-проектировщика, а не для абстрактного пользователя.
 - У каждого MVP / pilot сценария есть ожидаемый результат, связанный с source-backed behavior.
+- Сценарии проверяются через metrics/acceptance baseline из `docs/project/METRICS_AND_ACCEPTANCE.md`.
 - OCR / RAG / LLM generation не объявляются готовыми, если это не подтверждено кодом.
 - Minimal evaluation set покрывает границы supported now / diagnostics / future.
 - Материал связывает исторический Stage 10 baseline с текущим состоянием после Stage 37.

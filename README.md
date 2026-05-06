@@ -111,6 +111,10 @@ conda run -n etl_env python -m scripts.audit_corpus --report-path storage/index/
 
 Скрипт читает сохранённые JSON-результаты и при наличии corpus index / manifest, а затем печатает краткий summary без изменения `storage/results` и `storage/index`.
 
+## Metrics and acceptance criteria
+
+Метрики качества и финальные acceptance gates зафиксированы в `docs/project/METRICS_AND_ACCEPTANCE.md`. Документ описывает ETL/RAG-readiness quality gates для processing, chunks, table context, retrieval/source-backed QA, standalone image OCR smoke и operational acceptance без claims о full RAG, LLM generation, semantic retrieval, vector DB, scanned PDF OCR, embedded image OCR или table analytics.
+
 ## Очистка дубликатов в storage
 
 ```bash
