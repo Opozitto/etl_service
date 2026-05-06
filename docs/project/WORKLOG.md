@@ -218,6 +218,10 @@
 - Stage 38.5 adds `experiments/README.md` as the top-level entry point for reproducible scripts/evaluation workflows: baseline smoke/regression, single-file structure inspection, corpus audit, RAG-ready chunk export/audit, QA/retrieval readiness, external `Example_data` validation, OCR smoke and requirements/table evidence.
 - Stage 38.5 links the packaging from README, operation guide, metrics/acceptance and finish-line docs, and marks the stage completed in the plan.
 - Stage 38.5 does not add notebooks, data files, generated reports, `.runtime_eval` artifacts, external dataset copies, production code changes, tests changes, storage changes, API/search/OCR/ETL behavior changes, RAG/LLM/vector behavior or table analytics.
+- Stage 38.6 completed as final cleanup & verification checklist docs-only.
+- Stage 38.6 adds `docs/project/FINAL_DELIVERY_CHECKLIST.md` with final verification sequence, local cleanup before physical copy, physical copy rules, known limitations, next development steps and final acceptance checklist.
+- Stage 38.6 links the checklist from README, operation guide, metrics/acceptance, experiments packaging and finish-line docs, and marks the stage completed in the plan.
+- Stage 38.6 does not run full pytest in Codex, create runtime reports, clean local folders, change code/tests/storage/runtime artifacts, copy external `Example_data`, change `.gitignore`, alter API/search/OCR/ETL behavior, or claim full RAG/LLM/vector/scanned OCR/table analytics readiness.
 
 ## alignment
 

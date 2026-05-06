@@ -114,6 +114,8 @@ Acceptance смысл: delivery проверяется воспроизводи�
 
 Эксплуатационные команды, recommended demo route, temporary workspace policy и cleanup порядок описаны в `docs/project/OPERATION_GUIDE.md`. Метрики воспроизводятся через scripts/evaluation workflows, упакованные в `experiments/README.md`.
 
+Финальный acceptance checklist, cleanup перед физической копией и правила copy/commit зафиксированы в `docs/project/FINAL_DELIVERY_CHECKLIST.md`.
+
 ## Comparison of approaches
 
 Сравнивать в текущем проекте нужно не модели генерации, а версии ETL pipeline / extractor / splitter / chunker / OCR configuration по одним и тем же quality gates.

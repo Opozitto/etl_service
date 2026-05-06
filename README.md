@@ -137,6 +137,8 @@ Language/comment audit и правила будущей локализации �
 
 Воспроизводимые experiments/evaluation workflows для сдачи описаны в `experiments/README.md`. Это scripts-based packaging без fake notebooks, external dataset copies или generated report artifacts.
 
+Финальный cleanup/verification checklist перед физической копией проекта описан в `docs/project/FINAL_DELIVERY_CHECKLIST.md`.
+
 ## Очистка дубликатов в storage
 
 ```bash

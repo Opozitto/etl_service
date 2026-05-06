@@ -40,6 +40,7 @@
 - Stage 38.3 operation manuals are recorded in `docs/project/OPERATION_GUIDE.md`: quick start, explained operating route and detailed final handoff instructions for the confirmed ETL/source-backed baseline.
 - Stage 38.4 language/comment audit is recorded in `docs/project/LANGUAGE_AUDIT.md`: safe human-facing polish is allowed, while API/JSON/CLI identifiers and technical contracts remain unchanged.
 - Stage 38.5 experiments packaging is recorded in `experiments/README.md`: scripts-based reproducible experiments/evaluation workflows without fake notebooks, committed external data or generated reports.
+- Stage 38.6 final cleanup and verification checklist is recorded in `docs/project/FINAL_DELIVERY_CHECKLIST.md`: final verification sequence, local cleanup before physical copy, known limitations, next development steps, copy/commit rules and final acceptance checklist.
 - Stage 30–34.3 strengthened the metadata/source/structure/validation/governance contract, but this is still ETL/source-backed handoff readiness rather than full RAG.
 
 ## Best shippable baseline
@@ -105,6 +106,7 @@ conda run -n etl_env python -m scripts.evaluate_ocr --input-dir <dir> --json-rep
 - `docs/project/METRICS_AND_ACCEPTANCE.md` - quality gates and acceptance baseline.
 - `docs/project/OPERATION_GUIDE.md` - operation manual for quick start, explained demo route, detailed handoff, temporary workspace policy and cleanup.
 - `docs/project/LANGUAGE_AUDIT.md` - language/comment audit summary and future localization rules.
+- `docs/project/FINAL_DELIVERY_CHECKLIST.md` - final cleanup, verification, physical copy and acceptance checklist.
 - `experiments/README.md` - experiments/evaluation workflows entry point for final delivery packaging.
 - `scripts.demo_customer_flow` - customer-facing baseline smoke.
 - `scripts.inspect_document_structure` - single-file structure inspection without production storage pollution.
@@ -168,7 +170,7 @@ Stage 38 is the final delivery preparation route after completed Stage 37.1. It 
 - Stage 38.3 Operation manuals: completed docs-only in `docs/project/OPERATION_GUIDE.md` with short, medium and detailed operation instructions for the confirmed baseline.
 - Stage 38.4 Language/comment audit & polish: completed in `docs/project/LANGUAGE_AUDIT.md`; safe translation/polish of comments/docs/help text only, with API/JSON/CLI identifiers, test names and technical symbols unchanged.
 - Stage 38.5 Experiments packaging: completed docs-only in `experiments/README.md`; explains repository experiments/evaluation flows, scripts linkage and external dataset path-only policy without fake notebook experiments.
-- Stage 38.6 Final cleanup & verification checklist: full pytest, demo smoke, API smoke, OCR smoke, external validation smoke, single-file inspector smoke after Stage 38.2, UTF-8 sanity, `git diff --check`, cleanup runtime artifacts, known limitations and next development steps, and final acceptance checklist.
+- Stage 38.6 Final cleanup & verification checklist: completed docs-only in `docs/project/FINAL_DELIVERY_CHECKLIST.md`; records full pytest, demo smoke, OCR smoke, optional external validation smoke, single-file inspector smoke, UTF-8 sanity, `git diff --check`, storage/runtime pollution checks, cleanup rules, known limitations, next development steps and final acceptance checklist.
 
 Known limitations and next development steps are part of final delivery preparation, not an optional afterthought. The final acceptance checklist is also part of Stage 38.6 and should use `docs/project/METRICS_AND_ACCEPTANCE.md` as the metrics/acceptance baseline.
 
@@ -200,6 +202,7 @@ Follow-up sequence:
 - Stage 38.3 Operation manuals, completed / docs-only.
 - Stage 38.4 Language/comment audit & polish, completed.
 - Stage 38.5 Experiments packaging, completed / docs-only.
+- Stage 38.6 Final cleanup & verification checklist, completed / docs-only.
 - QA evaluator retrieval-loop speed/cache moves to later/backlog only if it becomes a severe operational blocker.
 
 This preserves the delivery-first rule: every stage should be demo-ready / shippable, future stages can be dropped without breaking the current baseline, large architecture rewrites stay out of scope, and future AI capabilities remain source-backed / evaluation-visible.

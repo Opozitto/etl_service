@@ -242,6 +242,7 @@ Reports/workspaces должны оставаться в `.runtime_eval` или �
 Language/comment audit и правила будущей локализации зафиксированы в [LANGUAGE_AUDIT.md](LANGUAGE_AUDIT.md). При polish переводить только human-facing prose и не менять API/JSON/CLI identifiers, report fields, stage names или command examples.
 
 Для финальной сдачи использовать этот guide как операционный маршрут, а `METRICS_AND_ACCEPTANCE.md` как quality/acceptance baseline.
+Финальный cleanup/verification gate перед физической копией описан в [FINAL_DELIVERY_CHECKLIST.md](FINAL_DELIVERY_CHECKLIST.md).
 
 ### Runtime cleanup
 

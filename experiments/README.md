@@ -121,6 +121,7 @@ conda run -n etl_env python -m scripts.evaluate_tables --json-report-path .runti
 7. Удалить/не коммитить runtime artifacts.
 
 Stage 38.6 отдельно закрывает final cleanup & verification checklist. Этот документ только упаковывает experiments/evaluation workflows.
+Финальный verification/cleanup checklist находится в `docs/project/FINAL_DELIVERY_CHECKLIST.md`.
 
 ## Где появляются результаты
 
