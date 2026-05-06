@@ -18,7 +18,7 @@ from app.evaluation.rag_chunk_quality import (
 def non_negative_int(value: str) -> int:
     parsed = int(value)
     if parsed < 0:
-        raise argparse.ArgumentTypeError("must be greater than or equal to 0")
+        raise argparse.ArgumentTypeError("значение должно быть больше или равно 0")
     return parsed
 
 
@@ -31,26 +31,26 @@ def sample_buckets(value: str) -> set[str]:
 
 
 def main(argv: Sequence[str] | None = None) -> None:
-    parser = argparse.ArgumentParser(description="Read-only RAG chunk quality audit")
-    parser.add_argument("--results-dir", default="storage/results", help="Directory with processed StructuredDocument JSON")
-    parser.add_argument("--output-path", help="Optional path to save JSON audit report")
+    parser = argparse.ArgumentParser(description="Read-only audit качества RAG chunks")
+    parser.add_argument("--results-dir", default="storage/results", help="Директория с processed StructuredDocument JSON")
+    parser.add_argument("--output-path", help="Опциональный путь для сохранения JSON audit report")
     parser.add_argument("--json-report-path", help="Alias for --output-path")
-    parser.add_argument("--max-documents", type=non_negative_int, help="Limit number of processed JSON documents")
+    parser.add_argument("--max-documents", type=non_negative_int, help="Ограничить число processed JSON documents")
     parser.add_argument(
         "--max-chunks-per-document",
         type=non_negative_int,
-        help="Limit audited chunks per document",
+        help="Ограничить audited chunks per document",
     )
     parser.add_argument("--text-preview-chars", type=non_negative_int, default=300)
     parser.add_argument("--short-threshold", type=non_negative_int, default=DEFAULT_SHORT_THRESHOLD)
     parser.add_argument("--long-threshold", type=non_negative_int, default=DEFAULT_LONG_THRESHOLD)
     parser.add_argument("--sample-limit-per-issue", type=non_negative_int, default=DEFAULT_SAMPLE_LIMIT_PER_ISSUE)
-    parser.add_argument("--include-samples", action="store_true", help="Include bounded sample chunks in JSON report")
-    parser.add_argument("--sample-limit", type=non_negative_int, help="Limit samples per compact taxonomy bucket")
+    parser.add_argument("--include-samples", action="store_true", help="Включить bounded sample chunks в JSON report")
+    parser.add_argument("--sample-limit", type=non_negative_int, help="Ограничить samples per compact taxonomy bucket")
     parser.add_argument(
         "--sample-buckets",
         type=sample_buckets,
-        help="Comma-separated compact taxonomy buckets to sample, for example real_low_value_tail,other_compact_text",
+        help="Compact taxonomy buckets через запятую, например real_low_value_tail,other_compact_text",
     )
     args = parser.parse_args(argv)
 

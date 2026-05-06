@@ -8,11 +8,11 @@ from app.storage.filesystem import FileStorage
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Remove duplicate stored ETL results by checksum and filename")
+    parser = argparse.ArgumentParser(description="Удалить дубликаты сохранённых ETL results по checksum и filename")
     parser.add_argument(
         "--apply",
         action="store_true",
-        help="Actually delete duplicate JSON result files. Without this flag, runs as dry-run.",
+        help="Фактически удалить duplicate JSON result files. Без флага выполняется dry-run.",
     )
     args = parser.parse_args()
 
@@ -29,20 +29,20 @@ def main() -> None:
             seen[key] = path
 
     if not duplicates:
-        print("No duplicate stored results found.")
+        print("Дубликаты сохранённых results не найдены.")
         return
 
-    print(f"Found {len(duplicates)} duplicate result files:")
+    print(f"Найдено duplicate result files: {len(duplicates)}")
     for path in duplicates:
         print(path)
 
     if not args.apply:
-        print("Dry-run only. Re-run with --apply to delete duplicates.")
+        print("Только dry-run. Повторите с --apply, чтобы удалить дубликаты.")
         return
 
     for path in duplicates:
         path.unlink(missing_ok=True)
-    print(f"Deleted {len(duplicates)} duplicate result files.")
+    print(f"Удалено duplicate result files: {len(duplicates)}")
 
 
 if __name__ == "__main__":

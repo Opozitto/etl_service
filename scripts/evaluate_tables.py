@@ -54,12 +54,12 @@ def print_report(report: dict, top_k: int = 10) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Read-only table-aware evidence evaluation")
-    parser.add_argument("--results-dir", help="Directory with processed StructuredDocument JSON files")
-    parser.add_argument("--json-report-path", help="Optional path to save the JSON report")
-    parser.add_argument("--min-score", type=float, default=0.25, help="Minimum table candidate score")
-    parser.add_argument("--max-tables", type=int, help="Limit table candidates")
-    parser.add_argument("--category", help="Optional category/tag filter")
-    parser.add_argument("--top-k", type=int, default=10, help="Number of table candidates to print")
+    parser.add_argument("--results-dir", help="Директория с processed StructuredDocument JSON files")
+    parser.add_argument("--json-report-path", help="Опциональный путь для сохранения JSON report")
+    parser.add_argument("--min-score", type=float, default=0.25, help="Минимальный table candidate score")
+    parser.add_argument("--max-tables", type=int, help="Ограничить table candidates")
+    parser.add_argument("--category", help="Опциональный category/tag filter")
+    parser.add_argument("--top-k", type=int, default=10, help="Сколько table candidates печатать")
     args = parser.parse_args()
 
     settings = get_settings()
@@ -78,7 +78,7 @@ def main() -> None:
         report_path = Path(args.json_report_path).resolve()
         report_path.parent.mkdir(parents=True, exist_ok=True)
         report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
-        print(f"Saved table evidence report to {report_path}")
+        print(f"Table evidence report сохранён: {report_path}")
 
 
 if __name__ == "__main__":

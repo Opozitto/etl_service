@@ -133,6 +133,8 @@ conda run -n etl_env python -m scripts.audit_corpus --report-path storage/index/
 
 Эксплуатационный маршрут для быстрого запуска, демонстрации, временных workspace, cleanup и final handoff описан в `docs/project/OPERATION_GUIDE.md`.
 
+Language/comment audit и правила будущей локализации описаны в `docs/project/LANGUAGE_AUDIT.md`.
+
 ## Очистка дубликатов в storage
 
 ```bash

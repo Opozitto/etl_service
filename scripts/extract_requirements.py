@@ -9,8 +9,8 @@ from app.extraction.requirements import build_requirements_report, load_document
 
 
 DISCLAIMER = (
-    "Note: deterministic source-backed candidate extraction only; "
-    "not a legal/compliance guarantee, no generation."
+    "Примечание: только deterministic source-backed candidate extraction; "
+    "это не legal/compliance guarantee и не generation."
 )
 
 
@@ -57,14 +57,14 @@ def print_report(report: dict, top_k: int = 10) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Read-only source-backed requirements extraction v1")
-    parser.add_argument("--results-dir", help="Directory with processed StructuredDocument JSON files")
-    parser.add_argument("--json-report-path", help="Optional path to save the JSON report")
-    parser.add_argument("--min-score", type=float, default=0.45, help="Minimum candidate score")
+    parser = argparse.ArgumentParser(description="Read-only source-backed extraction кандидатов требований v1")
+    parser.add_argument("--results-dir", help="Директория с processed StructuredDocument JSON files")
+    parser.add_argument("--json-report-path", help="Опциональный путь для сохранения JSON report")
+    parser.add_argument("--min-score", type=float, default=0.45, help="Минимальный candidate score")
     parser.add_argument("--min-confidence", type=float, dest="min_confidence", help="Alias for --min-score")
-    parser.add_argument("--max-per-document", type=int, help="Limit candidates per document")
-    parser.add_argument("--query", help="Optional substring filter over extracted text/category/source")
-    parser.add_argument("--top-k", type=int, default=10, help="Number of candidates to print")
+    parser.add_argument("--max-per-document", type=int, help="Ограничить candidates per document")
+    parser.add_argument("--query", help="Опциональный substring filter по extracted text/category/source")
+    parser.add_argument("--top-k", type=int, default=10, help="Сколько candidates печатать")
     args = parser.parse_args()
 
     settings = get_settings()
@@ -84,7 +84,7 @@ def main() -> None:
         report_path = Path(args.json_report_path).resolve()
         report_path.parent.mkdir(parents=True, exist_ok=True)
         report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
-        print(f"Saved requirements report to {report_path}")
+        print(f"Requirements report сохранён: {report_path}")
 
 
 if __name__ == "__main__":

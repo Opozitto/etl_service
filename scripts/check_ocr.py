@@ -38,24 +38,24 @@ def list_tesseract_languages(adapter: LocalOCRAdapter) -> tuple[list[str], str |
 
 def main() -> None:
     adapter = LocalOCRAdapter()
-    print("Optional local OCR baseline: standalone jpg/jpeg/png only.")
-    print(f"Local OCR engine: {adapter.engine_name}")
+    print("Опциональный локальный OCR baseline: только standalone jpg/jpeg/png.")
+    print(f"Локальный OCR engine: {adapter.engine_name}")
     if adapter.is_available():
         version = adapter.probe_version()
         first_line = version.text.splitlines()[0] if version.text else "n/a"
-        print(f"Available: yes")
-        print(f"Version: {first_line}")
+        print("Доступен: да")
+        print(f"Версия: {first_line}")
         languages, warning = list_tesseract_languages(adapter)
         if languages:
-            print(f"Available languages: {', '.join(languages)}")
+            print(f"Доступные языки: {', '.join(languages)}")
         else:
-            print("Available languages: n/a")
+            print("Доступные языки: n/a")
         if warning:
-            print(f"Warning: {warning}")
+            print(f"Предупреждение: {warning}")
     else:
-        print("Available: no")
-        print("Tesseract is optional; the baseline still works in metadata-only mode.")
-        print("Available languages: n/a")
+        print("Доступен: нет")
+        print("Tesseract опционален; baseline продолжает работать в metadata-only режиме.")
+        print("Доступные языки: n/a")
 
 
 if __name__ == "__main__":

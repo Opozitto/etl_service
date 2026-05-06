@@ -210,6 +210,10 @@
 - Stage 38.3 adds `docs/project/OPERATION_GUIDE.md` with three levels: quick start, medium route with pipeline rationale, and detailed operation/handoff guide.
 - Stage 38.3 records safe command usage through `conda run -n etl_env`, `.runtime_eval` / explicit temporary workspace policy, production storage cleanup, external `Example_data` path-only policy, OCR limitations, search/ask source-backed behavior, table baseline limitations and final demonstration route.
 - Stage 38.3 does not change code, tests, production storage, runtime reports, external data, RAG/LLM/vector behavior, OCR implementation, table analytics or API behavior.
+- Stage 38.4 completed as language/comment audit & safe polish.
+- Stage 38.4 adds `docs/project/LANGUAGE_AUDIT.md` with audit categories: safe_to_polish, keep_as_technical_identifier_or_contract, historical_log_do_not_touch, and out_of_scope_or_risky.
+- Stage 38.4 safely localizes selected human-facing FastAPI/CLI/help/console text while preserving API routes, JSON fields, CLI flags, module/test names, stage/report identifiers and technical taxonomy terms.
+- Stage 38.4 does not change production behavior, public API, storage, runtime reports, external data, OCR/RAG/LLM/vector behavior, table analytics or search ranking.
 
 ## alignment
 

@@ -9,7 +9,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title=settings.app_name,
         version=settings.app_version,
-        description="Autonomous ETL microservice for document structuring",
+        description="Автономный ETL-микросервис для структурирования документов",
     )
     app.include_router(documents_router, prefix=settings.api_prefix)
 
@@ -21,4 +21,3 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
-
