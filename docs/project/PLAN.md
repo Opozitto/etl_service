@@ -1,6 +1,6 @@
 # PLAN
 
-Stage 1–32 are completed. Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock. Stage 20–25 are completed OCR/readiness/extraction/table/QA-evaluation layers. Stage 26–32 are completed external QA/chunk visibility, audit, chunk contract hardening, table chunk context, and source location/citation hardening stages. Stage 33 splitter structure cleanup and validation closure is completed from the splitter cleanup standpoint. Stage 34.0 text chunk coherence audit/design is completed docs-only. Stage 34.1 text chunk coherence edge cleanup v1 is completed as a bounded deterministic implementation. Stage 34.2 is completed docs-only as the finite finish roadmap lock after Stage 34.1 validation and metric reconciliation. Stage 34.3 chunk quality taxonomy normalization/reporting v1 is completed as audit/reporting normalization. Stage 35 External `Example_data` validation v1 is completed as a safe reproducible external evidence workflow. Stage 36 targeted external chunk tail inspection / cleanup decision v1 is completed as inspection/reporting plus docs-only cleanup decision; splitter cleanup is not justified by current evidence. Stage 37 optional OCR handoff polish is completed as language-aware smoke/eval and handoff documentation. Stage 38 final delivery preparation is now locked as a fixed Stage 38.0–38.6 route; Stage 38.0 is docs-only plan lock, Stage 38.1 is documented in `docs/project/METRICS_AND_ACCEPTANCE.md`, and speed/cache remains distant backlog only.
+Stage 1–32 are completed. Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock. Stage 20–25 are completed OCR/readiness/extraction/table/QA-evaluation layers. Stage 26–32 are completed external QA/chunk visibility, audit, chunk contract hardening, table chunk context, and source location/citation hardening stages. Stage 33 splitter structure cleanup and validation closure is completed from the splitter cleanup standpoint. Stage 34.0 text chunk coherence audit/design is completed docs-only. Stage 34.1 text chunk coherence edge cleanup v1 is completed as a bounded deterministic implementation. Stage 34.2 is completed docs-only as the finite finish roadmap lock after Stage 34.1 validation and metric reconciliation. Stage 34.3 chunk quality taxonomy normalization/reporting v1 is completed as audit/reporting normalization. Stage 35 External `Example_data` validation v1 is completed as a safe reproducible external evidence workflow. Stage 36 targeted external chunk tail inspection / cleanup decision v1 is completed as inspection/reporting plus docs-only cleanup decision; splitter cleanup is not justified by current evidence. Stage 37 optional OCR handoff polish is completed as language-aware smoke/eval and handoff documentation. Stage 38 final delivery preparation is now locked as a fixed Stage 38.0–38.6 route; Stage 38.0 is docs-only plan lock, Stage 38.1 is documented in `docs/project/METRICS_AND_ACCEPTANCE.md`, Stage 38.2 adds `scripts.inspect_document_structure`, and speed/cache remains distant backlog only.
 
 ## Stage 1. Зафиксировать smoke/regression проверки
 
@@ -1025,7 +1025,7 @@ conda run -n etl_env python -m scripts.check_ocr
 
 ## Stage 38.1. Metrics & acceptance criteria documentation
 
-- Статус: in progress / docs-only.
+- Статус: completed / docs-only.
 - Цель: описать метрики качества ETL/RAG-readiness и закрыть пункт ТЗ "метрика определяется исполнителем".
 - Основной документ: `docs/project/METRICS_AND_ACCEPTANCE.md`.
 - Нужно зафиксировать:
@@ -1043,12 +1043,16 @@ conda run -n etl_env python -m scripts.check_ocr
 
 ## Stage 38.2. Single-file structure inspector
 
-- Статус: planned.
+- Статус: completed.
 - Цель: добавить customer/developer-readable CLI для проверки разбиения произвольного файла.
-- Ожидаемый контур:
+- Реализация:
+  - `scripts.inspect_document_structure`;
+  - запуск: `conda run -n etl_env python -m scripts.inspect_document_structure --input-path "D:\path\file.docx"`;
   - input: one explicit file path;
-  - processing only into explicit temporary workspace;
-  - report for manual review of sections, blocks, chunks, tables, images and warnings;
+  - processing only into isolated temporary workspace, default `.runtime_eval\inspect_document_structure_workspace`;
+  - console summary by default, optional Markdown and JSON reports by explicit path;
+  - report for manual review of metadata, processing info, sections, blocks, chunks, tables, images, warnings and artifacts;
+  - dangerous workspace guard rejects production `storage` paths;
   - no production storage pollution.
 - Scope:
   - inspection/handoff tool only;

@@ -201,6 +201,11 @@
 - Stage 38.1 started/prepared as docs-only metrics documentation in `docs/project/METRICS_AND_ACCEPTANCE.md`.
 - Stage 38.1 defines ETL/RAG-readiness quality gates instead of a single generative model accuracy metric: processing, chunk quality, table context, retrieval/source-backed QA, standalone image OCR smoke and operational acceptance.
 - Stage 38.1 keeps scope docs-only: no production code, tests, production storage, runtime artifacts, external dataset, full RAG, LLM generation, semantic retrieval, embeddings/vector DB, scanned PDF OCR, embedded image OCR, table analytics or production UI changes.
+- Stage 38.2 completed as a single-file structure inspector.
+- Stage 38.2 adds `scripts.inspect_document_structure`, which processes one explicit input file into an isolated workspace, defaults to `.runtime_eval\inspect_document_structure_workspace`, and prints a console summary unless Markdown/JSON report paths are explicitly provided.
+- Stage 38.2 reports metadata, processing info, warnings/features/source encoding/text counts, sections, blocks, chunks with source context, tables, images, workspace artifacts and limitations with bounded previews.
+- Stage 38.2 includes guards against using production `storage`, `storage/index`, `storage/results` or `storage/uploads` as the inspector workspace.
+- Stage 38.2 does not change production API, search ranking, OCR behavior, processing contract, RAG/LLM/vector behavior, table analytics or production storage migration.
 
 ## alignment
 

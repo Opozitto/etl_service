@@ -36,6 +36,7 @@
 - Stage 36 targeted external chunk tail inspection / cleanup decision v1 is completed: compact taxonomy samples can be exported through `scripts.audit_rag_chunks` or the Stage 35 wrapper, local external evidence was inspected, and splitter cleanup is not justified now.
 - Stage 37 optional OCR handoff polish is completed: OCR smoke/eval can pass an explicit Tesseract language config, JSON/console reports include `ocr_language`, and `check_ocr` surfaces installed Tesseract languages when available.
 - Stage 38.1 metrics and acceptance documentation is recorded in `docs/project/METRICS_AND_ACCEPTANCE.md`: final acceptance relies on reproducible ETL/RAG-readiness quality gates rather than a single generative model accuracy metric.
+- Stage 38.2 single-file structure inspector is available through `scripts.inspect_document_structure`: one explicit file is processed into an isolated `.runtime_eval` workspace by default, and console/Markdown/JSON reports show metadata, sections, blocks, chunks, tables, images, warnings and artifacts for handoff review.
 - Stage 30–34.3 strengthened the metadata/source/structure/validation/governance contract, but this is still ETL/source-backed handoff readiness rather than full RAG.
 
 ## Best shippable baseline
@@ -55,6 +56,7 @@
 - source location/citation hints for future handoff traceability without LLM citation generation.
 - splitter structure cleanup for cleaner section paths and fewer low-value heading/service chunks in newly processed documents.
 - fresh splitter cleanup validation for temporary workspace outputs without migrating production `storage/results`.
+- single-file structure inspector for customer/developer-readable inspection of one arbitrary file without production storage pollution.
 - Stage 33 closure evidence: 4-document fresh validation over `first_test_data` passed with `documents_with_failures=0`, `service_table_suspects=0`, and `real_table_chunks=984`.
 - Stage 34.0 evidence: fresh temporary audit over 4 explicit sample files found `text_chunks=947`, `table_chunks=5114`, `short_text_chunks=29`, `median_text_chars=884`, and table-heavy outputs dominating the sample; this is design evidence, not a behavior change.
 - Stage 34.1 evidence: on the same explicit 4-file fresh sample, `heading_only_chunks=0`, `nonservice_short_text_chunks=21`, `single_paragraph_text_chunks=0`, `one_line_text_chunks=0`, and `real_table_chunks=4008`.

@@ -66,6 +66,22 @@ conda run -n etl_env python -m scripts.batch_process --input-dir first_test_data
 conda run -n etl_env python -m scripts.batch_process --input-dir first_test_data --report-path storage/index/last_batch_report.json
 ```
 
+## Посмотреть структуру одного файла
+
+Для ручной inspection/handoff проверки одного файла без загрязнения production `storage/`:
+
+```bash
+conda run -n etl_env python -m scripts.inspect_document_structure --input-path "D:\path\file.docx"
+```
+
+По умолчанию временный workspace создается под `.runtime_eval\inspect_document_structure_workspace`. Можно явно сохранить Markdown/JSON отчет:
+
+```bash
+conda run -n etl_env python -m scripts.inspect_document_structure --input-path "D:\path\file.docx" --output-path .runtime_eval\inspect_report.md --json-report-path .runtime_eval\inspect_report.json --clean-workspace
+```
+
+Inspector показывает metadata, processing warnings/features, sections, blocks, chunks, tables, images и workspace artifacts с bounded previews. Это diagnostic tool, не UI, не RAG/LLM, не OCR expansion и не table analytics.
+
 ## Customer demo smoke runner
 
 ```bash

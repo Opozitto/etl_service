@@ -105,7 +105,7 @@ Scanned PDF OCR и embedded image OCR inside DOCX/PDF не реализован�
 - API smoke для core endpoints.
 - OCR smoke для standalone images.
 - External validation smoke по explicit external dataset path, без commit external files/reports.
-- Single-file inspector smoke после Stage 38.2.
+- Single-file inspector smoke через `scripts.inspect_document_structure` после Stage 38.2: один explicit файл, isolated workspace под `.runtime_eval` или explicit safe path, bounded console/Markdown/JSON report, production `storage` не изменяется.
 - `git diff --check`.
 - UTF-8/BOM/U+FFFD sanity для Markdown/docs.
 - Production storage clean: нет незапланированных изменений в `storage/index`, `storage/results`, `storage/uploads`.
@@ -135,6 +135,7 @@ Acceptance смысл: delivery проверяется воспроизводи�
 - Search/ask source-backed behavior works and no-answer case remains explicit.
 - Table rows have readable row/table/column context where deterministic metadata is available.
 - Audit/eval scripts are documented and distinguish diagnostics from production behavior.
+- Single-file structure inspector is available for manual handoff review of one arbitrary file without production storage pollution.
 - OCR limitations are honest: standalone image OCR is optional/local; scanned PDF OCR and embedded image OCR are not implemented.
 - No external proprietary API is required for the confirmed baseline.
 - External dataset is path-only and not committed.

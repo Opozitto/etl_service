@@ -207,11 +207,12 @@ Stage 36 targeted external chunk tail inspection:
 
 Пользователь или разработчик хочет проверить один произвольный документ до добавления его в regular corpus flow.
 
-Ожидаемый результат после будущего Stage 38.2:
+Текущий результат после Stage 38.2:
 
-- CLI принимает explicit path к одному файлу;
-- обработка идет только во временный workspace;
-- отчет показывает sections, blocks, chunks, tables, images и warnings для ручного просмотра;
+- CLI `scripts.inspect_document_structure` принимает explicit path к одному файлу;
+- обработка идет только во временный workspace, default `.runtime_eval\inspect_document_structure_workspace`;
+- console summary печатается по умолчанию, Markdown/JSON отчеты пишутся только по explicit output path;
+- отчет показывает metadata, processing info, sections, blocks, chunks, tables, images, warnings и workspace artifacts для ручного просмотра;
 - production `storage/index`, `storage/results` и `storage/uploads` не загрязняются.
 
 Это customer/developer-readable inspection/handoff tool для проверки разбиения произвольного документа. Это не UI, не RAG, не semantic retrieval, не embeddings/vector DB и не generation.
@@ -274,7 +275,7 @@ Stage 36 targeted external chunk tail inspection:
 | EC-14 | Fresh splitter cleanup validation | Проверить Stage 33 cleanup на свежей обработке sample documents | Explicit input files/directories plus temporary workspace | Reprocess samples into workspace, then report TOC parent violations, duplicate headings, heading-only chunks, service table suspects, real table chunks and missing page limitations | yes | supported now / diagnostics | Stage 33.2 validates newly processed output; Stage 33.4 records 4-document closure evidence; no migration of production `storage/results` |
 | EC-15 | External Example_data validation | Проверить handoff baseline на внешнем customer-like dataset | External `D:\Projects\etl_service_backup\Example_data` plus QA TSV file by explicit path | Audit QA coverage/source matching, process selected docs into temporary workspace, run QA/readiness eval, workflow summary and Stage 34.3 chunk taxonomy report | yes | supported now / diagnostics | Stage 35 workflow; strict expected-source mode may select 0 docs if sources are ambiguous, so exploratory chunk validation can use bounded `all-supported` / `ambiguous-policy all`; external files and `.runtime_eval` reports are not committed |
 | EC-16 | External compact tail inspection | Проверить конкретные compact taxonomy chunks перед cleanup decision | External Stage 35 workspace or explicit temporary results dir | Export bounded `compact_text_taxonomy.samples.real_low_value_tail` with source/chunk/context metadata and preview | yes | supported now / diagnostics | Stage 36 inspection/reporting completed; current local evidence does not justify splitter cleanup |
-| EC-17 | Single-file structure inspection | Проверить разбиение одного произвольного документа перед handoff/review | Explicit single file path plus temporary workspace | Обработать файл вне production storage и показать sections, blocks, chunks, tables, images, warnings для ручного просмотра | yes | planned Stage 38.2 / diagnostics | Будущий inspection/handoff CLI; not UI, not RAG, not semantic retrieval, not generation |
+| EC-17 | Single-file structure inspection | Проверить разбиение одного произвольного документа перед handoff/review | Explicit single file path plus temporary workspace | Обработать файл вне production storage и показать metadata, sections, blocks, chunks, tables, images, warnings и artifacts для ручного просмотра | yes | supported now / diagnostics | Stage 38.2 `scripts.inspect_document_structure`; not UI, not RAG, not semantic retrieval, not generation |
 
 ## Связь со Stage 11-17
 
