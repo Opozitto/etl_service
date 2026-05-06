@@ -206,6 +206,10 @@
 - Stage 38.2 reports metadata, processing info, warnings/features/source encoding/text counts, sections, blocks, chunks with source context, tables, images, workspace artifacts and limitations with bounded previews.
 - Stage 38.2 includes guards against using production `storage`, `storage/index`, `storage/results` or `storage/uploads` as the inspector workspace.
 - Stage 38.2 does not change production API, search ranking, OCR behavior, processing contract, RAG/LLM/vector behavior, table analytics or production storage migration.
+- Stage 38.3 completed as operation manuals docs-only.
+- Stage 38.3 adds `docs/project/OPERATION_GUIDE.md` with three levels: quick start, medium route with pipeline rationale, and detailed operation/handoff guide.
+- Stage 38.3 records safe command usage through `conda run -n etl_env`, `.runtime_eval` / explicit temporary workspace policy, production storage cleanup, external `Example_data` path-only policy, OCR limitations, search/ask source-backed behavior, table baseline limitations and final demonstration route.
+- Stage 38.3 does not change code, tests, production storage, runtime reports, external data, RAG/LLM/vector behavior, OCR implementation, table analytics or API behavior.
 
 ## alignment
 

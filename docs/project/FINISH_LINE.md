@@ -37,6 +37,7 @@
 - Stage 37 optional OCR handoff polish is completed: OCR smoke/eval can pass an explicit Tesseract language config, JSON/console reports include `ocr_language`, and `check_ocr` surfaces installed Tesseract languages when available.
 - Stage 38.1 metrics and acceptance documentation is recorded in `docs/project/METRICS_AND_ACCEPTANCE.md`: final acceptance relies on reproducible ETL/RAG-readiness quality gates rather than a single generative model accuracy metric.
 - Stage 38.2 single-file structure inspector is available through `scripts.inspect_document_structure`: one explicit file is processed into an isolated `.runtime_eval` workspace by default, and console/Markdown/JSON reports show metadata, sections, blocks, chunks, tables, images, warnings and artifacts for handoff review.
+- Stage 38.3 operation manuals are recorded in `docs/project/OPERATION_GUIDE.md`: quick start, explained operating route and detailed final handoff instructions for the confirmed ETL/source-backed baseline.
 - Stage 30–34.3 strengthened the metadata/source/structure/validation/governance contract, but this is still ETL/source-backed handoff readiness rather than full RAG.
 
 ## Best shippable baseline
@@ -97,6 +98,16 @@ conda run -n etl_env python -m scripts.evaluate_ocr --input-dir <dir> --json-rep
 ```
 - Stage 37 remains smoke/eval and handoff polish only. OCR quality depends on image quality, installed language packs, preprocessing and future OCR module design. Future OCR provenance should preserve source path/name, page, artifact/image id, engine/version, language config, confidence if available, processing timestamp and source modality; OCR-derived chunks should be marked explicitly as OCR-derived evidence.
 
+## Final delivery toolkit
+
+- `docs/project/METRICS_AND_ACCEPTANCE.md` - quality gates and acceptance baseline.
+- `docs/project/OPERATION_GUIDE.md` - operation manual for quick start, explained demo route, detailed handoff, temporary workspace policy and cleanup.
+- `scripts.demo_customer_flow` - customer-facing baseline smoke.
+- `scripts.inspect_document_structure` - single-file structure inspection without production storage pollution.
+- `scripts.audit_rag_chunks` - chunk quality / handoff diagnostics.
+- `scripts.validate_external_example_data` - external `Example_data` path-only validation workflow.
+- `scripts.check_ocr` and `scripts.evaluate_ocr` - optional local standalone image OCR smoke/eval.
+
 ## What is confirmed, and what is not
 
 - Confirmed:
@@ -150,7 +161,7 @@ Stage 38 is the final delivery preparation route after completed Stage 37.1. It 
 - Stage 38.0 Final delivery preparation plan lock: docs-only route lock; no code/tests/storage/runtime/external artifacts.
 - Stage 38.1 Metrics & acceptance criteria documentation: define ETL/RAG-readiness metrics and acceptance criteria in `docs/project/METRICS_AND_ACCEPTANCE.md`, including processing, chunk, table, retrieval/QA, OCR smoke and operational quality gates.
 - Stage 38.2 Single-file structure inspector: CLI inspection/handoff tool for one arbitrary file, processing only in a temporary workspace and reporting sections/blocks/chunks/tables/images/warnings without production storage pollution.
-- Stage 38.3 Operation manuals: short, medium and detailed operation instructions for the confirmed baseline.
+- Stage 38.3 Operation manuals: completed docs-only in `docs/project/OPERATION_GUIDE.md` with short, medium and detailed operation instructions for the confirmed baseline.
 - Stage 38.4 Language/comment audit & polish: audit first, then safe translation/polish of comments/docs/help text; keep API/JSON/CLI identifiers, test names and technical symbols unchanged.
 - Stage 38.5 Experiments packaging: explain repository experiments/evaluation flows, scripts linkage and external dataset path-only policy; do not add fake notebook experiments.
 - Stage 38.6 Final cleanup & verification checklist: full pytest, demo smoke, API smoke, OCR smoke, external validation smoke, single-file inspector smoke after Stage 38.2, UTF-8 sanity, `git diff --check`, cleanup runtime artifacts, known limitations and next development steps, and final acceptance checklist.
@@ -179,9 +190,10 @@ Follow-up sequence:
 - Stage 35 External `Example_data` validation v1, completed as evidence over explicit temporary workspace; external data is not training data and is not committed.
 - Stage 36 Targeted external chunk tail inspection / cleanup decision v1, completed; cleanup not needed now based on local sample evidence.
 - Stage 37 Optional light OCR handoff polish, completed.
-- Stage 38.0 Final delivery preparation plan lock, in progress / docs-only.
+- Stage 38.0 Final delivery preparation plan lock, completed / docs-only.
 - Stage 38.1 Metrics & acceptance criteria documentation, completed / docs-only.
-- Stage 38.2 Single-file structure inspector, next after Stage 38.1.
+- Stage 38.2 Single-file structure inspector, completed.
+- Stage 38.3 Operation manuals, completed / docs-only.
 - QA evaluator retrieval-loop speed/cache moves to later/backlog only if it becomes a severe operational blocker.
 
 This preserves the delivery-first rule: every stage should be demo-ready / shippable, future stages can be dropped without breaking the current baseline, large architecture rewrites stay out of scope, and future AI capabilities remain source-backed / evaluation-visible.

@@ -131,6 +131,8 @@ conda run -n etl_env python -m scripts.audit_corpus --report-path storage/index/
 
 Метрики качества и финальные acceptance gates зафиксированы в `docs/project/METRICS_AND_ACCEPTANCE.md`. Документ описывает ETL/RAG-readiness quality gates для processing, chunks, table context, retrieval/source-backed QA, standalone image OCR smoke и operational acceptance без claims о full RAG, LLM generation, semantic retrieval, vector DB, scanned PDF OCR, embedded image OCR или table analytics.
 
+Эксплуатационный маршрут для быстрого запуска, демонстрации, временных workspace, cleanup и final handoff описан в `docs/project/OPERATION_GUIDE.md`.
+
 ## Очистка дубликатов в storage
 
 ```bash

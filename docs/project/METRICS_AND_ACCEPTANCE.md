@@ -112,6 +112,8 @@ Scanned PDF OCR и embedded image OCR inside DOCX/PDF не реализован�
 
 Acceptance смысл: delivery проверяется воспроизводимыми командами и чистотой артефактов, а не устными claims.
 
+Эксплуатационные команды, recommended demo route, temporary workspace policy и cleanup порядок описаны в `docs/project/OPERATION_GUIDE.md`.
+
 ## Comparison of approaches
 
 Сравнивать в текущем проекте нужно не модели генерации, а версии ETL pipeline / extractor / splitter / chunker / OCR configuration по одним и тем же quality gates.
