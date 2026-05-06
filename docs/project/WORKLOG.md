@@ -214,6 +214,10 @@
 - Stage 38.4 adds `docs/project/LANGUAGE_AUDIT.md` with audit categories: safe_to_polish, keep_as_technical_identifier_or_contract, historical_log_do_not_touch, and out_of_scope_or_risky.
 - Stage 38.4 safely localizes selected human-facing FastAPI/CLI/help/console text while preserving API routes, JSON fields, CLI flags, module/test names, stage/report identifiers and technical taxonomy terms.
 - Stage 38.4 does not change production behavior, public API, storage, runtime reports, external data, OCR/RAG/LLM/vector behavior, table analytics or search ranking.
+- Stage 38.5 completed as experiments packaging docs-only.
+- Stage 38.5 adds `experiments/README.md` as the top-level entry point for reproducible scripts/evaluation workflows: baseline smoke/regression, single-file structure inspection, corpus audit, RAG-ready chunk export/audit, QA/retrieval readiness, external `Example_data` validation, OCR smoke and requirements/table evidence.
+- Stage 38.5 links the packaging from README, operation guide, metrics/acceptance and finish-line docs, and marks the stage completed in the plan.
+- Stage 38.5 does not add notebooks, data files, generated reports, `.runtime_eval` artifacts, external dataset copies, production code changes, tests changes, storage changes, API/search/OCR/ETL behavior changes, RAG/LLM/vector behavior or table analytics.
 
 ## alignment
 

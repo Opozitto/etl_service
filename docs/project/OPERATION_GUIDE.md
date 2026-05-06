@@ -65,6 +65,7 @@ intake -> extractor -> StructuredDocument JSON -> blocks/sections/tables/images 
 - `scripts.evaluate_ocr` - smoke/eval standalone `jpg`/`jpeg`/`png` OCR через локальный Tesseract, если он установлен.
 - `scripts.evaluate_qa_dataset` - retrieval/source-backed QA readiness evaluation по QA CSV/TSV и уже обработанным JSON.
 - `docs/project/METRICS_AND_ACCEPTANCE.md` - финальные quality gates и acceptance criteria для обработки, chunks, table context, search/ask, OCR smoke и operational cleanup.
+- `experiments/README.md` - entry point для reproducible experiments/evaluation workflows: smoke/regression, single-file inspection, corpus/chunk audits, QA readiness, external validation, OCR smoke и requirements/table evidence.
 
 Рекомендуемый порядок демонстрации:
 

@@ -135,6 +135,8 @@ conda run -n etl_env python -m scripts.audit_corpus --report-path storage/index/
 
 Language/comment audit и правила будущей локализации описаны в `docs/project/LANGUAGE_AUDIT.md`.
 
+Воспроизводимые experiments/evaluation workflows для сдачи описаны в `experiments/README.md`. Это scripts-based packaging без fake notebooks, external dataset copies или generated report artifacts.
+
 ## Очистка дубликатов в storage
 
 ```bash

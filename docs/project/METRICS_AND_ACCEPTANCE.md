@@ -112,7 +112,7 @@ Scanned PDF OCR и embedded image OCR inside DOCX/PDF не реализован�
 
 Acceptance смысл: delivery проверяется воспроизводимыми командами и чистотой артефактов, а не устными claims.
 
-Эксплуатационные команды, recommended demo route, temporary workspace policy и cleanup порядок описаны в `docs/project/OPERATION_GUIDE.md`.
+Эксплуатационные команды, recommended demo route, temporary workspace policy и cleanup порядок описаны в `docs/project/OPERATION_GUIDE.md`. Метрики воспроизводятся через scripts/evaluation workflows, упакованные в `experiments/README.md`.
 
 ## Comparison of approaches
 
