@@ -232,6 +232,10 @@
 - Stage 39.1 adds deterministic OCR text quality inspection before normal OCR text/chunk emission: printable ratio, Cyrillic/Latin ratios, suspicious latinized-RU patterns and mixed-symbol noise.
 - Stage 39.1 makes suspicious standalone OCR output degraded metadata/warning and OCR candidate evidence instead of silently searchable normal OCR text.
 - Stage 39.1 does not add scanned PDF OCR, embedded DOCX/PDF OCR, OCR language auto-switching, OCR pipeline redesign, external OCR APIs, ML/LLM scoring, splitter changes, search/ranking changes or storage migration.
+- Stage 39.2 completed as bounded extractor garbage detection for RTF output and PDF `(cid:...)` text fragments.
+- Stage 39.2 adds deterministic helper-level inspection for printable/control/symbol/word-quality signals in RTF extraction and conservative CID artifact density in PDF paragraph fragments.
+- Stage 39.2 suppresses obvious RTF garbage as degraded warning/metadata and suppresses only CID-dominated PDF paragraph fragments, while preserving normal PDF extraction and table extraction.
+- Stage 39.2 does not add parser replacement, OCR fallback, scanned PDF OCR, embedded image OCR, semantic cleanup, splitter changes, retrieval/search architecture changes or broad text rewriting.
 
 ## alignment
 
@@ -284,7 +288,7 @@
 - Future cleanup should only be considered if repeated tails appear across more documents/corpora.
 - Standalone OCR without RU language config can produce misleading Russian output; for Russian OCR baseline the recommended operational mode is `--language rus+eng`.
 - OCR without RU language config is smoke/best-effort only and must not be treated as quality baseline; Stage 39.1 only reduces misleading-success risk and does not guarantee OCR quality.
-- RTF/PDF extraction can technically succeed while text quality is garbage; Stage 39.2 is bounded to detection/reporting rather than parser replacement.
+- RTF/PDF extraction can technically succeed while text quality is garbage; Stage 39.2 reduces misleading-success risk through bounded detection/suppression rather than parser replacement.
 - `.doc` conversion can depend on local converter/dependency environment; this remains an accepted preflight limitation unless a separate implementation decision is made.
 - Accepted deterministic ETL limitations remain: missing DOCX pages, formula-like heading fragments, compact pollutant/equipment evidence, isolated table-layout tails, approval/signature service structures and partial multirow header limitations.
 - DOCX page metadata can be unavailable; this is an expected limitation and should stay explicit in diagnostics.
@@ -306,6 +310,7 @@
 - Stage 39.0 decision: not planned for this route are scanned PDF OCR, embedded DOCX/PDF OCR, semantic retrieval, reranking, vector DB, full RAG, advanced OCR pipeline, large splitter rewrites and endless cleanup/polish.
 - Stage 39.0 decision: after Stage 39.3 the project returns to final delivery preparation only, not Stage 40+ feature planning.
 - Stage 39.1 risk: conservative OCR heuristic can still miss some bad OCR or degrade rare valid text shaped like audit samples; this is accepted because the stage goal is honest degraded handling, not OCR quality scoring.
+- Stage 39.2 risk: conservative extraction heuristics can still miss some bad fragments or suppress rare valid compact text shaped like garbage; thresholds are intentionally bounded to avoid aggressive cleanup of useful evidence.
 
 ## checks
 
@@ -318,6 +323,9 @@
   - `conda run -n etl_env python -m pytest -q tests\test_ocr_quality.py` -> OK;
   - `conda run -n etl_env python -m pytest -q tests\test_extractors.py -k "standalone_image_with_ocr or suppresses_degraded_standalone_ocr_text"` -> OK;
   - `conda run -n etl_env python -m py_compile app\pipeline\ocr.py app\services\document_service.py scripts\evaluate_ocr.py` -> OK;
+- Stage 39.2 bounded checks:
+  - initial `conda run -n etl_env python -m pytest -q tests\test_extraction_quality.py` hit known Codex Windows `tmp_path` ACL issue under `D:\Temp\pytest-of-opozi` before test body for extractor-level cases; tests were adjusted to use a local workspace temp folder instead of pytest `tmp_path`;
+  - `conda run -n etl_env python -m pytest -q tests\test_extraction_quality.py` -> OK, `6 passed`;
   - `conda run -n etl_env python -m pytest -q tests\test_ocr_quality.py tests\test_evaluate_ocr.py` -> `tests\test_ocr_quality.py` passed, then `tests\test_evaluate_ocr.py` setup was blocked by known Codex sandbox `D:\Temp\pytest-of-opozi` ACL before test assertions.
 - `conda run -n etl_env python -m pytest -q tests\test_extractors.py -k "image or ocr or registry" --basetemp=D:\Projects\etl_service\.pytest-run-temp\stage20_extractors` -> tests executed, but pytest sessionfinish hit `PermissionError` on `basetemp` cleanup in the Codex sandbox.
 - `conda run -n etl_env python -m pytest -q tests\test_api.py tests\test_contracts.py tests\test_audit_corpus.py --basetemp=D:\Projects\etl_service\.pytest-run-temp\stage20_core` -> tests executed, but pytest sessionfinish hit `PermissionError` on `basetemp` cleanup in the Codex sandbox.

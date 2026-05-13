@@ -3,6 +3,7 @@ from pathlib import Path
 import pdfplumber
 
 from app.pipeline.extractors.base import BaseExtractor
+from app.pipeline.extractors.quality import inspect_pdf_cid_fragment_quality
 from app.pipeline.errors import ExtractionError
 from app.pipeline.types import ExtractedDocument, RawBlock
 
@@ -22,9 +23,16 @@ class PdfExtractor(BaseExtractor):
                 for page_idx, page in enumerate(pdf.pages, start=1):
                     page_text = (page.extract_text() or "").strip()
                     if page_text:
-                        text_parts.append(page_text)
+                        accepted_chunks: list[str] = []
                         for chunk in [item.strip() for item in page_text.split("\n\n") if item.strip()]:
+                            quality = inspect_pdf_cid_fragment_quality(chunk)
+                            if not quality.accepted and quality.status == "degraded":
+                                warnings.extend(quality.warnings)
+                                continue
+                            accepted_chunks.append(chunk)
                             blocks.append(RawBlock(kind="paragraph", text=chunk, page_num=page_idx))
+                        if accepted_chunks:
+                            text_parts.append("\n\n".join(accepted_chunks))
 
                     try:
                         tables = page.extract_tables() or []
