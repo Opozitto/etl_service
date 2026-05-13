@@ -44,6 +44,9 @@
 - Stage 38.5 experiments packaging is recorded in `experiments/README.md`: scripts-based reproducible experiments/evaluation workflows without fake notebooks, committed external data or generated reports.
 - Stage 38.6 final cleanup and verification checklist is recorded in `docs/project/FINAL_DELIVERY_CHECKLIST.md`: final verification sequence, local cleanup before physical copy, known limitations, next development steps, copy/commit rules and final acceptance checklist.
 - Stage 39.0 post-audit triage is completed docs-only: F1/F2/F3 are bounded remediation targets, F4 and known deterministic ETL limits are accepted limitations, and Stage 39.1–39.3 is the only remediation-before-delivery route.
+- Stage 39.1 standalone OCR safety gate is completed: suspicious standalone OCR output is degraded/warning evidence instead of silently searchable normal OCR text, but this is not an OCR quality guarantee.
+- Stage 39.2 extractor garbage detection is completed: RTF garbage and PDF `(cid:...)` fragments are handled through bounded warning/degraded detection, not parser replacement or OCR fallback.
+- Stage 39.3 final post-audit verification and docs alignment is completed: final delivery docs/checklist now point to delivery preparation only.
 - Stage 30–34.3 strengthened the metadata/source/structure/validation/governance contract, but this is still ETL/source-backed handoff readiness rather than full RAG.
 
 ## Best shippable baseline
@@ -147,6 +150,9 @@ conda run -n etl_env python -m scripts.evaluate_ocr --input-dir <dir> --json-rep
   - Stage 36 targeted chunk tail sample export and cleanup decision evidence: cleanup not needed now.
   - Stage 37 language-aware OCR smoke/eval and handoff polish for standalone images.
   - Stage 39.0 docs-only audit triage and limitation classification lock.
+  - Stage 39.1 standalone OCR safety gate.
+  - Stage 39.2 extractor garbage detection.
+  - Stage 39.3 final post-audit verification and docs alignment.
 - Not confirmed:
   - scanned PDF OCR;
   - embedded DOCX/PDF image OCR;
@@ -181,7 +187,7 @@ Stage 38 completed final delivery preparation docs. Stage 39 is a bounded post-a
 - Stage 39.0 Audit triage & limitation classification: completed docs-only; separates bounded remediation from accepted limitations after deep audit of `first_test_data`.
 - Stage 39.1 Standalone OCR safety gate: bounded remediation for misleading standalone OCR output, especially Russian OCR without `--language rus+eng`.
 - Stage 39.2 Extractor garbage detection: bounded remediation for RTF garbage and PDF `(cid:...)` garbage fragments through warning/degraded classification, not parser replacement.
-- Stage 39.3 Final post-audit verification & docs alignment: closing verification after Stage 39.1–39.2.
+- Stage 39.3 Final post-audit verification & docs alignment: completed docs-only closing verification after Stage 39.1–39.2.
 
 Accepted limitations and post-audit verification are part of final delivery preparation, not an optional afterthought. The final acceptance checklist should use `docs/project/METRICS_AND_ACCEPTANCE.md` plus Stage 39 post-audit wording as the metrics/acceptance baseline.
 
@@ -191,7 +197,7 @@ Cleanup of the local project folder must not remove source files, tests, docs, `
 
 ## Next choice
 
-The next direction is selected and finite after Stage 39.0. Keep the work bounded to remediation that prevents misleading behavior; after Stage 39.3, continue final delivery preparation only.
+The next direction is selected and finite after Stage 39.3. Continue final delivery preparation only.
 
 Follow-up sequence:
 
@@ -215,9 +221,9 @@ Follow-up sequence:
 - Stage 38.5 Experiments packaging, completed / docs-only.
 - Stage 38.6 Final cleanup & verification checklist, completed / docs-only.
 - Stage 39.0 Audit triage & limitation classification, completed / docs-only.
-- Stage 39.1 Standalone OCR safety gate.
-- Stage 39.2 Extractor garbage detection.
-- Stage 39.3 Final post-audit verification & docs alignment.
+- Stage 39.1 Standalone OCR safety gate, completed.
+- Stage 39.2 Extractor garbage detection, completed.
+- Stage 39.3 Final post-audit verification & docs alignment, completed / docs-only.
 - Final delivery preparation only.
 - QA evaluator retrieval-loop speed/cache moves to later/backlog only if it becomes a severe operational blocker.
 
@@ -228,7 +234,7 @@ Stage 29.1 and Stage 29.2 closed visibility/export/audit for chunks. Stage 30 co
 Current chunks are acceptable for lexical search and now carry stronger source/location/citation metadata. Newly processed chunks also have cleaner splitter structure after Stage 33.1 and fewer approval/signature table false positives after Stage 33.3.
 Stage 33.2 adds a bounded validation workflow for proving cleanup on fresh temporary outputs, without migrating old `storage/results`. Stage 33.4 records an expanded 4-document fresh validation run with zero failures/warnings, so Stage 33 is closed from the splitter cleanup standpoint.
 Stage 34.1 implements the narrow ordinary text chunk coherence cleanup target without full RAG or semantic retrieval.
-Stage 34.2 locked the finite finish route, Stage 34.3 implemented metric taxonomy normalization, Stage 35 validated the external `Example_data` path without committing external/runtime artifacts, Stage 36 closed the targeted compact tail cleanup decision as no cleanup needed now, Stage 37 closed optional OCR handoff polish, Stage 38 completed final delivery preparation docs, and Stage 39.0 now locks the post-audit remediation route.
+Stage 34.2 locked the finite finish route, Stage 34.3 implemented metric taxonomy normalization, Stage 35 validated the external `Example_data` path without committing external/runtime artifacts, Stage 36 closed the targeted compact tail cleanup decision as no cleanup needed now, Stage 37 closed optional OCR handoff polish, Stage 38 completed final delivery preparation docs, and Stage 39.0–39.3 closed the finite post-audit remediation route.
 
 Known splitter issues:
 

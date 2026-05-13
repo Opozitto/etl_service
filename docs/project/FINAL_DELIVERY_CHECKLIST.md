@@ -41,25 +41,38 @@ git status --short
 conda run -n etl_env python -m pytest -q
 ```
 
-3. Запустить customer demo smoke:
+3. Запустить focused post-audit regression для Stage 39.1–39.2:
+
+```powershell
+conda run -n etl_env python -m pytest -q tests\test_ocr_quality.py tests\test_extraction_quality.py
+conda run -n etl_env python -m pytest -q tests\test_extractors.py -k "standalone_image_with_ocr or suppresses_degraded_standalone_ocr_text"
+```
+
+4. Запустить relevant focused `py_compile` для OCR/extractor quality path:
+
+```powershell
+conda run -n etl_env python -m py_compile app\pipeline\ocr.py app\services\document_service.py app\pipeline\extractors\quality.py app\pipeline\extractors\rtf.py app\pipeline\extractors\pdf.py scripts\evaluate_ocr.py tests\test_ocr_quality.py tests\test_extraction_quality.py tests\test_extractors.py
+```
+
+5. Запустить customer demo smoke:
 
 ```powershell
 conda run -n etl_env python -m scripts.demo_customer_flow
 ```
 
-4. Проверить single-file inspector на маленьком sample-файле с output под `.runtime_eval`:
+6. Проверить single-file inspector на маленьком sample-файле с output под `.runtime_eval`:
 
 ```powershell
 conda run -n etl_env python -m scripts.inspect_document_structure --input-path "D:\path\small_sample.docx" --output-path .runtime_eval\inspect_report.md --json-report-path .runtime_eval\inspect_report.json --clean-workspace
 ```
 
-5. Проверить local OCR engine/languages:
+7. Проверить local OCR engine/languages:
 
 ```powershell
 conda run -n etl_env python -m scripts.check_ocr
 ```
 
-6. Optional OCR eval для standalone images, если Tesseract и language packs доступны:
+8. Optional OCR eval для standalone images, если Tesseract и language packs доступны:
 
 ```powershell
 conda run -n etl_env python -m scripts.evaluate_ocr --input-dir first_test_data --json-report-path .runtime_eval\ocr_smoke_report.json --language rus+eng
@@ -67,7 +80,7 @@ conda run -n etl_env python -m scripts.evaluate_ocr --input-dir first_test_data 
 
 Для русского OCR baseline рекомендуемый режим - `--language rus+eng`. OCR без RU language config не считается quality baseline: он может дать misleading латинизированный или искаженный русский текст и допустим только как smoke/best-effort behavior.
 
-7. Optional external validation bounded smoke, если доступен external `Example_data`:
+9. Optional external validation bounded smoke, если доступен external `Example_data`:
 
 ```powershell
 conda run -n etl_env python -m scripts.validate_external_example_data --dataset-dir D:\Projects\etl_service_backup\Example_data --qa-path "D:\Projects\etl_service_backup\Example_data\[ОТВЕТЫ] Данные для тестирования\test_with_answers.csv" --source-scope all-supported --ambiguous-policy all --process --run-eval --run-chunk-quality --clean-workspace --max-documents 10 --max-questions 20
@@ -75,19 +88,19 @@ conda run -n etl_env python -m scripts.validate_external_example_data --dataset-
 
 External `Example_data` является path-only dataset outside repository. Его не копировать в repository и не коммитить.
 
-8. Если demo/eval/API smoke изменили production storage, восстановить tracked baseline:
+10. Если demo/eval/API smoke изменили production storage, восстановить tracked baseline:
 
 ```powershell
 git restore storage/index storage/results storage/uploads
 ```
 
-9. Проверить diff whitespace:
+11. Проверить diff whitespace:
 
 ```powershell
 git diff --check
 ```
 
-10. Проверить UTF-8 sanity для измененных Markdown-файлов:
+12. Проверить UTF-8 sanity для измененных Markdown-файлов:
 
 ```powershell
 $files = @(
@@ -109,7 +122,7 @@ foreach ($file in $files) {
 }
 ```
 
-11. Проверить storage/runtime pollution:
+13. Проверить storage/runtime pollution:
 
 ```powershell
 git status --short storage/index storage/results storage/uploads .runtime_eval
@@ -126,6 +139,8 @@ git status --short storage/index storage/results storage/uploads .runtime_eval
 - PDF `(cid:...)` garbage fragments surfaced through detection/reporting, без OCR fallback и без PDF parser replacement;
 - `.doc` converter/dependency issue описан как preflight/accepted limitation, а не production blocker;
 - accepted deterministic ETL limitations остаются honest limitations, а не remediation backlog.
+
+Stage 39.3 закрывает эту проверку как docs-only alignment: после неё route возвращается к final delivery preparation only.
 
 Эта проверка не запускает новый feature roadmap и не добавляет Stage 40+.
 
@@ -199,20 +214,18 @@ External `D:\Projects\etl_service_backup\Example_data` остается вне r
 - No table analytics/calculations.
 - Optional local OCR only for standalone `jpg`/`jpeg`/`png`.
 - For Russian standalone OCR baseline use `--language rus+eng`; OCR without RU language config is smoke/best-effort only.
+- Stage 39.1 OCR safety gate reduces misleading-success risk, but does not guarantee OCR quality.
 - DOCX page metadata may be unavailable.
 - Deterministic chunking is not semantic document understanding.
-- RTF/PDF extraction may require garbage detection/reporting for misleading successful-looking output.
+- Stage 39.2 RTF/PDF garbage detection reduces retrieval pollution risk, but is not an RTF/PDF parser rewrite and not OCR fallback.
 - `.doc` conversion can depend on local converter/dependency environment; this is a preflight limitation unless separately changed.
 - Accepted deterministic ETL limitations: missing DOCX pages, formula-like heading fragments, compact pollutant/equipment evidence, isolated table-layout tails, approval/signature service structures and partial multirow header limitations.
 - External QA source ambiguity is dataset/workflow diagnostic, not an automatic project failure and not successful quality evidence by itself.
 
 ## Bounded route before delivery
 
-Allowed next steps are finite and closing:
+Stage 39 route is now closed. Allowed next steps are delivery-only:
 
-- Stage 39.1 standalone OCR safety gate;
-- Stage 39.2 extractor garbage detection;
-- Stage 39.3 final post-audit verification & docs alignment;
 - final delivery preparation only.
 
 Not planned in this route:
@@ -231,15 +244,20 @@ Not planned in this route:
 
 - [ ] Repository clean: `git status --short` has no output.
 - [ ] Tests pass in local `etl_env`.
+- [ ] OCR safety gate tests pass: `tests\test_ocr_quality.py` and focused image OCR extractor checks.
+- [ ] Extractor quality tests pass: `tests\test_extraction_quality.py`.
+- [ ] Focused `py_compile` for OCR/extractor quality path passes.
 - [ ] Demo pass: `scripts.demo_customer_flow`.
+- [ ] Optional standalone OCR smoke with `--language rus+eng` is either passed or explicitly skipped because local Tesseract/language packs are unavailable.
 - [ ] API documented.
 - [ ] Operation guide present.
 - [ ] Metrics doc present.
 - [ ] Experiments README present.
 - [ ] Single-file inspector present.
 - [ ] Limitations honest.
-- [ ] Stage 39 post-audit bounded remediation classified and finite.
+- [ ] Stage 39 post-audit route closed; remaining route is final delivery preparation only.
 - [ ] External dataset not committed.
 - [ ] Runtime artifacts not committed.
+- [ ] Production storage/runtime cleanliness checked.
 - [ ] No false readiness claims.
 - [ ] Final physical copy ready.

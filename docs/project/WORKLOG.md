@@ -236,6 +236,10 @@
 - Stage 39.2 adds deterministic helper-level inspection for printable/control/symbol/word-quality signals in RTF extraction and conservative CID artifact density in PDF paragraph fragments.
 - Stage 39.2 suppresses obvious RTF garbage as degraded warning/metadata and suppresses only CID-dominated PDF paragraph fragments, while preserving normal PDF extraction and table extraction.
 - Stage 39.2 does not add parser replacement, OCR fallback, scanned PDF OCR, embedded image OCR, semantic cleanup, splitter changes, retrieval/search architecture changes or broad text rewriting.
+- Stage 39.3 completed as final post-audit verification and docs alignment.
+- Stage 39.3 updates final delivery docs/checklist so pre-delivery verification explicitly covers OCR safety gate tests, extractor quality tests, focused `py_compile`, optional standalone OCR smoke with `--language rus+eng`, and storage/runtime cleanliness.
+- Stage 39.3 closes the Stage 39 route: OCR safety gate and RTF/PDF garbage detection are bounded misleading-success risk reductions, `.doc` remains accepted preflight/dependency limitation, accepted deterministic ETL limitations stay limitations, and the next route is final delivery preparation only.
+- Stage 39.3 is docs-only: no production code, tests, API, OCR/extractor/splitter behavior, runtime artifacts, production storage, ingestion/eval output or external dataset changes.
 
 ## alignment
 
@@ -309,6 +313,7 @@
 - Stage 19.1 remains OCR candidate reporting / readiness visibility, while Stage 20 adds only the optional local OCR baseline for standalone images.
 - Stage 39.0 decision: not planned for this route are scanned PDF OCR, embedded DOCX/PDF OCR, semantic retrieval, reranking, vector DB, full RAG, advanced OCR pipeline, large splitter rewrites and endless cleanup/polish.
 - Stage 39.0 decision: after Stage 39.3 the project returns to final delivery preparation only, not Stage 40+ feature planning.
+- Stage 39.3 decision: the post-audit remediation route is closed; final delivery preparation is checklist execution and cleanup, not roadmap reopen.
 - Stage 39.1 risk: conservative OCR heuristic can still miss some bad OCR or degrade rare valid text shaped like audit samples; this is accepted because the stage goal is honest degraded handling, not OCR quality scoring.
 - Stage 39.2 risk: conservative extraction heuristics can still miss some bad fragments or suppress rare valid compact text shaped like garbage; thresholds are intentionally bounded to avoid aggressive cleanup of useful evidence.
 
@@ -327,6 +332,13 @@
   - initial `conda run -n etl_env python -m pytest -q tests\test_extraction_quality.py` hit known Codex Windows `tmp_path` ACL issue under `D:\Temp\pytest-of-opozi` before test body for extractor-level cases; tests were adjusted to use a local workspace temp folder instead of pytest `tmp_path`;
   - `conda run -n etl_env python -m pytest -q tests\test_extraction_quality.py` -> OK, `6 passed`;
   - `conda run -n etl_env python -m pytest -q tests\test_ocr_quality.py tests\test_evaluate_ocr.py` -> `tests\test_ocr_quality.py` passed, then `tests\test_evaluate_ocr.py` setup was blocked by known Codex sandbox `D:\Temp\pytest-of-opozi` ACL before test assertions.
+- Stage 39.3 docs-only checks:
+  - `git status --short` before changes -> clean;
+  - docs aligned only in `docs/project/PLAN.md`, `docs/project/WORKLOG.md`, `docs/project/FINISH_LINE.md`, `docs/project/FINAL_DELIVERY_CHECKLIST.md`;
+  - `git diff --check` -> OK, only Git CRLF working-copy warnings;
+  - UTF-8 sanity for changed Markdown files -> OK, no BOM, no replacement char;
+  - `git status --short storage/index storage/results storage/uploads .runtime_eval` -> clean;
+  - no code/tests/API/OCR/extractor/splitter behavior, production storage, `.runtime_eval`, ingestion/eval smoke or external dataset changes were made.
 - `conda run -n etl_env python -m pytest -q tests\test_extractors.py -k "image or ocr or registry" --basetemp=D:\Projects\etl_service\.pytest-run-temp\stage20_extractors` -> tests executed, but pytest sessionfinish hit `PermissionError` on `basetemp` cleanup in the Codex sandbox.
 - `conda run -n etl_env python -m pytest -q tests\test_api.py tests\test_contracts.py tests\test_audit_corpus.py --basetemp=D:\Projects\etl_service\.pytest-run-temp\stage20_core` -> tests executed, but pytest sessionfinish hit `PermissionError` on `basetemp` cleanup in the Codex sandbox.
 - `conda run -n etl_env python -m pytest -q --basetemp=D:\Projects\etl_service\.pytest-run-temp\stage20_full` -> tests executed, but pytest sessionfinish hit `PermissionError` on `basetemp` cleanup in the Codex sandbox.
