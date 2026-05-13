@@ -172,7 +172,8 @@ conda run -n etl_env python -m scripts.evaluate_tables --json-report-path report
 
 OCR для standalone `jpg`/`jpeg`/`png` теперь optional local baseline: если локальный `tesseract` доступен, сервис извлекает текст и сохраняет его в обычный document output, чтобы он попадал в blocks/chunks/search/ask path.
 Если локальный OCR engine недоступен, упал или вернул пустой текст, сохраняется metadata-only OCR-candidate поведение Stage 19.1.
-В `processing_info.features` для image-only intake теперь могут появляться `ocr_used`, `ocr_candidate`, `ocr_engine`, `ocr_text_length` и `ocr_status`; top-level contract при этом не расширяется.
+Если OCR engine технически вернул success, но standalone image OCR output выглядит как вероятный шум / misleading latinized-RU текст, Stage 39.1 quality gate сохраняет degraded metadata/warning и не выпускает такой текст как обычные OCR chunks.
+В `processing_info.features` для image-only intake теперь могут появляться `ocr_used`, `ocr_candidate`, `ocr_engine`, `ocr_text_length`, `ocr_raw_text_length`, `ocr_status`, `ocr_quality_status`, `ocr_quality_reason` и `ocr_quality_metrics`; top-level contract при этом не расширяется.
 `pdf` без meaningful extracted text / chunks по-прежнему может быть conservatively отмечен как `possible_scanned_pdf` / OCR candidate, но страницы не рендерятся в изображения и OCR для scanned PDF не запускается.
 `HEIC`/`HEIF`/`TIFF`/`TIF`/`BMP`/`WEBP` по-прежнему остаются неподдерживаемыми image-like форматами.
 Read-only audit и customer demo runner теперь показывают summary по OCR candidates и OCR-used documents без изменения storage.

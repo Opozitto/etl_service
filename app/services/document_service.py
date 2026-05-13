@@ -8,7 +8,7 @@ from typing import Literal
 
 from app.pipeline.extractors.registry import ExtractorRegistry
 from app.pipeline.errors import ExtractionError
-from app.pipeline.ocr import LocalOCRAdapter
+from app.pipeline.ocr import LocalOCRAdapter, inspect_ocr_text_quality
 from app.pipeline.transform.structure import build_structure
 from app.pipeline.transform.normalizer import normalize_text
 from app.pipeline.types import RawBlock
@@ -74,14 +74,18 @@ class DocumentService:
 
         ocr_result = None
         ocr_text = ""
+        ocr_raw_text = ""
         ocr_used = False
         ocr_candidate = False
         ocr_reason: str | None = None
+        ocr_quality = None
         if path.suffix.lower() in OCR_STANDALONE_IMAGE_SUFFIXES:
             ocr_result = self.ocr_adapter.run(path)
             if ocr_result.success and ocr_result.text.strip():
-                ocr_text = normalize_text(ocr_result.text)
-                if ocr_text:
+                ocr_raw_text = normalize_text(ocr_result.text)
+                ocr_quality = inspect_ocr_text_quality(ocr_raw_text)
+                if ocr_raw_text and ocr_quality.accepted:
+                    ocr_text = ocr_raw_text
                     extracted.text = normalize_text("\n\n".join(part for part in [extracted.text, ocr_text] if part))
                     extracted.blocks.append(
                         RawBlock(
@@ -91,6 +95,7 @@ class DocumentService:
                                 "source": "ocr",
                                 "ocr_engine": ocr_result.engine,
                                 "ocr_status": ocr_result.status,
+                                "ocr_quality_status": ocr_quality.status,
                             },
                         )
                     )
@@ -98,8 +103,9 @@ class DocumentService:
                     ocr_candidate = False
                     ocr_reason = None
                 else:
+                    extracted.warnings.extend(ocr_quality.warnings)
                     ocr_candidate = True
-                    ocr_reason = OCR_IMAGE_REASON
+                    ocr_reason = ocr_quality.reason or OCR_IMAGE_REASON
             else:
                 ocr_candidate = True
                 ocr_reason = ocr_result.reason if ocr_result and ocr_result.reason else OCR_IMAGE_REASON
@@ -155,7 +161,11 @@ class DocumentService:
                     "ocr_candidate": ocr_candidate,
                     "ocr_engine": ocr_result.engine if ocr_result else None,
                     "ocr_text_length": len(ocr_text),
+                    "ocr_raw_text_length": len(ocr_raw_text),
                     "ocr_status": ocr_result.status if ocr_result else "not_applicable",
+                    "ocr_quality_status": ocr_quality.status if ocr_quality else "not_applicable",
+                    "ocr_quality_reason": ocr_quality.reason if ocr_quality else None,
+                    "ocr_quality_metrics": ocr_quality.metrics if ocr_quality else None,
                 },
                 ocr_candidate=ocr_candidate,
                 ocr_reason=ocr_reason,

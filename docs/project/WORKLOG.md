@@ -228,6 +228,10 @@
 - Stage 39.0 classifies missing DOCX pages, formula-like heading fragments, compact pollutant/equipment evidence, isolated table-layout tails, approval/signature service structures and partial multirow header limitations as accepted deterministic ETL limitations, not cleanup targets.
 - Stage 39.0 locks the finite route: Stage 39.1 standalone OCR safety gate, Stage 39.2 extractor garbage detection, Stage 39.3 final post-audit verification and docs alignment, then final delivery preparation only.
 - Stage 39.0 does not change production code, tests, runtime behavior, API, OCR pipeline, extractor logic, splitter/chunking, storage, `.runtime_eval`, ingestion/eval outputs or external artifacts.
+- Stage 39.1 completed as a bounded standalone OCR safety gate for `jpg` / `jpeg` / `png` only.
+- Stage 39.1 adds deterministic OCR text quality inspection before normal OCR text/chunk emission: printable ratio, Cyrillic/Latin ratios, suspicious latinized-RU patterns and mixed-symbol noise.
+- Stage 39.1 makes suspicious standalone OCR output degraded metadata/warning and OCR candidate evidence instead of silently searchable normal OCR text.
+- Stage 39.1 does not add scanned PDF OCR, embedded DOCX/PDF OCR, OCR language auto-switching, OCR pipeline redesign, external OCR APIs, ML/LLM scoring, splitter changes, search/ranking changes or storage migration.
 
 ## alignment
 
@@ -279,7 +283,7 @@
 - Stage 36 sample export improved evidence readability and the local `Example_data` inspection closed the current cleanup decision as no cleanup needed now.
 - Future cleanup should only be considered if repeated tails appear across more documents/corpora.
 - Standalone OCR without RU language config can produce misleading Russian output; for Russian OCR baseline the recommended operational mode is `--language rus+eng`.
-- OCR without RU language config is smoke/best-effort only and must not be treated as quality baseline.
+- OCR without RU language config is smoke/best-effort only and must not be treated as quality baseline; Stage 39.1 only reduces misleading-success risk and does not guarantee OCR quality.
 - RTF/PDF extraction can technically succeed while text quality is garbage; Stage 39.2 is bounded to detection/reporting rather than parser replacement.
 - `.doc` conversion can depend on local converter/dependency environment; this remains an accepted preflight limitation unless a separate implementation decision is made.
 - Accepted deterministic ETL limitations remain: missing DOCX pages, formula-like heading fragments, compact pollutant/equipment evidence, isolated table-layout tails, approval/signature service structures and partial multirow header limitations.
@@ -301,6 +305,7 @@
 - Stage 19.1 remains OCR candidate reporting / readiness visibility, while Stage 20 adds only the optional local OCR baseline for standalone images.
 - Stage 39.0 decision: not planned for this route are scanned PDF OCR, embedded DOCX/PDF OCR, semantic retrieval, reranking, vector DB, full RAG, advanced OCR pipeline, large splitter rewrites and endless cleanup/polish.
 - Stage 39.0 decision: after Stage 39.3 the project returns to final delivery preparation only, not Stage 40+ feature planning.
+- Stage 39.1 risk: conservative OCR heuristic can still miss some bad OCR or degrade rare valid text shaped like audit samples; this is accepted because the stage goal is honest degraded handling, not OCR quality scoring.
 
 ## checks
 
@@ -309,6 +314,11 @@
   - UTF-8 sanity for `docs/project/PLAN.md`, `docs/project/WORKLOG.md`, `docs/project/FINISH_LINE.md`, `docs/project/FINAL_DELIVERY_CHECKLIST.md`, `docs/project/CUSTOMER_SCENARIOS.md` -> OK, no BOM, no replacement char;
   - `git diff --check` -> OK, only Git CRLF working-copy warnings;
   - no pytest/ingestion/eval/API smoke was run because Stage 39.0 is docs-only.
+- Stage 39.1 bounded checks:
+  - `conda run -n etl_env python -m pytest -q tests\test_ocr_quality.py` -> OK;
+  - `conda run -n etl_env python -m pytest -q tests\test_extractors.py -k "standalone_image_with_ocr or suppresses_degraded_standalone_ocr_text"` -> OK;
+  - `conda run -n etl_env python -m py_compile app\pipeline\ocr.py app\services\document_service.py scripts\evaluate_ocr.py` -> OK;
+  - `conda run -n etl_env python -m pytest -q tests\test_ocr_quality.py tests\test_evaluate_ocr.py` -> `tests\test_ocr_quality.py` passed, then `tests\test_evaluate_ocr.py` setup was blocked by known Codex sandbox `D:\Temp\pytest-of-opozi` ACL before test assertions.
 - `conda run -n etl_env python -m pytest -q tests\test_extractors.py -k "image or ocr or registry" --basetemp=D:\Projects\etl_service\.pytest-run-temp\stage20_extractors` -> tests executed, but pytest sessionfinish hit `PermissionError` on `basetemp` cleanup in the Codex sandbox.
 - `conda run -n etl_env python -m pytest -q tests\test_api.py tests\test_contracts.py tests\test_audit_corpus.py --basetemp=D:\Projects\etl_service\.pytest-run-temp\stage20_core` -> tests executed, but pytest sessionfinish hit `PermissionError` on `basetemp` cleanup in the Codex sandbox.
 - `conda run -n etl_env python -m pytest -q --basetemp=D:\Projects\etl_service\.pytest-run-temp\stage20_full` -> tests executed, but pytest sessionfinish hit `PermissionError` on `basetemp` cleanup in the Codex sandbox.

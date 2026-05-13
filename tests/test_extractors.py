@@ -392,6 +392,64 @@ def test_document_service_processes_standalone_image_with_ocr(
         shutil.rmtree(smoke_root, ignore_errors=True)
 
 
+def test_document_service_suppresses_degraded_standalone_ocr_text(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    smoke_root = project_root / "tests" / ".stage39_1_ocr_quality_gate"
+    storage_dir = smoke_root / "storage"
+    smoke_root.mkdir(parents=True, exist_ok=True)
+    storage_dir.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setenv("ETL_STORAGE_DIR", str(storage_dir))
+    get_settings.cache_clear()
+
+    image_path = smoke_root / "sample.png"
+    Image.new("RGB", (2, 2), color="black").save(image_path)
+    misleading_text = "Crpapka 0 KOM4eCTBe ucTo4HuKOB BbI6pocoB"
+
+    try:
+        service = DocumentService()
+        monkeypatch.setattr(
+            service.ocr_adapter,
+            "run",
+            lambda path: OCRResult(
+                text=misleading_text,
+                engine="tesseract",
+                success=True,
+                status="success",
+            ),
+        )
+
+        outcome = service.process_path_with_status(image_path)
+        document = outcome.document
+
+        assert outcome.status == "processed"
+        assert document.metadata.image_count == 1
+        assert document.metadata.block_count == 1
+        assert document.chunks == []
+        assert all(misleading_text not in (block.text or "") for block in document.blocks)
+        assert document.processing_info.features["ocr_status"] == "success"
+        assert document.processing_info.features["ocr_used"] is False
+        assert document.processing_info.features["ocr_candidate"] is True
+        assert document.processing_info.features["ocr_text_length"] == 0
+        assert document.processing_info.features["ocr_raw_text_length"] == len(misleading_text)
+        assert document.processing_info.features["ocr_quality_status"] == "degraded"
+        assert document.processing_info.features["ocr_quality_reason"] == "ocr_quality_degraded"
+        assert (
+            document.processing_info.features["ocr_quality_metrics"]["quality_issue"]
+            == "suspicious_latinized_ru_ocr"
+        )
+        assert document.processing_info.ocr_candidate is True
+        assert document.processing_info.ocr_reason == "ocr_quality_degraded"
+        assert any("OCR output suppressed by conservative quality gate" in warning for warning in document.processing_info.warnings)
+        assert document.processing_info.text_char_count == 0
+        assert document.processing_info.text_block_count == 0
+        assert Path(document.artifacts.result_json_path).is_file()
+    finally:
+        get_settings.cache_clear()
+        shutil.rmtree(smoke_root, ignore_errors=True)
+
+
 def test_document_service_marks_image_only_pdf_as_ocr_candidate(monkeypatch: pytest.MonkeyPatch) -> None:
     project_root = Path(__file__).resolve().parents[1]
     smoke_root = project_root / "tests" / ".stage19_1_pdf_smoke"
