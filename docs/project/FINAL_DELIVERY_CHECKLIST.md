@@ -6,6 +6,8 @@
 
 Stage 38.6 - это не новый feature stage. Это проверка упаковки, чистоты локальной папки, честности ограничений и готовности к физической копии проекта.
 
+Stage 39.0 добавляет post-audit triage lock после deep audit `first_test_data`: проект находится в bounded remediation before delivery, а не в active feature development. Route конечный: Stage 39.1 standalone OCR safety gate, Stage 39.2 extractor garbage detection, Stage 39.3 final post-audit verification & docs alignment, затем только final delivery preparation.
+
 ## Current final delivery package
 
 В текущем репозитории есть:
@@ -21,6 +23,7 @@ Stage 38.6 - это не новый feature stage. Это проверка уп�
 - customer scenarios: `docs/project/CUSTOMER_SCENARIOS.md`;
 - single-file inspector: `scripts.inspect_document_structure`;
 - known limitations, зафиксированные в README, operation guide, metrics/acceptance и этом checklist.
+- post-audit Stage 39.0 classification: bounded remediation separated from accepted deterministic ETL limitations.
 
 ## Final verification sequence
 
@@ -62,6 +65,8 @@ conda run -n etl_env python -m scripts.check_ocr
 conda run -n etl_env python -m scripts.evaluate_ocr --input-dir first_test_data --json-report-path .runtime_eval\ocr_smoke_report.json --language rus+eng
 ```
 
+Для русского OCR baseline рекомендуемый режим - `--language rus+eng`. OCR без RU language config не считается quality baseline: он может дать misleading латинизированный или искаженный русский текст и допустим только как smoke/best-effort behavior.
+
 7. Optional external validation bounded smoke, если доступен external `Example_data`:
 
 ```powershell
@@ -93,6 +98,7 @@ $files = @(
   'docs/project/FINISH_LINE.md',
   'docs/project/PLAN.md',
   'docs/project/WORKLOG.md',
+  'docs/project/CUSTOMER_SCENARIOS.md',
   'experiments/README.md'
 )
 foreach ($file in $files) {
@@ -110,6 +116,18 @@ git status --short storage/index storage/results storage/uploads .runtime_eval
 ```
 
 Финальная verification считается завершенной, если все обязательные проверки пройдены или конкретно отмечено, какие optional checks сознательно пропущены и почему.
+
+## Post-audit bounded verification
+
+После Stage 39.1–39.2 финальная проверка должна подтвердить только bounded remediation:
+
+- standalone OCR safety gate не позволяет silently считать подозрительный RU OCR output quality baseline без `--language rus+eng`;
+- RTF garbage extraction классифицируется как warning/degraded evidence, а не чистый successful extraction;
+- PDF `(cid:...)` garbage fragments surfaced through detection/reporting, без OCR fallback и без PDF parser replacement;
+- `.doc` converter/dependency issue описан как preflight/accepted limitation, а не production blocker;
+- accepted deterministic ETL limitations остаются honest limitations, а не remediation backlog.
+
+Эта проверка не запускает новый feature roadmap и не добавляет Stage 40+.
 
 ## Local cleanup before physical copy
 
@@ -174,27 +192,40 @@ External `D:\Projects\etl_service_backup\Example_data` остается вне r
 
 - No scanned PDF OCR.
 - No embedded image OCR inside DOCX/PDF.
+- No advanced OCR pipeline.
 - No full RAG.
 - No LLM generation.
-- No semantic retrieval/vector DB.
+- No semantic retrieval/reranking/vector DB.
 - No table analytics/calculations.
 - Optional local OCR only for standalone `jpg`/`jpeg`/`png`.
+- For Russian standalone OCR baseline use `--language rus+eng`; OCR without RU language config is smoke/best-effort only.
 - DOCX page metadata may be unavailable.
 - Deterministic chunking is not semantic document understanding.
+- RTF/PDF extraction may require garbage detection/reporting for misleading successful-looking output.
+- `.doc` conversion can depend on local converter/dependency environment; this is a preflight limitation unless separately changed.
+- Accepted deterministic ETL limitations: missing DOCX pages, formula-like heading fragments, compact pollutant/equipment evidence, isolated table-layout tails, approval/signature service structures and partial multirow header limitations.
 - External QA source ambiguity is dataset/workflow diagnostic, not an automatic project failure and not successful quality evidence by itself.
 
-## Next development steps
+## Bounded route before delivery
 
-Future work should stay explicit, source-backed and evaluation-visible:
+Allowed next steps are finite and closing:
 
-- production OCR module;
-- scanned PDF / embedded image OCR with provenance;
-- semantic retrieval / vector DB / reranking;
-- real source-backed RAG generation;
-- table analytics/calculation layer;
-- production UI;
-- speed/cache optimization only if it becomes an operational blocker;
-- larger customer dataset validation.
+- Stage 39.1 standalone OCR safety gate;
+- Stage 39.2 extractor garbage detection;
+- Stage 39.3 final post-audit verification & docs alignment;
+- final delivery preparation only.
+
+Not planned in this route:
+
+- scanned PDF OCR;
+- embedded DOCX/PDF OCR;
+- semantic retrieval;
+- reranking;
+- vector DB;
+- full RAG;
+- advanced OCR pipeline;
+- large splitter rewrites;
+- endless cleanup/polish.
 
 ## Final acceptance checklist
 
@@ -207,6 +238,7 @@ Future work should stay explicit, source-backed and evaluation-visible:
 - [ ] Experiments README present.
 - [ ] Single-file inspector present.
 - [ ] Limitations honest.
+- [ ] Stage 39 post-audit bounded remediation classified and finite.
 - [ ] External dataset not committed.
 - [ ] Runtime artifacts not committed.
 - [ ] No false readiness claims.

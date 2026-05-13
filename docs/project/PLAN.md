@@ -1,6 +1,6 @@
 # PLAN
 
-Stage 1–32 are completed. Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock. Stage 20–25 are completed OCR/readiness/extraction/table/QA-evaluation layers. Stage 26–32 are completed external QA/chunk visibility, audit, chunk contract hardening, table chunk context, and source location/citation hardening stages. Stage 33 splitter structure cleanup and validation closure is completed from the splitter cleanup standpoint. Stage 34.0 text chunk coherence audit/design is completed docs-only. Stage 34.1 text chunk coherence edge cleanup v1 is completed as a bounded deterministic implementation. Stage 34.2 is completed docs-only as the finite finish roadmap lock after Stage 34.1 validation and metric reconciliation. Stage 34.3 chunk quality taxonomy normalization/reporting v1 is completed as audit/reporting normalization. Stage 35 External `Example_data` validation v1 is completed as a safe reproducible external evidence workflow. Stage 36 targeted external chunk tail inspection / cleanup decision v1 is completed as inspection/reporting plus docs-only cleanup decision; splitter cleanup is not justified by current evidence. Stage 37 optional OCR handoff polish is completed as language-aware smoke/eval and handoff documentation. Stage 38 final delivery preparation is now locked as a fixed Stage 38.0–38.6 route; Stage 38.0 is docs-only plan lock, Stage 38.1 is documented in `docs/project/METRICS_AND_ACCEPTANCE.md`, Stage 38.2 adds `scripts.inspect_document_structure`, Stage 38.3 is documented in `docs/project/OPERATION_GUIDE.md`, Stage 38.4 is documented in `docs/project/LANGUAGE_AUDIT.md`, Stage 38.5 is documented in `experiments/README.md`, Stage 38.6 is documented in `docs/project/FINAL_DELIVERY_CHECKLIST.md`, and speed/cache remains distant backlog only.
+Stage 1–32 are completed. Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock. Stage 20–25 are completed OCR/readiness/extraction/table/QA-evaluation layers. Stage 26–32 are completed external QA/chunk visibility, audit, chunk contract hardening, table chunk context, and source location/citation hardening stages. Stage 33 splitter structure cleanup and validation closure is completed from the splitter cleanup standpoint. Stage 34.0 text chunk coherence audit/design is completed docs-only. Stage 34.1 text chunk coherence edge cleanup v1 is completed as a bounded deterministic implementation. Stage 34.2 is completed docs-only as the finite finish roadmap lock after Stage 34.1 validation and metric reconciliation. Stage 34.3 chunk quality taxonomy normalization/reporting v1 is completed as audit/reporting normalization. Stage 35 External `Example_data` validation v1 is completed as a safe reproducible external evidence workflow. Stage 36 targeted external chunk tail inspection / cleanup decision v1 is completed as inspection/reporting plus docs-only cleanup decision; splitter cleanup is not justified by current evidence. Stage 37 optional OCR handoff polish is completed as language-aware smoke/eval and handoff documentation. Stage 38 final delivery preparation is locked as a fixed Stage 38.0–38.6 route. Stage 39.0 is completed docs-only as post-audit triage / limitation classification after deep audit of `first_test_data`; Stage 39.1–39.3 are the only bounded remediation-before-delivery route, followed by final delivery preparation only. Speed/cache remains distant backlog only.
 
 ## Stage 1. Зафиксировать smoke/regression проверки
 
@@ -1132,6 +1132,103 @@ conda run -n etl_env python -m scripts.check_ocr
   - no final claim of full RAG, LLM generation, semantic retrieval, embeddings/vector DB, scanned PDF OCR, embedded DOCX/PDF OCR, table analytics, production UI or external proprietary APIs.
 - Критерий завершения:
   - финальная checklist создана как docs-only gate; actual final verification run выполняется отдельно перед физической копией.
+
+## Stage 39.0. Audit triage & limitation classification
+
+- Статус: completed / docs-only.
+- Цель: после deep audit реального `first_test_data` разделить bounded remediation и accepted limitations, чтобы проект оставался delivery-ready with bounded remediation вместо ongoing improvements.
+- Scope:
+  - docs/governance alignment only;
+  - no production code changes;
+  - no tests changes;
+  - no runtime behavior, API, OCR pipeline, chunking/splitter or extractor logic changes;
+  - no ingestion/eval runs, no `.runtime_eval`, no storage changes.
+- Bounded remediation findings:
+  - F1 standalone OCR misleading RU output: standalone image OCR без RU language config может выглядеть successful, но выдавать латинизированный/искаженный русский текст; route = Stage 39.1 OCR safety gate and stronger docs wording, no OCR expansion.
+  - F2 RTF garbage extraction: RTF может выглядеть processed/successful при мусорном extraction output; route = Stage 39.2 garbage detection and degraded/warning classification, no parser rewrite.
+  - F3 PDF `(cid:...)` garbage fragments: route = Stage 39.2 garbage detection/reporting, no OCR expansion and no PDF parser replacement.
+  - F4 `.doc` dependency limitation: converter/dependency environment issue is accepted/preflight documentation limitation, not a production blocker and not a converter roadmap.
+- Accepted limitations, not remediation targets:
+  - missing DOCX pages;
+  - formula-like heading fragments;
+  - compact pollutant/equipment evidence;
+  - isolated table-layout tails;
+  - approval/signature service structures;
+  - partial multirow header limitations.
+- OCR policy tightening:
+  - recommended operational mode for Russian OCR baseline is `--language rus+eng`;
+  - OCR without RU language config is not a quality baseline;
+  - OCR without RU language config can produce misleading output and is acceptable only as smoke/best-effort behavior.
+- Not planned:
+  - scanned PDF OCR;
+  - embedded DOCX/PDF OCR;
+  - semantic retrieval;
+  - reranking;
+  - vector DB;
+  - full RAG;
+  - advanced OCR pipeline;
+  - large splitter rewrites;
+  - endless cleanup/polish.
+- Критерий завершения:
+  - Stage 39.1–39.3 route recorded as finite and closing;
+  - findings are classified as bounded remediation vs accepted deterministic ETL limitations;
+  - roadmap does not reopen Stage 40+ or broad AI/OCR/RAG architecture work.
+
+## Stage 39.1. Standalone OCR safety gate
+
+- Статус: planned / bounded remediation.
+- Цель: убрать misleading behavior для standalone image OCR, особенно на русском тексте без language config.
+- Scope:
+  - standalone `jpg` / `jpeg` / `png` OCR safety only;
+  - require/report safe OCR quality classification around configured language and suspicious output;
+  - strengthen docs so Russian OCR baseline uses `--language rus+eng`.
+- Вне scope:
+  - scanned PDF OCR;
+  - embedded DOCX/PDF OCR;
+  - layout/table OCR;
+  - OCR overhaul;
+  - external/proprietary OCR API.
+- Критерий завершения:
+  - standalone OCR cannot silently look like quality baseline when RU language config is missing or output is suspicious.
+
+## Stage 39.2. Extractor garbage detection
+
+- Статус: planned / bounded remediation.
+- Цель: не допускать silent successful-looking extraction для очевидного мусора в RTF/PDF output.
+- Scope:
+  - deterministic garbage detection/reporting for RTF garbage and PDF `(cid:...)` fragments;
+  - degraded/warning classification where extraction succeeded technically but text quality is suspect;
+  - no parser replacement and no broad extractor rewrite.
+- Вне scope:
+  - new RTF parser architecture;
+  - new PDF parser replacement;
+  - OCR fallback for scanned/bad PDF;
+  - semantic cleanup or document understanding.
+- Критерий завершения:
+  - garbage extraction is surfaced honestly as warning/degraded evidence, not as clean success.
+
+## Stage 39.3. Final post-audit verification & docs alignment
+
+- Статус: planned / closing verification.
+- Цель: подтвердить bounded remediation after Stage 39.1–39.2 and align final delivery docs.
+- Scope:
+  - minimal checks only for Stage 39.1/39.2 changes;
+  - final docs alignment for limitations, verification wording and handoff route;
+  - no new feature scope.
+- Критерий завершения:
+  - post-audit findings are either remediated within bounded route or explicitly accepted as limitations;
+  - final delivery preparation resumes without opening a new roadmap.
+
+## After Stage 39.3. Final delivery preparation only
+
+- Разрешено:
+  - final verification;
+  - cleanup of runtime artifacts before physical copy;
+  - delivery packaging/checklist execution.
+- Не planned:
+  - Stage 40+ feature route;
+  - OCR/RAG/retrieval/splitter expansion;
+  - broad polish or endless cleanup.
 
 ## Stage 33.x. QA evaluator retrieval-loop speed/cache
 

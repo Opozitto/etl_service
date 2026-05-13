@@ -2,7 +2,7 @@
 
 ## Назначение документа
 
-Документ был создан на Stage 10 как docs-level baseline для пользовательских сценариев и минимального evaluation set. Сейчас он актуализируется по мере развития ETL/search/evaluation baseline и отражает текущее состояние после Stage 37 OCR handoff polish.
+Документ был создан на Stage 10 как docs-level baseline для пользовательских сценариев и минимального evaluation set. Сейчас он актуализируется по мере развития ETL/search/evaluation baseline и отражает текущее состояние после Stage 39.0 post-audit triage lock.
 
 Сценарии описывают пилотный контур для эколога-проектировщика: source-backed search, extractive QA, extraction/evidence diagnostics, контроль качества корпуса и подготовку chunk handoff для будущего source-backed RAG layer. Документ не объявляет готовыми full RAG, LLM generation, embeddings/vector DB, semantic retrieval, scanned PDF OCR или table analytics.
 
@@ -84,16 +84,17 @@
 - OCR candidate detection / reporting;
 - optional local OCR baseline для standalone `jpg` / `jpeg` / `png`, если engine доступен;
 - language-aware OCR smoke/eval для standalone images через local Tesseract, включая рекомендуемый `--language rus+eng` для русских документов;
+- OCR без RU language config не считается quality baseline, потому что может дать misleading латинизированный или искаженный русский текст;
+- OCR без RU language config допустим только как smoke/best-effort behavior;
 - scanned PDF OCR не обещается как готовый.
 
-Будущий путь:
+Post-audit scope freeze:
 
 - scanned PDF OCR остается вне подтвержденного baseline;
 - embedded image OCR inside DOCX/PDF остается вне подтвержденного baseline;
 - table/table-layout OCR и full document layout analysis остаются вне текущего scope.
-- будущий OCR module должен сохранять provenance: source path/name, page, artifact/image id, OCR engine/version, language config, confidence if available, processing timestamp и source modality;
-- будущие OCR-derived chunks должны быть явно marked as OCR-derived evidence и не смешиваться silently с normal text layer;
-- table OCR не должен выдаваться за structured table extraction без отдельной layout/table model.
+- Stage 39.1 ограничен safety gate для standalone OCR и docs wording;
+- scanned PDF OCR, embedded DOCX/PDF OCR, advanced OCR pipeline и OCR overhaul не planned.
 
 ### S7. Summarization / draft generation candidate
 
@@ -203,6 +204,15 @@ Stage 36 targeted external chunk tail inspection:
 - `pollutant_or_equipment_micro_evidence` samples are acceptable compact evidence with source/equipment/emission terms, not cleanup targets;
 - final Stage 36 cleanup decision: splitter cleanup was not performed and is not needed now; future cleanup only if repeated tails appear across more documents/corpora.
 
+Stage 39.0 post-audit triage lock:
+
+- цель Stage 39 не "улучшить всё", а убрать misleading success-looking behavior перед delivery;
+- bounded remediation: F1 standalone OCR misleading RU output, F2 RTF garbage extraction, F3 PDF `(cid:...)` garbage fragments;
+- accepted limitation / preflight wording: F4 `.doc` converter/dependency issue;
+- accepted deterministic ETL limitations, not remediation targets: missing DOCX pages, formula-like heading fragments, compact pollutant/equipment evidence, isolated table-layout tails, approval/signature service structures, partial multirow header limitations;
+- finite route: Stage 39.1 standalone OCR safety gate, Stage 39.2 extractor garbage detection, Stage 39.3 final post-audit verification & docs alignment, then final delivery preparation only;
+- not planned: scanned PDF OCR, embedded DOCX/PDF OCR, semantic retrieval, reranking, vector DB, full RAG, advanced OCR pipeline, large splitter rewrites, endless cleanup/polish.
+
 ### S9. Single-file structure inspection / handoff
 
 Пользователь или разработчик хочет проверить один произвольный документ до добавления его в regular corpus flow.
@@ -222,7 +232,10 @@ Stage 36 targeted external chunk tail inspection:
 Сейчас вне подтвержденного baseline:
 
 - scanned PDF OCR;
+- embedded DOCX/PDF image OCR;
+- advanced OCR pipeline;
 - semantic retrieval;
+- reranking;
 - embeddings/vector DB;
 - full RAG;
 - LLM generation / answer synthesis;
@@ -233,6 +246,8 @@ Stage 36 targeted external chunk tail inspection:
 - SQL/table analytics или automatic calculations;
 - production UI;
 - external proprietary APIs.
+- large splitter rewrites;
+- endless cleanup/polish.
 
 ## Ожидаемые результаты документа
 
@@ -251,7 +266,7 @@ Stage 36 targeted external chunk tail inspection:
 - Сценарии проверяются через metrics/acceptance baseline из `docs/project/METRICS_AND_ACCEPTANCE.md`.
 - OCR / RAG / LLM generation не объявляются готовыми, если это не подтверждено кодом.
 - Minimal evaluation set покрывает границы supported now / diagnostics / future.
-- Материал связывает исторический Stage 10 baseline с текущим состоянием после Stage 37.
+- Материал связывает исторический Stage 10 baseline с текущим состоянием после Stage 39.0.
 
 ## Minimal evaluation set
 
@@ -276,6 +291,8 @@ Stage 36 targeted external chunk tail inspection:
 | EC-15 | External Example_data validation | Проверить handoff baseline на внешнем customer-like dataset | External `D:\Projects\etl_service_backup\Example_data` plus QA TSV file by explicit path | Audit QA coverage/source matching, process selected docs into temporary workspace, run QA/readiness eval, workflow summary and Stage 34.3 chunk taxonomy report | yes | supported now / diagnostics | Stage 35 workflow; strict expected-source mode may select 0 docs if sources are ambiguous, so exploratory chunk validation can use bounded `all-supported` / `ambiguous-policy all`; external files and `.runtime_eval` reports are not committed |
 | EC-16 | External compact tail inspection | Проверить конкретные compact taxonomy chunks перед cleanup decision | External Stage 35 workspace or explicit temporary results dir | Export bounded `compact_text_taxonomy.samples.real_low_value_tail` with source/chunk/context metadata and preview | yes | supported now / diagnostics | Stage 36 inspection/reporting completed; current local evidence does not justify splitter cleanup |
 | EC-17 | Single-file structure inspection | Проверить разбиение одного произвольного документа перед handoff/review | Explicit single file path plus temporary workspace | Обработать файл вне production storage и показать metadata, sections, blocks, chunks, tables, images, warnings и artifacts для ручного просмотра | yes | supported now / diagnostics | Stage 38.2 `scripts.inspect_document_structure`; not UI, not RAG, not semantic retrieval, not generation |
+| EC-18 | Standalone OCR safety | Проверить русский standalone image OCR | Standalone JPG/JPEG/PNG with Russian text | Использовать `--language rus+eng` для quality baseline; без RU language config не считать output quality evidence | no | bounded remediation | Stage 39.1 target; no scanned PDF OCR, no embedded image OCR, no OCR overhaul |
+| EC-19 | Extractor garbage classification | Проверить RTF/PDF output на мусор | RTF with garbage output / PDF with `(cid:...)` fragments | Отразить suspicious extraction как warning/degraded evidence вместо clean success | yes | bounded remediation | Stage 39.2 target; no parser replacement and no OCR fallback |
 
 ## Связь со Stage 11-17
 
@@ -302,8 +319,9 @@ Stage 36 targeted external chunk tail inspection:
 - Stage 35 validates external `Example_data` as evidence only; it is not training and not committed.
 - Stage 36 adds targeted compact taxonomy sample export for cleanup decision evidence and closes the current decision as cleanup not needed now.
 - Stage 37 adds language-aware OCR smoke/eval and handoff polish for standalone image OCR without claiming production OCR.
+- Stage 39.0 locks post-audit triage: bounded remediation is limited to misleading OCR/extractor garbage behavior, accepted deterministic ETL limitations stay explicit, and the route ends at Stage 39.3 plus final delivery preparation.
 
-## Текущее состояние после Stage 37 OCR handoff polish
+## Текущее состояние после Stage 39.0 post-audit triage
 
 - Stage 29.1 adds read-only RAG-ready chunk inspection/export over existing processed JSON.
 - Stage 29.2 adds read-only chunk quality audit over existing processed JSON / exported chunk records.
@@ -327,12 +345,16 @@ Stage 36 targeted external chunk tail inspection:
 - Stage 36 local external inspection found `3` `real_low_value_tail` candidates out of `2145` chunks, all from one document and consistent with isolated table/layout-derived fragments.
 - Stage 36 does not perform splitter cleanup and closes the current cleanup decision as not needed now.
 - Stage 37 completed optional light OCR handoff polish: `check_ocr` lists available Tesseract languages when possible, `evaluate_ocr` supports `--language`, and Russian OCR smoke/eval should use `--language rus+eng` when language packs are installed.
+- Stage 39.0 completed docs-only audit triage after deep audit of real `first_test_data`.
+- Stage 39.0 explicitly separates bounded remediation from accepted limitations and prevents reopening the roadmap.
+- Stage 39.1–39.3 are the only post-audit remediation route before final delivery preparation.
 - Chunks now have better visibility, stronger metadata/source/location/citation context, and cleaner deterministic section/chunk structure where available.
 - Splitter cleanup is conservative and improves handoff quality, but it is not semantic document understanding.
 - Text chunk coherence remains bounded and deterministic: ordinary text chunks should not cross sections, merge with tables, invent pages, or change API schema in a breaking way.
 - Unified chunk quality taxonomy/reporting is now available and separates real problems from metric/taxonomy noise.
 - DOCX page metadata can still be unavailable; diagnostics should show this honestly rather than inventing page context.
 - These stages should not promise full RAG, semantic retrieval, embeddings/vector DB, LLM generation, scanned PDF OCR or table analytics.
+- These stages should also not promise embedded DOCX/PDF OCR, reranking, vector DB, advanced OCR pipeline, large splitter rewrites or endless cleanup/polish.
 - Speed/cache is not the default next step, and there is no endless splitter polishing by default.
 
 ## Notes on the current baseline

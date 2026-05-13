@@ -6,6 +6,8 @@
 - Future stages may be dropped without breaking the current baseline.
 - Any future AI capability should remain source-backed and evaluation-visible.
 - Large architecture rewrites stay out of scope unless there is a separate decision.
+- After the post-audit `first_test_data` review, the project is in bounded remediation before delivery, not active feature development.
+- Stage 39 goal is not to "improve everything"; it is to remove misleading success-looking behavior and keep honest deterministic limitations explicit.
 
 ## Current baseline
 
@@ -41,6 +43,7 @@
 - Stage 38.4 language/comment audit is recorded in `docs/project/LANGUAGE_AUDIT.md`: safe human-facing polish is allowed, while API/JSON/CLI identifiers and technical contracts remain unchanged.
 - Stage 38.5 experiments packaging is recorded in `experiments/README.md`: scripts-based reproducible experiments/evaluation workflows without fake notebooks, committed external data or generated reports.
 - Stage 38.6 final cleanup and verification checklist is recorded in `docs/project/FINAL_DELIVERY_CHECKLIST.md`: final verification sequence, local cleanup before physical copy, known limitations, next development steps, copy/commit rules and final acceptance checklist.
+- Stage 39.0 post-audit triage is completed docs-only: F1/F2/F3 are bounded remediation targets, F4 and known deterministic ETL limits are accepted limitations, and Stage 39.1–39.3 is the only remediation-before-delivery route.
 - Stage 30–34.3 strengthened the metadata/source/structure/validation/governance contract, but this is still ETL/source-backed handoff readiness rather than full RAG.
 
 ## Best shippable baseline
@@ -99,7 +102,8 @@ conda run -n etl_env python -m scripts.validate_external_example_data --dataset-
 conda run -n etl_env python -m scripts.check_ocr
 conda run -n etl_env python -m scripts.evaluate_ocr --input-dir <dir> --json-report-path <path> --language rus+eng
 ```
-- Stage 37 remains smoke/eval and handoff polish only. OCR quality depends on image quality, installed language packs, preprocessing and future OCR module design. Future OCR provenance should preserve source path/name, page, artifact/image id, engine/version, language config, confidence if available, processing timestamp and source modality; OCR-derived chunks should be marked explicitly as OCR-derived evidence.
+- Stage 37 remains smoke/eval and handoff polish only. OCR quality depends on image quality, installed language packs, preprocessing and language config.
+- Formal Stage 39 OCR policy: for Russian OCR baseline use `--language rus+eng`; OCR without RU language config is not a quality baseline and is acceptable only as smoke/best-effort behavior because it can produce misleading latinized or distorted Russian output.
 
 ## Final delivery toolkit
 
@@ -142,12 +146,15 @@ conda run -n etl_env python -m scripts.evaluate_ocr --input-dir <dir> --json-rep
   - Stage 35 external `Example_data` validation v1 through safe temporary workspace and machine-readable reports.
   - Stage 36 targeted chunk tail sample export and cleanup decision evidence: cleanup not needed now.
   - Stage 37 language-aware OCR smoke/eval and handoff polish for standalone images.
+  - Stage 39.0 docs-only audit triage and limitation classification lock.
 - Not confirmed:
   - scanned PDF OCR;
   - embedded DOCX/PDF image OCR;
+  - advanced OCR pipeline;
   - LLM generation;
   - summarization / draft generation;
   - semantic retrieval;
+  - reranking;
   - embeddings/vector DB;
   - full RAG;
   - table-aware analytics;
@@ -160,9 +167,9 @@ conda run -n etl_env python -m scripts.evaluate_ocr --input-dir <dir> --json-rep
 - check README limitations;
 - make sure storage artifacts are not committed.
 
-## Final delivery preparation lock
+## Bounded Remediation Lock
 
-Stage 38 is the final delivery preparation route after completed Stage 37.1. It is fixed and should not expand without a separate decision.
+Stage 38 completed final delivery preparation docs. Stage 39 is a bounded post-audit remediation route before delivery, not a reopened product roadmap.
 
 - Stage 38.0 Final delivery preparation plan lock: docs-only route lock; no code/tests/storage/runtime/external artifacts.
 - Stage 38.1 Metrics & acceptance criteria documentation: define ETL/RAG-readiness metrics and acceptance criteria in `docs/project/METRICS_AND_ACCEPTANCE.md`, including processing, chunk, table, retrieval/QA, OCR smoke and operational quality gates.
@@ -171,8 +178,12 @@ Stage 38 is the final delivery preparation route after completed Stage 37.1. It 
 - Stage 38.4 Language/comment audit & polish: completed in `docs/project/LANGUAGE_AUDIT.md`; safe translation/polish of comments/docs/help text only, with API/JSON/CLI identifiers, test names and technical symbols unchanged.
 - Stage 38.5 Experiments packaging: completed docs-only in `experiments/README.md`; explains repository experiments/evaluation flows, scripts linkage and external dataset path-only policy without fake notebook experiments.
 - Stage 38.6 Final cleanup & verification checklist: completed docs-only in `docs/project/FINAL_DELIVERY_CHECKLIST.md`; records full pytest, demo smoke, OCR smoke, optional external validation smoke, single-file inspector smoke, UTF-8 sanity, `git diff --check`, storage/runtime pollution checks, cleanup rules, known limitations, next development steps and final acceptance checklist.
+- Stage 39.0 Audit triage & limitation classification: completed docs-only; separates bounded remediation from accepted limitations after deep audit of `first_test_data`.
+- Stage 39.1 Standalone OCR safety gate: bounded remediation for misleading standalone OCR output, especially Russian OCR without `--language rus+eng`.
+- Stage 39.2 Extractor garbage detection: bounded remediation for RTF garbage and PDF `(cid:...)` garbage fragments through warning/degraded classification, not parser replacement.
+- Stage 39.3 Final post-audit verification & docs alignment: closing verification after Stage 39.1–39.2.
 
-Known limitations and next development steps are part of final delivery preparation, not an optional afterthought. The final acceptance checklist is also part of Stage 38.6 and should use `docs/project/METRICS_AND_ACCEPTANCE.md` as the metrics/acceptance baseline.
+Accepted limitations and post-audit verification are part of final delivery preparation, not an optional afterthought. The final acceptance checklist should use `docs/project/METRICS_AND_ACCEPTANCE.md` plus Stage 39 post-audit wording as the metrics/acceptance baseline.
 
 Local physical copy of the project should be made only after runtime artifacts are cleaned and `git status --short` is clean.
 
@@ -180,7 +191,7 @@ Cleanup of the local project folder must not remove source files, tests, docs, `
 
 ## Next choice
 
-The next direction is selected and finite after Stage 37.1. Keep future work bounded to source-backed/evaluation-visible improvements; Stage 38.0 locks final delivery preparation before Stage 38.1 starts.
+The next direction is selected and finite after Stage 39.0. Keep the work bounded to remediation that prevents misleading behavior; after Stage 39.3, continue final delivery preparation only.
 
 Follow-up sequence:
 
@@ -203,6 +214,11 @@ Follow-up sequence:
 - Stage 38.4 Language/comment audit & polish, completed.
 - Stage 38.5 Experiments packaging, completed / docs-only.
 - Stage 38.6 Final cleanup & verification checklist, completed / docs-only.
+- Stage 39.0 Audit triage & limitation classification, completed / docs-only.
+- Stage 39.1 Standalone OCR safety gate.
+- Stage 39.2 Extractor garbage detection.
+- Stage 39.3 Final post-audit verification & docs alignment.
+- Final delivery preparation only.
 - QA evaluator retrieval-loop speed/cache moves to later/backlog only if it becomes a severe operational blocker.
 
 This preserves the delivery-first rule: every stage should be demo-ready / shippable, future stages can be dropped without breaking the current baseline, large architecture rewrites stay out of scope, and future AI capabilities remain source-backed / evaluation-visible.
@@ -212,7 +228,7 @@ Stage 29.1 and Stage 29.2 closed visibility/export/audit for chunks. Stage 30 co
 Current chunks are acceptable for lexical search and now carry stronger source/location/citation metadata. Newly processed chunks also have cleaner splitter structure after Stage 33.1 and fewer approval/signature table false positives after Stage 33.3.
 Stage 33.2 adds a bounded validation workflow for proving cleanup on fresh temporary outputs, without migrating old `storage/results`. Stage 33.4 records an expanded 4-document fresh validation run with zero failures/warnings, so Stage 33 is closed from the splitter cleanup standpoint.
 Stage 34.1 implements the narrow ordinary text chunk coherence cleanup target without full RAG or semantic retrieval.
-Stage 34.2 locks the finite finish route, Stage 34.3 implements metric taxonomy normalization before any additional cleanup, Stage 35 validates the external `Example_data` path without committing external/runtime artifacts, Stage 36 closes the targeted compact tail cleanup decision as no cleanup needed now, and Stage 37 closes the optional OCR handoff polish.
+Stage 34.2 locked the finite finish route, Stage 34.3 implemented metric taxonomy normalization, Stage 35 validated the external `Example_data` path without committing external/runtime artifacts, Stage 36 closed the targeted compact tail cleanup decision as no cleanup needed now, Stage 37 closed optional OCR handoff polish, Stage 38 completed final delivery preparation docs, and Stage 39.0 now locks the post-audit remediation route.
 
 Known splitter issues:
 
@@ -227,8 +243,10 @@ Known splitter issues:
 - Remaining compact chunks after Stage 34.1 are categorized as title/cover fragments, TOC/list fragments, formula/calculation micro-sections and pollutant/equipment micro-evidence; confirmed real problematic low-value tails were `0` in the inspected exact sample.
 - Stage 34.3 formalizes this in audit reporting: raw `content_type` counts, table-linked counts and strict `table_row` counts are separate; compact `<250` chunks are evidence taxonomy, not automatic defects.
 - No endless splitter polishing: cleanup v2 is not allowed unless non-empty Stage 35 external evidence shows repeated real problems.
+- Accepted post-audit limitations are not remediation targets: missing DOCX pages, formula-like heading fragments, compact pollutant/equipment evidence, isolated table-layout tails, approval/signature service structures and partial multirow header limitations.
+- F4 `.doc` converter/dependency failure is dependency/preflight wording, not a production blocker.
 
-Do not present full RAG, LLM generation, embeddings/vector DB, semantic retrieval/reranking, scanned PDF OCR, embedded DOCX/PDF OCR, speed/cache work, table analytics / SQL-like QA, production UI or external proprietary API as ready or in-scope for the finite finish route.
+Do not present scanned PDF OCR, embedded DOCX/PDF OCR, semantic retrieval, reranking, vector DB, full RAG, advanced OCR pipeline, large splitter rewrites, endless cleanup/polish, LLM generation, table analytics / SQL-like QA, production UI or external proprietary API as ready or in-scope for the finite finish route.
 
 ## Note
 
