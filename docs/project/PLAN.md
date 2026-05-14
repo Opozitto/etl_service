@@ -2,6 +2,8 @@
 
 Stage 1–32 are completed. Stage 1–6 are a closed baseline. Stage 7–9 are completed and form the local batch/evaluation foundation. Stage 10–17.1 are completed and documented below. Stage 18 is completed. Stage 19.0 is the delivery-first roadmap lock. Stage 20–25 are completed OCR/readiness/extraction/table/QA-evaluation layers. Stage 26–32 are completed external QA/chunk visibility, audit, chunk contract hardening, table chunk context, and source location/citation hardening stages. Stage 33 splitter structure cleanup and validation closure is completed from the splitter cleanup standpoint. Stage 34.0 text chunk coherence audit/design is completed docs-only. Stage 34.1 text chunk coherence edge cleanup v1 is completed as a bounded deterministic implementation. Stage 34.2 is completed docs-only as the finite finish roadmap lock after Stage 34.1 validation and metric reconciliation. Stage 34.3 chunk quality taxonomy normalization/reporting v1 is completed as audit/reporting normalization. Stage 35 External `Example_data` validation v1 is completed as a safe reproducible external evidence workflow. Stage 36 targeted external chunk tail inspection / cleanup decision v1 is completed as inspection/reporting plus docs-only cleanup decision; splitter cleanup is not justified by current evidence. Stage 37 optional OCR handoff polish is completed as language-aware smoke/eval and handoff documentation. Stage 38 final delivery preparation is locked as a fixed Stage 38.0–38.6 route. Stage 39.0 is completed docs-only as post-audit triage / limitation classification after deep audit of `first_test_data`; Stage 39.1 is completed as a standalone OCR safety gate; Stage 39.2 is completed as extractor garbage detection; Stage 39.3 is completed as final post-audit verification and docs alignment. The next route is final delivery preparation only. Speed/cache remains distant backlog only.
 
+Clear repository baseline after Stage 40 means `storage/index`, `storage/results` and `storage/uploads` are local generated output, not committed baseline artifacts. Historical demo/search commands that read corpus/index assume a local processing/index build from `first_test_data` or another explicit input route after checkout.
+
 ## Stage 1. Зафиксировать smoke/regression проверки
 
 - Цель: определить минимальные проверки, которые защищают подтверждённый baseline от регрессий.
@@ -1172,7 +1174,7 @@ conda run -n etl_env python -m scripts.check_ocr
 - Критерий завершения:
   - Stage 39.1–39.3 route recorded as finite and closing;
   - findings are classified as bounded remediation vs accepted deterministic ETL limitations;
-  - roadmap does not reopen Stage 40+ or broad AI/OCR/RAG architecture work.
+  - roadmap does not reopen a feature route or broad AI/OCR/RAG architecture work.
 
 ## Stage 39.1. Standalone OCR safety gate
 
@@ -1239,7 +1241,7 @@ conda run -n etl_env python -m scripts.check_ocr
   - cleanup of runtime artifacts before physical copy;
   - delivery packaging/checklist execution.
 - Не planned:
-  - Stage 40+ feature route;
+  - Stage 41+ feature route;
   - OCR/RAG/retrieval/splitter expansion;
   - broad polish or endless cleanup.
 

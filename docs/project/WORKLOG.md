@@ -312,7 +312,7 @@
 - Codex sandbox ACL limits on Windows are treated as environment limitations, not a reason to change code or tests.
 - Stage 19.1 remains OCR candidate reporting / readiness visibility, while Stage 20 adds only the optional local OCR baseline for standalone images.
 - Stage 39.0 decision: not planned for this route are scanned PDF OCR, embedded DOCX/PDF OCR, semantic retrieval, reranking, vector DB, full RAG, advanced OCR pipeline, large splitter rewrites and endless cleanup/polish.
-- Stage 39.0 decision: after Stage 39.3 the project returns to final delivery preparation only, not Stage 40+ feature planning.
+- Stage 39.0 decision: after Stage 39.3 the project returns to final delivery preparation/governance only, not Stage 41+ feature planning.
 - Stage 39.3 decision: the post-audit remediation route is closed; final delivery preparation is checklist execution and cleanup, not roadmap reopen.
 - Clear baseline governance decision: `storage/index`, `storage/results` and `storage/uploads` are ignored local generated output; final verification must not expect committed storage files.
 - Stage 39.1 risk: conservative OCR heuristic can still miss some bad OCR or degrade rare valid text shaped like audit samples; this is accepted because the stage goal is honest degraded handling, not OCR quality scoring.

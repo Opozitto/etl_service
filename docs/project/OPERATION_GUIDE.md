@@ -23,6 +23,7 @@ conda run -n etl_env python -m pytest -q
 Customer demo flow:
 
 ```powershell
+conda run -n etl_env python -m scripts.batch_process --input-dir first_test_data
 conda run -n etl_env python -m scripts.demo_customer_flow
 ```
 

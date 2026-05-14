@@ -87,6 +87,7 @@ Inspector показывает metadata, processing warnings/features, sections,
 ## Customer demo smoke runner
 
 ```bash
+conda run -n etl_env python -m scripts.batch_process --input-dir first_test_data
 conda run -n etl_env python -m scripts.demo_customer_flow
 ```
 
@@ -96,7 +97,7 @@ conda run -n etl_env python -m scripts.demo_customer_flow
 conda run -n etl_env python -m scripts.demo_customer_flow --json-report-path .runtime_eval/customer_demo_report.json
 ```
 
-Режим по умолчанию read-only. Путь для опционального JSON-отчёта является runtime artifact, а `--refresh-index` может обновить локальный `storage/index`.
+Режим по умолчанию read-only. Путь для опционального JSON-отчёта является runtime artifact, а `--refresh-index` может обновить локальный generated `storage/index`.
 В clear checkout meaningful demo/search требует сначала обработать документы, например через `scripts.batch_process --input-dir first_test_data`, потому что готовый corpus/index больше не хранится в Git.
 Этот demo показывает только текущий baseline: LLM generation, summarization, vector DB, semantic retrieval и full RAG не реализованы; OCR ограничен optional local baseline для standalone `jpg`/`jpeg`/`png`, а scanned PDF OCR и embedded image OCR inside DOCX/PDF не реализованы.
 Вывод демо-проверки русскоязычный и ориентирован на read-only просмотр текущего состояния корпуса; в Stage 19.1 он также показывает OCR candidate summary без запуска OCR. Для более явного row-level table context при необходимости можно запустить `--refresh-index`.

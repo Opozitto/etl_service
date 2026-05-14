@@ -156,7 +156,7 @@ git check-ignore -v .runtime_eval/probe.json .pytest_cache/probe __pycache__/pro
 
 Stage 39.3 закрывает эту проверку как docs-only alignment: после неё route возвращается к final delivery preparation only.
 
-Эта проверка не запускает новый feature roadmap и не добавляет Stage 40+.
+Эта проверка не запускает новый feature roadmap и не добавляет Stage 41+.
 
 ## Local cleanup before physical copy
 
@@ -184,7 +184,6 @@ Stage 39.3 закрывает эту проверку как docs-only alignment
 - `experiments/README.md`;
 - `first_test_data`;
 - `app/storage`;
-- `first_test_data`;
 - README/spec/docs;
 - `pyproject.toml` и другие config files.
 
