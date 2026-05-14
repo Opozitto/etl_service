@@ -26,6 +26,8 @@ Customer demo flow:
 conda run -n etl_env python -m scripts.demo_customer_flow
 ```
 
+В clear checkout этот demo становится содержательным после локальной обработки документов: готовые `storage/index`, `storage/results` и `storage/uploads` больше не хранятся в Git.
+
 Проверка структуры одного файла без загрязнения production `storage/`:
 
 ```powershell
@@ -38,11 +40,7 @@ conda run -n etl_env python -m scripts.inspect_document_structure --input-path "
 conda run -n etl_env python -m scripts.check_ocr
 ```
 
-Если demo/eval/API smoke изменили production storage, восстановить tracked baseline:
-
-```powershell
-git restore storage/index storage/results storage/uploads
-```
+Runtime storage является локальным generated output и игнорируется Git. Перед сдачей проверять, что он не попал в tracked changes.
 
 ## Уровень 2: средний маршрут с объяснением логики
 
@@ -58,7 +56,7 @@ intake -> extractor -> StructuredDocument JSON -> blocks/sections/tables/images 
 
 Зачем нужны основные эксплуатационные документы и скрипты:
 
-- `scripts.demo_customer_flow` - read-only customer smoke текущего baseline: health of corpus, search/ask/table/OCR-candidate visibility и honest limitations.
+- `scripts.demo_customer_flow` - read-only customer smoke локально созданного corpus baseline: health of corpus, search/ask/table/OCR-candidate visibility и honest limitations.
 - `scripts.inspect_document_structure` - проверка одного explicit файла в изолированном workspace, полезная для handoff/review до добавления файла в regular corpus flow.
 - `scripts.audit_rag_chunks` - read-only диагностика chunk quality, compact taxonomy, table-linked context и handoff limitations.
 - `scripts.validate_external_example_data` - workflow для external `D:\Projects\etl_service_backup\Example_data` как path-only evidence dataset, с обработкой только в `.runtime_eval` или другом explicit temporary workspace.
@@ -70,7 +68,7 @@ intake -> extractor -> StructuredDocument JSON -> blocks/sections/tables/images 
 Рекомендуемый порядок демонстрации:
 
 1. Health/tests: установить dev-зависимости и выполнить локальную regression-проверку.
-2. Demo flow: запустить `scripts.demo_customer_flow`.
+2. Demo flow: при необходимости сначала создать локальный sample corpus через `scripts.batch_process --input-dir first_test_data`, затем запустить `scripts.demo_customer_flow`.
 3. Inspect one file: показать `scripts.inspect_document_structure` на одном explicit файле.
 4. Chunk quality / external validation if needed: выполнить read-only chunk audit или bounded external validation в `.runtime_eval`.
 5. OCR smoke if local Tesseract installed: проверить `scripts.check_ocr`, затем standalone image smoke через `scripts.evaluate_ocr --language rus+eng`.
@@ -157,11 +155,7 @@ Production storage route использует:
 - `storage/results`;
 - `storage/index`.
 
-Эти папки не использовать как scratch workspace для экспериментов. Если smoke/demo загрязнили production storage, восстановить tracked baseline:
-
-```powershell
-git restore storage/index storage/results storage/uploads
-```
+Эти папки не использовать как scratch workspace для экспериментов. Они являются generated runtime output и не коммитятся.
 
 Temporary workspace route должен писать в `.runtime_eval` или другой explicit temporary path. Пример safe external validation workspace:
 
@@ -246,13 +240,7 @@ Language/comment audit и правила будущей локализации �
 
 ### Runtime cleanup
 
-Восстановить production storage после demo/eval/API smoke, если он изменился:
-
-```powershell
-git restore storage/index storage/results storage/uploads
-```
-
-`.runtime_eval` and `.pytest-run-temp` are local/runtime only. Их не коммитить.
+`storage/index`, `storage/results`, `storage/uploads`, `.runtime_eval` and `.pytest-run-temp` are local/runtime only. Их не коммитить.
 
 Не коммитить:
 
@@ -284,12 +272,12 @@ git restore storage/index storage/results storage/uploads
 ```powershell
 conda run -n etl_env python -m pip install -e .[dev]
 conda run -n etl_env python -m pytest -q
+conda run -n etl_env python -m scripts.batch_process --input-dir first_test_data --report-path .runtime_eval\last_batch_report.json
 conda run -n etl_env python -m scripts.demo_customer_flow
 conda run -n etl_env python -m scripts.inspect_document_structure --input-path "D:\path\file.docx" --output-path .runtime_eval\inspect_report.md --json-report-path .runtime_eval\inspect_report.json --clean-workspace
 conda run -n etl_env python -m scripts.audit_rag_chunks --max-documents 1 --max-chunks-per-document 5
 conda run -n etl_env python -m scripts.check_ocr
 conda run -n etl_env python -m scripts.evaluate_ocr --input-dir first_test_data --json-report-path .runtime_eval\ocr_smoke_report.json --language rus+eng
-git restore storage/index storage/results storage/uploads
 git status --short
 ```
 

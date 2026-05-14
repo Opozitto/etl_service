@@ -14,6 +14,8 @@
 - индексирует все обработанные документы и позволяет делать простой поиск по корпусу
 - Исторически Stage 13 считал `XLS` неподдерживаемым, но Stage 14 уже заменил это состояние: `.xls` теперь является подтверждённым baseline-форматом.
 
+Репозиторий поставляется как clear baseline: готовые `storage/index`, `storage/results` и `storage/uploads` не коммитятся. Эти runtime artifacts создаются локально после batch/API processing и игнорируются Git.
+
 ## Структура проекта
 
 - `app/api` — FastAPI endpoint'ы
@@ -63,7 +65,7 @@ conda run -n etl_env python -m scripts.batch_process --input-dir first_test_data
 С отчётом:
 
 ```bash
-conda run -n etl_env python -m scripts.batch_process --input-dir first_test_data --report-path storage/index/last_batch_report.json
+conda run -n etl_env python -m scripts.batch_process --input-dir first_test_data --report-path .runtime_eval/last_batch_report.json
 ```
 
 ## Посмотреть структуру одного файла
@@ -91,10 +93,11 @@ conda run -n etl_env python -m scripts.demo_customer_flow
 Опциональный JSON-отчёт:
 
 ```bash
-conda run -n etl_env python -m scripts.demo_customer_flow --json-report-path storage/index/customer_demo_report.json
+conda run -n etl_env python -m scripts.demo_customer_flow --json-report-path .runtime_eval/customer_demo_report.json
 ```
 
-Режим по умолчанию read-only. Путь для опционального JSON-отчёта является runtime artifact, а `--refresh-index` — единственный режим, который может обновить `storage/index`.
+Режим по умолчанию read-only. Путь для опционального JSON-отчёта является runtime artifact, а `--refresh-index` может обновить локальный `storage/index`.
+В clear checkout meaningful demo/search требует сначала обработать документы, например через `scripts.batch_process --input-dir first_test_data`, потому что готовый corpus/index больше не хранится в Git.
 Этот demo показывает только текущий baseline: LLM generation, summarization, vector DB, semantic retrieval и full RAG не реализованы; OCR ограничен optional local baseline для standalone `jpg`/`jpeg`/`png`, а scanned PDF OCR и embedded image OCR inside DOCX/PDF не реализованы.
 Вывод демо-проверки русскоязычный и ориентирован на read-only просмотр текущего состояния корпуса; в Stage 19.1 он также показывает OCR candidate summary без запуска OCR. Для более явного row-level table context при необходимости можно запустить `--refresh-index`.
 
@@ -105,6 +108,7 @@ conda run -n etl_env python -m scripts.rebuild_corpus
 ```
 
 Индекс корпуса хранится в `storage/index/corpus_index.json` и используется поиском, чтобы не сканировать все JSON-результаты на каждый запрос.
+Это локальный generated artifact; он не коммитится.
 
 ## Минимальная retrieval-проверка
 
@@ -114,7 +118,7 @@ conda run -n etl_env python -m scripts.rebuild_corpus
 conda run -n etl_env python -m scripts.demo_search --query "экология проект"
 ```
 
-Скрипт поднимает простой локальный retrieval по чанкам из всех сохранённых JSON-результатов в `storage/results`.
+Скрипт поднимает простой локальный retrieval по чанкам из локально созданных JSON-результатов в `storage/results`.
 
 ## Corpus quality audit
 
@@ -122,10 +126,10 @@ conda run -n etl_env python -m scripts.demo_search --query "экология п�
 
 ```bash
 conda run -n etl_env python -m scripts.audit_corpus
-conda run -n etl_env python -m scripts.audit_corpus --report-path storage/index/last_corpus_audit.json
+conda run -n etl_env python -m scripts.audit_corpus --report-path .runtime_eval/last_corpus_audit.json
 ```
 
-Скрипт читает сохранённые JSON-результаты и при наличии corpus index / manifest, а затем печатает краткий summary без изменения `storage/results` и `storage/index`.
+Скрипт читает локальные JSON-результаты и при наличии corpus index / manifest, а затем печатает краткий summary без изменения `storage/results` и `storage/index`.
 
 ## Metrics and acceptance criteria
 
@@ -152,10 +156,10 @@ conda run -n etl_env python -m scripts.cleanup_storage --apply
 
 ```bash
 conda run -n etl_env python -m scripts.extract_requirements
-conda run -n etl_env python -m scripts.extract_requirements --json-report-path reports/requirements_v1.json
+conda run -n etl_env python -m scripts.extract_requirements --json-report-path .runtime_eval/requirements_v1.json
 ```
 
-Скрипт читает `storage/results`, возвращает extractive candidates с `document_id`, `filename`, source context, category, score и matched terms. JSON-отчёт пишется только по явному `--json-report-path`. Это не LLM, не RAG, не генерация новых требований и не юридическая/compliance-гарантия.
+Скрипт читает локальные `storage/results`, возвращает extractive candidates с `document_id`, `filename`, source context, category, score и matched terms. JSON-отчёт пишется только по явному `--json-report-path`. Это не LLM, не RAG, не генерация новых требований и не юридическая/compliance-гарантия.
 
 ## Table evidence evaluation
 
@@ -163,10 +167,10 @@ conda run -n etl_env python -m scripts.extract_requirements --json-report-path r
 
 ```bash
 conda run -n etl_env python -m scripts.evaluate_tables
-conda run -n etl_env python -m scripts.evaluate_tables --json-report-path reports/table_evidence_v1.json
+conda run -n etl_env python -m scripts.evaluate_tables --json-report-path .runtime_eval/table_evidence_v1.json
 ```
 
-Скрипт читает уже обработанные JSON из `storage/results`, показывает найденные таблицы, source-backed preview, категории и matched terms. JSON-отчет пишется только по явному `--json-report-path`. Это не SQL/table analytics, не table reasoning и не автоматические расчеты.
+Скрипт читает локально обработанные JSON из `storage/results`, показывает найденные таблицы, source-backed preview, категории и matched terms. JSON-отчет пишется только по явному `--json-report-path`. Это не SQL/table analytics, не table reasoning и не автоматические расчеты.
 
 ## OCR
 

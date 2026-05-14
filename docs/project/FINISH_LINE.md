@@ -193,7 +193,7 @@ Accepted limitations and post-audit verification are part of final delivery prep
 
 Local physical copy of the project should be made only after runtime artifacts are cleaned and `git status --short` is clean.
 
-Cleanup of the local project folder must not remove source files, tests, docs, `first_test_data` or tracked baseline files.
+Cleanup of the local project folder must not remove source files, tests, docs, `first_test_data` or project source/config files.
 
 ## Next choice
 

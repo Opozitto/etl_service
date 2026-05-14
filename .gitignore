@@ -98,7 +98,11 @@ tmpmgcw4co7
 _tmp_stage3_20260429
 
 # =========================
-# Important:
-# storage/ and first_test_data/ are intentionally NOT ignored.
-# This baseline commit includes demo corpus/artifacts.
+# Runtime storage
 # =========================
+
+storage/index/
+storage/results/
+storage/uploads/
+
+# first_test_data/ stays tracked as sample input data.

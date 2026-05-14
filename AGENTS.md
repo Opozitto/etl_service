@@ -35,8 +35,7 @@
 - Не коммитить `storage/index`, `storage/results`, `storage/uploads`.
 - Не коммитить `.runtime_eval/`.
 - Не коммитить внешний dataset `D:\Projects\etl_service_backup\Example_data`.
-- Если tests/demo/API smoke загрязнили production storage, восстановить:
-  `git restore storage/index storage/results storage/uploads`
+- Если tests/demo/API smoke создали production storage, не коммитить эти artifacts; перед сдачей проверить, что `storage/index`, `storage/results`, `storage/uploads` не tracked.
 
 ## Окружение и команды Python
 

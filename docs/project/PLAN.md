@@ -1125,7 +1125,7 @@ conda run -n etl_env python -m scripts.check_ocr
   - known limitations and next development steps;
   - final acceptance checklist.
 - Правила cleanup:
-  - runtime cleanup не должен удалять исходники, tests, docs, `first_test_data` или tracked baseline files;
+  - runtime cleanup не должен удалять исходники, tests, docs, `first_test_data` или project source/config files;
   - local physical copy of the project is allowed only after cleanup runtime artifacts and clean `git status`.
 - Scope:
   - no new features;
