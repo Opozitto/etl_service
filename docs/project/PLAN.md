@@ -29,11 +29,11 @@ conda run -n etl_env python -m scripts.demo_search --query "экология п�
 - Подзадачи:
   - подтвердить `pdf`, `doc`, `docx`, `rtf`, `txt`, `xlsx`, `xls`;
   - подтвердить baseline image presence handling;
-  - сопоставить поведение extractor'ов с тестами и сохранёнными результатами.
+  - сопоставить поведение extractor'ов с тестами и локально созданными результатами после processing.
 - Артефакты:
   - `app/pipeline/extractors/*`
   - `tests/test_extractors.py`
-  - `storage/results/*`
+  - локально generated `storage/results/*` после `scripts.batch_process --input-dir first_test_data` (не committed baseline)
 - Команды проверки:
 ```powershell
 conda run -n etl_env python -m pytest -q tests\test_extractors.py tests\test_structure.py
@@ -47,20 +47,20 @@ conda run -n etl_env python -m scripts.batch_process --input-dir first_test_data
 - Цель: сохранить стабильный контракт вывода для JSON документов, индекса корпуса и manifest.
 - Подзадачи:
   - проверить `StructuredDocument` и API schemas;
-  - проверить `corpus_index.json` и `ingestion_manifest.json`;
-  - убедиться, что сохранённые данные и API-ответы совпадают по смыслу.
+  - проверить локально generated `corpus_index.json` и `ingestion_manifest.json`;
+  - убедиться, что данные, созданные локальным processing/index build, и API-ответы совпадают по смыслу.
 - Артефакты:
   - `app/schemas/document.py`
   - `app/schemas/api.py`
-  - `storage/index/corpus_index.json`
-  - `storage/index/ingestion_manifest.json`
+  - локально generated `storage/index/corpus_index.json`
+  - локально generated `storage/index/ingestion_manifest.json`
 - Команды проверки:
 ```powershell
 conda run -n etl_env python -m pytest -q tests\test_api.py tests\test_search.py
 conda run -n etl_env python -m scripts.rebuild_corpus
 ```
 - Критерий завершения:
-  - JSON output contract подтверждён и не расходится с кодом или сохранёнными данными.
+  - JSON output contract подтверждён и не расходится с кодом или локально generated output.
 
 ## Stage 4. Подтвердить поток API
 
@@ -84,9 +84,9 @@ conda run -n etl_env python -m pytest -q tests\test_api.py
 
 - Цель: сохранить минимальное, но рабочее доказательство поиска по локальному корпусу.
 - Подзадачи:
-  - проверить `rebuild_corpus` на существующем корпусе;
+  - проверить `rebuild_corpus` на локально созданном корпусе после processing;
   - проверить `demo_search` на осмысленном запросе;
-  - убедиться, что retrieval возвращает top hits из локального storage/index.
+  - убедиться, что retrieval возвращает top hits из локального generated `storage/index`.
 - Артефакты:
   - `app/search/index.py`
   - `app/search/store.py`

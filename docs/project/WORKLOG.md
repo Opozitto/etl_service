@@ -254,7 +254,7 @@
 - Stage 25 QA evaluator fast/summary modes are operational diagnostics only; they do not indicate a retrieval quality improvement by themselves.
 - Stage 25.1 aligns the roadmap after QA evaluator diagnostics: coverage first, temporary eval workspace second, failure taxonomy third, speed/cache last if still necessary.
 - Stage 26 keeps external QA dataset audit separate from processing/eval so Stage 27 can operate only on diagnosed inputs in a temporary workspace.
-- Stage 27 keeps external processing/eval isolated in `.runtime_eval` or another explicit temporary workspace; production storage remains the baseline corpus, not an evaluation scratch area.
+- Stage 27 keeps external processing/eval isolated in `.runtime_eval` or another explicit temporary workspace; production storage is local generated corpus output, not a committed baseline and not an evaluation scratch area.
 - Stage 29.0 realigns the next work after RAG chunk audit: inspection/export and quality audit come before speed/cache.
 - Stage 29.1/29.2 close the visibility/export/audit layer for chunks; Stage 30 hardens payload/source context, Stage 31 improves table chunk context, and Stage 32 strengthens source location/citation hints so chunks become stronger handoff units without claiming embeddings, vector DB, semantic retrieval, LLM generation, table analytics, or full RAG.
 - Stage 33.4 closes splitter cleanup validation from the current roadmap standpoint; speed/cache is still not prioritized by default.
@@ -314,6 +314,7 @@
 - Stage 39.0 decision: not planned for this route are scanned PDF OCR, embedded DOCX/PDF OCR, semantic retrieval, reranking, vector DB, full RAG, advanced OCR pipeline, large splitter rewrites and endless cleanup/polish.
 - Stage 39.0 decision: after Stage 39.3 the project returns to final delivery preparation only, not Stage 40+ feature planning.
 - Stage 39.3 decision: the post-audit remediation route is closed; final delivery preparation is checklist execution and cleanup, not roadmap reopen.
+- Clear baseline governance decision: `storage/index`, `storage/results` and `storage/uploads` are ignored local generated output; final verification must not expect committed storage files.
 - Stage 39.1 risk: conservative OCR heuristic can still miss some bad OCR or degrade rare valid text shaped like audit samples; this is accepted because the stage goal is honest degraded handling, not OCR quality scoring.
 - Stage 39.2 risk: conservative extraction heuristics can still miss some bad fragments or suppress rare valid compact text shaped like garbage; thresholds are intentionally bounded to avoid aggressive cleanup of useful evidence.
 

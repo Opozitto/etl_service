@@ -16,10 +16,11 @@
 
 ```powershell
 conda run -n etl_env python -m pytest -q
+conda run -n etl_env python -m scripts.batch_process --input-dir first_test_data --report-path .runtime_eval\last_batch_report.json
 conda run -n etl_env python -m scripts.demo_customer_flow
 ```
 
-`pytest` является полной regression-проверкой проекта. `scripts.demo_customer_flow` показывает customer-facing smoke текущего baseline: corpus visibility, source-backed search/ask, table/OCR-candidate visibility и known limitations.
+`pytest` является полной regression-проверкой проекта. В clear checkout meaningful demo/search требует локальной обработки sample corpus из `first_test_data`, потому что `storage/index`, `storage/results` и `storage/uploads` больше не являются committed baseline. `scripts.demo_customer_flow` показывает customer-facing smoke текущего baseline: corpus visibility, source-backed search/ask, table/OCR-candidate visibility и known limitations.
 
 ### 2. Single-file structure inspection
 
@@ -113,12 +114,13 @@ conda run -n etl_env python -m scripts.evaluate_tables --json-report-path .runti
 ## Рекомендуемый порядок воспроизведения для сдачи
 
 1. Запустить `conda run -n etl_env python -m pytest -q`.
-2. Запустить `conda run -n etl_env python -m scripts.demo_customer_flow`.
-3. Проверить один файл через `scripts.inspect_document_structure`.
-4. Выполнить chunk export/audit smoke.
-5. Запустить OCR smoke, если Tesseract установлен.
-6. Запустить external validation bounded mode, если `D:\Projects\etl_service_backup\Example_data` доступен.
-7. Удалить/не коммитить runtime artifacts.
+2. В clear checkout создать локальный sample corpus через `scripts.batch_process --input-dir first_test_data`.
+3. Запустить `conda run -n etl_env python -m scripts.demo_customer_flow`.
+4. Проверить один файл через `scripts.inspect_document_structure`.
+5. Выполнить chunk export/audit smoke.
+6. Запустить OCR smoke, если Tesseract установлен.
+7. Запустить external validation bounded mode, если `D:\Projects\etl_service_backup\Example_data` доступен.
+8. Удалить/не коммитить runtime artifacts.
 
 Stage 38.6 отдельно закрывает final cleanup & verification checklist. Этот документ только упаковывает experiments/evaluation workflows.
 Финальный verification/cleanup checklist находится в `docs/project/FINAL_DELIVERY_CHECKLIST.md`.

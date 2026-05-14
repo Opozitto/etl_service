@@ -128,7 +128,19 @@ foreach ($file in $files) {
 ```powershell
 git status --short storage/index storage/results storage/uploads .runtime_eval
 git ls-files storage/index storage/results storage/uploads
+git check-ignore -v storage/index/probe.json storage/results/probe.json storage/uploads/probe.txt
 ```
+
+`git ls-files storage/index storage/results storage/uploads` должен быть пустым. `git check-ignore -v ...` должен показывать правила `.gitignore` для всех трех probe-файлов.
+
+14. Проверить, что runtime dirs отсутствуют локально или остаются ignored:
+
+```powershell
+git status --short
+git check-ignore -v .runtime_eval/probe.json .pytest_cache/probe __pycache__/probe.pyc
+```
+
+Если после demo/eval появились `storage/index`, `storage/results`, `storage/uploads` или `.runtime_eval`, их можно удалить вручную как local generated output перед сдачей. Нельзя коммитить эти каталоги или generated reports.
 
 Финальная verification считается завершенной, если все обязательные проверки пройдены или конкретно отмечено, какие optional checks сознательно пропущены и почему.
 
@@ -184,7 +196,8 @@ External `D:\Projects\etl_service_backup\Example_data` остается вне r
 
 - `git status --short` clean;
 - runtime dirs удалены locally или сознательно исключены из копии;
-- generated runtime storage не попал в tracked files;
+- generated runtime storage не попал в tracked files: `git ls-files storage/index storage/results storage/uploads` пустой;
+- `.gitignore` подтверждает ignore для `storage/index/probe.json`, `storage/results/probe.json`, `storage/uploads/probe.txt`;
 - нет untracked generated files;
 - final checks completed or intentionally skipped with note.
 
@@ -262,6 +275,7 @@ Not planned in this route:
 - [ ] Stage 39 post-audit route closed; remaining route is final delivery preparation only.
 - [ ] External dataset not committed.
 - [ ] Runtime artifacts not committed.
-- [ ] Production storage/runtime cleanliness checked.
+- [ ] Production storage/runtime cleanliness checked: `git ls-files storage/index storage/results storage/uploads` пустой, `git check-ignore -v` подтверждает ignore для storage probes, runtime dirs absent or ignored.
+- [ ] Meaningful search/demo in a clear checkout is run only after local processing/index build from `first_test_data` or another explicit input route.
 - [ ] No false readiness claims.
 - [ ] Final physical copy ready.

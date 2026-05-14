@@ -21,7 +21,7 @@
 - `processing_success_rate` - доля успешно обработанных документов среди выбранных.
 - Unsupported format counts - количество файлов по неподдерживаемым расширениям/типам.
 - Ambiguous/missing expected source diagnostics for external QA - диагностика, когда expected source из QA-файла не найден однозначно или отсутствует.
-- Runtime storage pollution check - подтверждение, что smoke/eval временные прогоны не загрязнили production `storage/index`, `storage/results`, `storage/uploads`.
+- Runtime storage pollution check - подтверждение, что smoke/eval временные прогоны не оставили tracked files в `storage/index`, `storage/results`, `storage/uploads`; эти каталоги являются local generated output и должны быть absent or ignored.
 
 Acceptance смысл: успешность обработки должна быть измеримой, а zero-document или ambiguous-source runs не должны выдаваться за успешную оценку качества корпуса.
 
@@ -108,7 +108,7 @@ Scanned PDF OCR и embedded image OCR inside DOCX/PDF не реализован�
 - Single-file inspector smoke через `scripts.inspect_document_structure` после Stage 38.2: один explicit файл, isolated workspace под `.runtime_eval` или explicit safe path, bounded console/Markdown/JSON report, production `storage` не изменяется.
 - `git diff --check`.
 - UTF-8/BOM/U+FFFD sanity для Markdown/docs.
-- Production storage clean: нет незапланированных изменений в `storage/index`, `storage/results`, `storage/uploads`.
+- Runtime storage clean: `git ls-files storage/index storage/results storage/uploads` пустой, `git check-ignore -v` подтверждает ignore для storage probes, а локальные `storage/index`, `storage/results`, `storage/uploads` после demo/eval отсутствуют или остаются ignored generated output.
 
 Acceptance смысл: delivery проверяется воспроизводимыми командами и чистотой артефактов, а не устными claims.
 
@@ -143,7 +143,7 @@ Acceptance смысл: delivery проверяется воспроизводи�
 - OCR limitations are honest: standalone image OCR is optional/local; scanned PDF OCR and embedded image OCR are not implemented.
 - No external proprietary API is required for the confirmed baseline.
 - External dataset is path-only and not committed.
-- Runtime artifacts are not committed, including `.runtime_eval` reports/workspaces and production storage pollution from smoke/eval runs.
+- Runtime artifacts are not committed, including `.runtime_eval` reports/workspaces and generated `storage/index`, `storage/results`, `storage/uploads` from local processing/smoke/eval runs.
 - Known limitations and next steps are explicit.
 
 ## Explicit non-claims
