@@ -4,7 +4,7 @@
 
 Этот документ описывает эксплуатацию ETL service для финальной сдачи и передачи проекта.
 
-Текущий проект - это ETL/source-backed handoff baseline: он извлекает структуру документов, готовит `StructuredDocument` JSON, строит локальные chunks/index и поддерживает source-backed search/ask. Это не full RAG/LLM product: генерация LLM-ответов, semantic retrieval, embeddings/vector DB, scanned PDF OCR, embedded image OCR, table analytics, production UI и external proprietary API не входят в подтвержденный baseline.
+Текущий проект - это ETL/source-backed handoff baseline: он извлекает структуру документов, готовит `StructuredDocument` JSON, строит локальные chunks/index и поддерживает source-backed search/ask. Это не full RAG/LLM-продукт: генерация LLM-ответов, semantic retrieval, embeddings/vector DB, scanned PDF OCR, embedded image OCR, table analytics, production UI и external proprietary API не входят в подтвержденный baseline.
 
 ## Уровень 1: короткий запуск
 
@@ -57,8 +57,8 @@ intake -> extractor -> StructuredDocument JSON -> blocks/sections/tables/images 
 
 Зачем нужны основные эксплуатационные документы и скрипты:
 
-- `scripts.demo_customer_flow` - read-only customer smoke локально созданного corpus baseline: health of corpus, search/ask/table/OCR-candidate visibility и honest limitations.
-- `scripts.inspect_document_structure` - проверка одного explicit файла в изолированном workspace, полезная для handoff/review до добавления файла в regular corpus flow.
+- `scripts.demo_customer_flow` - read-only customer smoke локально созданного corpus baseline: состояние корпуса, видимость search/ask/table/OCR-candidate и честные ограничения.
+- `scripts.inspect_document_structure` - проверка одного явно указанного файла в изолированном workspace, полезная для handoff/review до добавления файла в regular corpus flow.
 - `scripts.audit_rag_chunks` - read-only диагностика chunk quality, compact taxonomy, table-linked context и handoff limitations.
 - `scripts.validate_external_example_data` - workflow для external `D:\Projects\etl_service_backup\Example_data` как path-only evidence dataset, с обработкой только в `.runtime_eval` или другом explicit temporary workspace.
 - `scripts.evaluate_ocr` - smoke/eval standalone `jpg`/`jpeg`/`png` OCR через локальный Tesseract, если он установлен.
@@ -166,19 +166,19 @@ conda run -n etl_env python -m scripts.validate_external_example_data --dataset-
 
 ### Single-file inspector
 
-Console-only example:
+Пример вывода только в консоль:
 
 ```powershell
 conda run -n etl_env python -m scripts.inspect_document_structure --input-path "D:\path\file.docx"
 ```
 
-Markdown/JSON report example:
+Пример Markdown/JSON-отчёта:
 
 ```powershell
 conda run -n etl_env python -m scripts.inspect_document_structure --input-path "D:\path\file.docx" --output-path .runtime_eval\inspect_report.md --json-report-path .runtime_eval\inspect_report.json --clean-workspace
 ```
 
-Inspector обрабатывает один explicit file path и по умолчанию использует `.runtime_eval\inspect_document_structure_workspace`. Не указывать `storage`, `storage/index`, `storage/results` или `storage/uploads` как workspace/output для inspection.
+Inspector обрабатывает один явно указанный file path и по умолчанию использует `.runtime_eval\inspect_document_structure_workspace`. Не указывать `storage`, `storage/index`, `storage/results` или `storage/uploads` как workspace/output для inspection.
 
 ### Search / ask
 
@@ -228,20 +228,20 @@ Exploratory bounded mode для non-empty ETL/chunk validation:
 conda run -n etl_env python -m scripts.validate_external_example_data --dataset-dir D:\Projects\etl_service_backup\Example_data --qa-path "D:\Projects\etl_service_backup\Example_data\[ОТВЕТЫ] Данные для тестирования\test_with_answers.csv" --source-scope all-supported --ambiguous-policy all --process --run-chunk-quality --clean-workspace --max-documents 10
 ```
 
-Reports/workspaces должны оставаться в `.runtime_eval` или другом explicit temporary path. External files, runtime reports и workspace artifacts не коммитить.
+Reports/workspaces должны оставаться в `.runtime_eval` или другом явно указанном temporary path. External files, runtime reports и workspace artifacts не коммитить.
 
 ### Metrics and acceptance
 
 Метрики, acceptance gates и non-claims зафиксированы в [METRICS_AND_ACCEPTANCE.md](METRICS_AND_ACCEPTANCE.md).
 
-Language/comment audit и правила будущей локализации зафиксированы в [LANGUAGE_AUDIT.md](LANGUAGE_AUDIT.md). При polish переводить только human-facing prose и не менять API/JSON/CLI identifiers, report fields, stage names или command examples.
+Language/comment audit и правила будущей локализации зафиксированы в [LANGUAGE_AUDIT.md](LANGUAGE_AUDIT.md). При полировке переводить только human-facing prose и не менять API/JSON/CLI identifiers, report fields или command examples.
 
 Для финальной сдачи использовать этот guide как операционный маршрут, а `METRICS_AND_ACCEPTANCE.md` как quality/acceptance baseline.
 Финальный cleanup/verification gate перед физической копией описан в [FINAL_DELIVERY_CHECKLIST.md](FINAL_DELIVERY_CHECKLIST.md).
 
 ### Runtime cleanup
 
-`storage/index`, `storage/results`, `storage/uploads`, `.runtime_eval` and `.pytest-run-temp` are local/runtime only. Их не коммитить.
+`storage/index`, `storage/results`, `storage/uploads`, `.runtime_eval` и `.pytest-run-temp` являются local/runtime only. Их не коммитить.
 
 Не коммитить:
 
@@ -290,7 +290,7 @@ conda run -n etl_env python -m scripts.validate_external_example_data --dataset-
 
 ### Troubleshooting
 
-CRLF warnings: `git diff --check` может показывать Windows line-ending warnings. Если это только line endings, не чинить весь репозиторий широким форматированием в docs-only stage.
+CRLF warnings: `git diff --check` может показывать Windows line-ending warnings. Если это только line endings, не чинить весь репозиторий широким форматированием в docs-only задаче.
 
 UTF-8/mojibake: русскоязычные Markdown-файлы считать UTF-8. Если PowerShell console показывает mojibake, сначала проверить bytes/UTF-8 decode, BOM и replacement char `U+FFFD`; не переписывать файл только из-за кодовой страницы консоли.
 

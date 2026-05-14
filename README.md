@@ -12,7 +12,7 @@
 - строит структурированный JSON с разделами, блоками и таблицами
 - сохраняет результаты локально в `storage/`
 - индексирует все обработанные документы и позволяет делать простой поиск по корпусу
-- Исторически Stage 13 считал `XLS` неподдерживаемым, но Stage 14 уже заменил это состояние: `.xls` теперь является подтверждённым baseline-форматом.
+- `.xls` является подтверждённым baseline-форматом наряду с `.xlsx`
 
 Репозиторий поставляется как clear baseline: готовые `storage/index`, `storage/results` и `storage/uploads` не коммитятся. Эти runtime artifacts создаются локально после batch/API processing и игнорируются Git.
 
@@ -27,7 +27,7 @@
 
 ## Быстрый старт
 
-```bash
+```powershell
 conda run -n etl_env python -m pip install -e .[dev]
 conda run -n etl_env uvicorn app.main:app --reload
 ```
@@ -58,53 +58,53 @@ conda run -n etl_env uvicorn app.main:app --reload
 
 ## Batch обработка директории
 
-```bash
+```powershell
 conda run -n etl_env python -m scripts.batch_process --input-dir first_test_data
 ```
 
 С отчётом:
 
-```bash
-conda run -n etl_env python -m scripts.batch_process --input-dir first_test_data --report-path .runtime_eval/last_batch_report.json
+```powershell
+conda run -n etl_env python -m scripts.batch_process --input-dir first_test_data --report-path .runtime_eval\last_batch_report.json
 ```
 
 ## Посмотреть структуру одного файла
 
 Для ручной inspection/handoff проверки одного файла без загрязнения production `storage/`:
 
-```bash
+```powershell
 conda run -n etl_env python -m scripts.inspect_document_structure --input-path "D:\path\file.docx"
 ```
 
 По умолчанию временный workspace создается под `.runtime_eval\inspect_document_structure_workspace`. Можно явно сохранить Markdown/JSON отчет:
 
-```bash
+```powershell
 conda run -n etl_env python -m scripts.inspect_document_structure --input-path "D:\path\file.docx" --output-path .runtime_eval\inspect_report.md --json-report-path .runtime_eval\inspect_report.json --clean-workspace
 ```
 
-Inspector показывает metadata, processing warnings/features, sections, blocks, chunks, tables, images и workspace artifacts с bounded previews. Это diagnostic tool, не UI, не RAG/LLM, не OCR expansion и не table analytics.
+Inspector показывает metadata, processing warnings/features, sections, blocks, chunks, tables, images и workspace artifacts с bounded previews. Это диагностический инструмент, не UI, не RAG/LLM, не расширенный OCR и не table analytics.
 
 ## Customer demo smoke runner
 
-```bash
+```powershell
 conda run -n etl_env python -m scripts.batch_process --input-dir first_test_data
 conda run -n etl_env python -m scripts.demo_customer_flow
 ```
 
 Опциональный JSON-отчёт:
 
-```bash
-conda run -n etl_env python -m scripts.demo_customer_flow --json-report-path .runtime_eval/customer_demo_report.json
+```powershell
+conda run -n etl_env python -m scripts.demo_customer_flow --json-report-path .runtime_eval\customer_demo_report.json
 ```
 
 Режим по умолчанию read-only. Путь для опционального JSON-отчёта является runtime artifact, а `--refresh-index` может обновить локальный generated `storage/index`.
 В clear checkout meaningful demo/search требует сначала обработать документы, например через `scripts.batch_process --input-dir first_test_data`, потому что готовый corpus/index больше не хранится в Git.
 Этот demo показывает только текущий baseline: LLM generation, summarization, vector DB, semantic retrieval и full RAG не реализованы; OCR ограничен optional local baseline для standalone `jpg`/`jpeg`/`png`, а scanned PDF OCR и embedded image OCR inside DOCX/PDF не реализованы.
-Вывод демо-проверки русскоязычный и ориентирован на read-only просмотр текущего состояния корпуса; в Stage 19.1 он также показывает OCR candidate summary без запуска OCR. Для более явного row-level table context при необходимости можно запустить `--refresh-index`.
+Вывод демо-проверки русскоязычный и ориентирован на read-only просмотр текущего состояния корпуса; он также показывает OCR candidate summary без запуска OCR. Для более явного row-level table context при необходимости можно запустить `--refresh-index`.
 
 ## Пересборка индекса корпуса
 
-```bash
+```powershell
 conda run -n etl_env python -m scripts.rebuild_corpus
 ```
 
@@ -115,7 +115,7 @@ conda run -n etl_env python -m scripts.rebuild_corpus
 
 После пакетной обработки можно проверить, что структура документа уже даёт полезный корпус для задач последующей обработки:
 
-```bash
+```powershell
 conda run -n etl_env python -m scripts.demo_search --query "экология проект"
 ```
 
@@ -125,9 +125,9 @@ conda run -n etl_env python -m scripts.demo_search --query "экология п�
 
 Для read-only аудита качества корпуса доступны команды:
 
-```bash
+```powershell
 conda run -n etl_env python -m scripts.audit_corpus
-conda run -n etl_env python -m scripts.audit_corpus --report-path .runtime_eval/last_corpus_audit.json
+conda run -n etl_env python -m scripts.audit_corpus --report-path .runtime_eval\last_corpus_audit.json
 ```
 
 Скрипт читает локальные JSON-результаты и при наличии corpus index / manifest, а затем печатает краткий summary без изменения `storage/results` и `storage/index`.
@@ -146,7 +146,7 @@ Language/comment audit и правила будущей локализации �
 
 ## Очистка дубликатов в storage
 
-```bash
+```powershell
 conda run -n etl_env python -m scripts.cleanup_storage
 conda run -n etl_env python -m scripts.cleanup_storage --apply
 ```
@@ -155,9 +155,9 @@ conda run -n etl_env python -m scripts.cleanup_storage --apply
 
 Для read-only извлечения возможных требований из уже обработанных JSON доступен deterministic source-backed слой:
 
-```bash
+```powershell
 conda run -n etl_env python -m scripts.extract_requirements
-conda run -n etl_env python -m scripts.extract_requirements --json-report-path .runtime_eval/requirements_v1.json
+conda run -n etl_env python -m scripts.extract_requirements --json-report-path .runtime_eval\requirements_v1.json
 ```
 
 Скрипт читает локальные `storage/results`, возвращает extractive candidates с `document_id`, `filename`, source context, category, score и matched terms. JSON-отчёт пишется только по явному `--json-report-path`. Это не LLM, не RAG, не генерация новых требований и не юридическая/compliance-гарантия.
@@ -166,9 +166,9 @@ conda run -n etl_env python -m scripts.extract_requirements --json-report-path .
 
 Для read-only оценки табличных источников и поиска возможных входных данных для экологических расчетов доступен deterministic source-backed слой:
 
-```bash
+```powershell
 conda run -n etl_env python -m scripts.evaluate_tables
-conda run -n etl_env python -m scripts.evaluate_tables --json-report-path .runtime_eval/table_evidence_v1.json
+conda run -n etl_env python -m scripts.evaluate_tables --json-report-path .runtime_eval\table_evidence_v1.json
 ```
 
 Скрипт читает локально обработанные JSON из `storage/results`, показывает найденные таблицы, source-backed preview, категории и matched terms. JSON-отчет пишется только по явному `--json-report-path`. Это не SQL/table analytics, не table reasoning и не автоматические расчеты.
@@ -176,8 +176,8 @@ conda run -n etl_env python -m scripts.evaluate_tables --json-report-path .runti
 ## OCR
 
 OCR для standalone `jpg`/`jpeg`/`png` теперь optional local baseline: если локальный `tesseract` доступен, сервис извлекает текст и сохраняет его в обычный document output, чтобы он попадал в blocks/chunks/search/ask path.
-Если локальный OCR engine недоступен, упал или вернул пустой текст, сохраняется metadata-only OCR-candidate поведение Stage 19.1.
-Если OCR engine технически вернул success, но standalone image OCR output выглядит как вероятный шум / misleading latinized-RU текст, Stage 39.1 quality gate сохраняет degraded metadata/warning и не выпускает такой текст как обычные OCR chunks.
+Если локальный OCR engine недоступен, упал или вернул пустой текст, сохраняется metadata-only OCR-candidate поведение.
+Если OCR engine технически вернул success, но standalone image OCR output выглядит как вероятный шум / misleading latinized-RU текст, quality gate сохраняет degraded metadata/warning и не выпускает такой текст как обычные OCR chunks.
 В `processing_info.features` для image-only intake теперь могут появляться `ocr_used`, `ocr_candidate`, `ocr_engine`, `ocr_text_length`, `ocr_raw_text_length`, `ocr_status`, `ocr_quality_status`, `ocr_quality_reason` и `ocr_quality_metrics`; top-level contract при этом не расширяется.
 `pdf` без meaningful extracted text / chunks по-прежнему может быть conservatively отмечен как `possible_scanned_pdf` / OCR candidate, но страницы не рендерятся в изображения и OCR для scanned PDF не запускается.
 `HEIC`/`HEIF`/`TIFF`/`TIF`/`BMP`/`WEBP` по-прежнему остаются неподдерживаемыми image-like форматами.
@@ -188,13 +188,13 @@ Read-only audit и customer demo runner теперь показывают summar
 
 Для read-only smoke/eval проверки качества OCR на sample images можно использовать:
 
-```bash
+```powershell
 conda run -n etl_env python -m scripts.evaluate_ocr
-conda run -n etl_env python -m scripts.evaluate_ocr --input-dir first_test_data --json-report-path tmp/ocr_smoke_report.json
-conda run -n etl_env python -m scripts.evaluate_ocr --input-dir first_test_data --json-report-path tmp/ocr_smoke_report.json --language rus+eng
+conda run -n etl_env python -m scripts.evaluate_ocr --input-dir first_test_data --json-report-path .runtime_eval\ocr_smoke_report.json
+conda run -n etl_env python -m scripts.evaluate_ocr --input-dir first_test_data --json-report-path .runtime_eval\ocr_smoke_report.json --language rus+eng
 ```
 
-Этот script читает входные image samples, использует Stage 20 OCR adapter и не пишет в `storage/index`, `storage/results` или `storage/uploads`.
+Этот скрипт читает входные image samples, использует локальный OCR adapter и не пишет в `storage/index`, `storage/results` или `storage/uploads`.
 `--language` задаёт Tesseract language config для smoke/eval; для русских документов рекомендуется `--language rus+eng`, если эти language packs установлены.
 Это smoke/eval слой для проверки readiness, а не production OCR quality guarantee: качество зависит от изображения, установленных языков Tesseract, preprocessing и будущего OCR module design.
 Scanned PDF OCR и OCR embedded images inside DOCX/PDF не входят в baseline; external/proprietary OCR API не используются.
@@ -206,9 +206,8 @@ Table OCR не должен выдаваться за structured table extractio
 
 Для старых файлов `DOC` baseline использует локальный `LibreOffice` (`soffice`) и конвертирует документ в `DOCX` перед извлечением. Внешние API не используются.
 
-## Примечание Stage 14
+## Поддержка XLS
 
 - `.xls` теперь поддерживается на baseline-уровне через `XlsExtractor`.
 - `.xls` и `.xlsx` используют один и тот же flattened table extraction contract для search/ask, а дополнительные row-level lexical chunks улучшают поиск по строкам и значениям.
 - Advanced Excel semantics вроде formulas, macros, styles, merged cells и hidden-sheet behavior остаются вне scope.
-- Решение Stage 13 о неподдержке `XLS` остаётся только исторической отметкой и уже заменено Stage 14.

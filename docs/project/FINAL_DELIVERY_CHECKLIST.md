@@ -4,9 +4,7 @@
 
 Этот документ фиксирует финальный checklist для сдачи ETL service.
 
-Stage 38.6 - это не новый feature stage. Это проверка упаковки, чистоты локальной папки, честности ограничений и готовности к физической копии проекта.
-
-Stage 39.0 добавляет post-audit triage lock после deep audit `first_test_data`: проект находится в bounded remediation before delivery, а не в active feature development. Route конечный: Stage 39.1 standalone OCR safety gate, Stage 39.2 extractor garbage detection, Stage 39.3 final post-audit verification & docs alignment, затем только final delivery preparation.
+Checklist предназначен для финальной упаковки, проверки чистоты локальной папки, честности ограничений и готовности к физической копии проекта. Он не описывает историю разработки и не открывает новый feature roadmap.
 
 ## Current final delivery package
 
@@ -23,7 +21,6 @@ Stage 39.0 добавляет post-audit triage lock после deep audit `firs
 - customer scenarios: `docs/project/CUSTOMER_SCENARIOS.md`;
 - single-file inspector: `scripts.inspect_document_structure`;
 - known limitations, зафиксированные в README, operation guide, metrics/acceptance и этом checklist.
-- post-audit Stage 39.0 classification: bounded remediation separated from accepted deterministic ETL limitations.
 - clear repository baseline: готовые `storage/index`, `storage/results` и `storage/uploads` не коммитятся; они создаются локально после processing.
 
 ## Final verification sequence
@@ -42,7 +39,7 @@ git status --short
 conda run -n etl_env python -m pytest -q
 ```
 
-3. Запустить focused post-audit regression для Stage 39.1–39.2:
+3. Запустить focused regression для OCR/extractor quality checks:
 
 ```powershell
 conda run -n etl_env python -m pytest -q tests\test_ocr_quality.py tests\test_extraction_quality.py
@@ -146,7 +143,7 @@ git check-ignore -v .runtime_eval/probe.json .pytest_cache/probe __pycache__/pro
 
 ## Post-audit bounded verification
 
-После Stage 39.1–39.2 финальная проверка должна подтвердить только bounded remediation:
+Финальная проверка должна подтвердить только bounded remediation:
 
 - standalone OCR safety gate не позволяет silently считать подозрительный RU OCR output quality baseline без `--language rus+eng`;
 - RTF garbage extraction классифицируется как warning/degraded evidence, а не чистый successful extraction;
@@ -154,9 +151,7 @@ git check-ignore -v .runtime_eval/probe.json .pytest_cache/probe __pycache__/pro
 - `.doc` converter/dependency issue описан как preflight/accepted limitation, а не production blocker;
 - accepted deterministic ETL limitations остаются honest limitations, а не remediation backlog.
 
-Stage 39.3 закрывает эту проверку как docs-only alignment: после неё route возвращается к final delivery preparation only.
-
-Эта проверка не запускает новый feature roadmap и не добавляет Stage 41+.
+Эта проверка не запускает новый feature roadmap и не расширяет scope перед сдачей.
 
 ## Local cleanup before physical copy
 
@@ -221,26 +216,26 @@ External `D:\Projects\etl_service_backup\Example_data` остается вне r
 
 ## Known limitations
 
-- No scanned PDF OCR.
-- No embedded image OCR inside DOCX/PDF.
-- No advanced OCR pipeline.
-- No full RAG.
-- No LLM generation.
-- No semantic retrieval/reranking/vector DB.
-- No table analytics/calculations.
-- Optional local OCR only for standalone `jpg`/`jpeg`/`png`.
-- For Russian standalone OCR baseline use `--language rus+eng`; OCR without RU language config is smoke/best-effort only.
-- Stage 39.1 OCR safety gate reduces misleading-success risk, but does not guarantee OCR quality.
-- DOCX page metadata may be unavailable.
-- Deterministic chunking is not semantic document understanding.
-- Stage 39.2 RTF/PDF garbage detection reduces retrieval pollution risk, but is not an RTF/PDF parser rewrite and not OCR fallback.
-- `.doc` conversion can depend on local converter/dependency environment; this is a preflight limitation unless separately changed.
-- Accepted deterministic ETL limitations: missing DOCX pages, formula-like heading fragments, compact pollutant/equipment evidence, isolated table-layout tails, approval/signature service structures and partial multirow header limitations.
-- External QA source ambiguity is dataset/workflow diagnostic, not an automatic project failure and not successful quality evidence by itself.
+- Нет scanned PDF OCR.
+- Нет embedded image OCR inside DOCX/PDF.
+- Нет advanced OCR pipeline.
+- Нет full RAG.
+- Нет LLM generation.
+- Нет semantic retrieval/reranking/vector DB.
+- Нет table analytics/calculations.
+- Optional local OCR работает только для standalone `jpg`/`jpeg`/`png`.
+- Для Russian standalone OCR baseline использовать `--language rus+eng`; OCR без RU language config является только smoke/best-effort режимом.
+- OCR safety gate снижает риск misleading-success, но не гарантирует качество OCR.
+- DOCX page metadata может быть недоступна.
+- Deterministic chunking не является semantic document understanding.
+- RTF/PDF garbage detection снижает риск retrieval pollution, но не является RTF/PDF parser rewrite и не добавляет OCR fallback.
+- `.doc` conversion может зависеть от local converter/dependency environment; это preflight limitation, если отдельно не изменено.
+- Accepted deterministic ETL limitations: missing DOCX pages, formula-like heading fragments, compact pollutant/equipment evidence, isolated table-layout tails, approval/signature service structures и partial multirow header limitations.
+- External QA source ambiguity является dataset/workflow diagnostic, а не automatic project failure и не successful quality evidence by itself.
 
-## Bounded route before delivery
+## Delivery-only route
 
-Stage 39 route is now closed. Allowed next steps are delivery-only:
+Feature work закрыт. Разрешённые следующие шаги относятся только к сдаче:
 
 - final delivery preparation only.
 
@@ -271,10 +266,10 @@ Not planned in this route:
 - [ ] Experiments README present.
 - [ ] Single-file inspector present.
 - [ ] Limitations honest.
-- [ ] Stage 39 post-audit route closed; remaining route is final delivery preparation only.
+- [ ] Feature route closed; remaining route is final delivery preparation only.
 - [ ] External dataset not committed.
 - [ ] Runtime artifacts not committed.
 - [ ] Production storage/runtime cleanliness checked: `git ls-files storage/index storage/results storage/uploads` пустой, `git check-ignore -v` подтверждает ignore для storage probes, runtime dirs absent or ignored.
 - [ ] Meaningful search/demo in a clear checkout is run only after local processing/index build from `first_test_data` or another explicit input route.
-- [ ] No false readiness claims.
+- [ ] Нет false readiness claims.
 - [ ] Final physical copy ready.

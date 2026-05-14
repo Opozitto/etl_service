@@ -6,7 +6,7 @@
 
 В текущем проекте нет обученной LLM/генеративной модели и нет full RAG. Поэтому метрика не описывается как accuracy модели генерации. Проект решает ETL-задачу первого этапа: разделение документов на `blocks` / `chunks`, извлечение текста и таблиц, подготовка `StructuredDocument` JSON и локального search/source-backed QA handoff. Качество такого baseline измеряется набором воспроизводимых quality gates по слоям пайплайна.
 
-Иными словами, "метрика" в рамках текущего этапа - это не одно число, а согласованный набор acceptance metrics, которые исполнитель определяет для ETL/RAG-readiness: обработка документов, качество структуры/chunks, контекст таблиц, retrieval/source-backed QA readiness, OCR smoke для standalone images и operational acceptance.
+Иными словами, "метрика" в рамках текущей поставки - это не одно число, а согласованный набор acceptance metrics, которые исполнитель определяет для ETL/RAG-readiness: обработка документов, качество структуры/chunks, контекст таблиц, retrieval/source-backed QA readiness, OCR smoke для standalone images и operational acceptance.
 
 ## Metric groups
 
@@ -105,7 +105,7 @@ Scanned PDF OCR и embedded image OCR inside DOCX/PDF не реализован�
 - API smoke для core endpoints.
 - OCR smoke для standalone images.
 - External validation smoke по explicit external dataset path, без commit external files/reports.
-- Single-file inspector smoke через `scripts.inspect_document_structure` после Stage 38.2: один explicit файл, isolated workspace под `.runtime_eval` или explicit safe path, bounded console/Markdown/JSON report, production `storage` не изменяется.
+- Single-file inspector smoke через `scripts.inspect_document_structure`: один явно указанный файл, isolated workspace под `.runtime_eval` или explicit safe path, bounded console/Markdown/JSON report, production `storage` не изменяется.
 - `git diff --check`.
 - UTF-8/BOM/U+FFFD sanity для Markdown/docs.
 - Runtime storage clean: `git ls-files storage/index storage/results storage/uploads` пустой, `git check-ignore -v` подтверждает ignore для storage probes, а локальные `storage/index`, `storage/results`, `storage/uploads` после demo/eval отсутствуют или остаются ignored generated output.
@@ -140,10 +140,10 @@ Acceptance смысл: delivery проверяется воспроизводи�
 - Table rows have readable row/table/column context where deterministic metadata is available.
 - Audit/eval scripts are documented and distinguish diagnostics from production behavior.
 - Single-file structure inspector is available for manual handoff review of one arbitrary file without production storage pollution.
-- OCR limitations are honest: standalone image OCR is optional/local; scanned PDF OCR and embedded image OCR are not implemented.
-- No external proprietary API is required for the confirmed baseline.
-- External dataset is path-only and not committed.
-- Runtime artifacts are not committed, including `.runtime_eval` reports/workspaces and generated `storage/index`, `storage/results`, `storage/uploads` from local processing/smoke/eval runs.
+- OCR limitations are honest: standalone image OCR является optional/local; scanned PDF OCR и embedded image OCR не реализованы.
+- Для подтверждённого baseline не требуются external proprietary API.
+- External dataset используется только by path и не коммитится.
+- Runtime artifacts не коммитятся, включая `.runtime_eval` reports/workspaces и generated `storage/index`, `storage/results`, `storage/uploads` from local processing/smoke/eval runs.
 - Known limitations and next steps are explicit.
 
 ## Explicit non-claims
