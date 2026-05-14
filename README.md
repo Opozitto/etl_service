@@ -1,29 +1,20 @@
 # ETL Service
 
-Автономный ETL-микросервис для извлечения структуры из документов и подготовки данных для последующей обработки и задач поиска.
+Автономный ETL-микросервис для извлечения структуры из документов и подготовки данных для последующей обработки, локального поиска и source-backed handoff.
+
+Проект поставляется как clear baseline: готовые `storage/index`, `storage/results` и `storage/uploads` не коммитятся. Эти runtime artifacts создаются локально после API/batch processing и игнорируются Git.
 
 ## Что умеет baseline
 
-- принимает документы через API или пакетную CLI-обработку
-- поддерживает `pdf`, `doc`, `docx`, `rtf`, `txt`, `xlsx`, `xls`
-- `xlsx` и `xls` извлекают таблицы, сохраняют их в JSON и дают табличный текст в retrieval path
-- `jpg`/`jpeg`/`png` поддерживают optional local OCR baseline: при наличии локального engine текст извлекается, а при его отсутствии сохраняется metadata-only OCR-candidate поведение
-- извлекает текст, таблицы, базовые метаданные и факт наличия изображений
-- строит структурированный JSON с разделами, блоками и таблицами
-- сохраняет результаты локально в `storage/`
-- индексирует все обработанные документы и позволяет делать простой поиск по корпусу
-- `.xls` является подтверждённым baseline-форматом наряду с `.xlsx`
+- принимает документы через FastAPI или пакетную CLI-обработку;
+- поддерживает `pdf`, `doc`, `docx`, `rtf`, `txt`, `xlsx`, `xls`;
+- поддерживает standalone `jpg`/`jpeg`/`png` как optional local OCR baseline: при наличии локального OCR engine текст может быть извлечен, при отсутствии сохраняется metadata-only OCR-candidate поведение;
+- извлекает текст, таблицы, базовые метаданные и факт наличия изображений;
+- строит `StructuredDocument` JSON с разделами, блоками, таблицами, изображениями и chunks;
+- сохраняет результаты локально в `storage/`;
+- строит локальный lexical index и дает source-backed `search` / extractive `ask` по уже обработанному корпусу.
 
-Репозиторий поставляется как clear baseline: готовые `storage/index`, `storage/results` и `storage/uploads` не коммитятся. Эти runtime artifacts создаются локально после batch/API processing и игнорируются Git.
-
-## Структура проекта
-
-- `app/api` — FastAPI endpoint'ы
-- `app/pipeline` — extract / transform / load
-- `app/storage` — файловое хранилище артефактов
-- `app/search` — локальный retrieval по обработанным документам
-- `tests` — тесты
-- `scripts` — CLI для пакетной обработки директории
+Это не full RAG/LLM-продукт: LLM generation, summarization, semantic/vector search, embeddings/vector DB, scanned PDF OCR, embedded OCR inside DOCX/PDF и table analytics не являются реализованными возможностями.
 
 ## Быстрый старт
 
@@ -32,7 +23,32 @@ conda run -n etl_env python -m pip install -e .[dev]
 conda run -n etl_env uvicorn app.main:app --reload
 ```
 
-## Полезные endpoint'ы
+Проверка API:
+
+```powershell
+curl http://127.0.0.1:8000/health
+```
+
+## Архитектура и pipeline
+
+```text
+intake -> extractor -> StructuredDocument JSON -> blocks/sections/tables/images -> chunks -> index/search/ask/eval
+```
+
+- `app/api` - FastAPI endpoints;
+- `app/pipeline` - extract / transform / load;
+- `app/storage` - файловое хранилище артефактов;
+- `app/search` - локальный lexical retrieval по обработанным документам;
+- `scripts` - CLI для batch/demo/audit/evaluation/inspection workflows;
+- `tests` - regression baseline.
+
+## Локальный API
+
+```powershell
+conda run -n etl_env uvicorn app.main:app --reload
+```
+
+Core endpoints:
 
 - `GET /health`
 - `POST /api/v1/documents/process`
@@ -46,29 +62,20 @@ conda run -n etl_env uvicorn app.main:app --reload
 - `GET /api/v1/corpus/requirements`
 - `GET /api/v1/corpus/tables`
 
-Поток API подтверждён тестом `tests/test_api.py`.
+`/api/v1/ask` возвращает source-backed evidence snippets. Если в корпусе нет ответа, сервис возвращает `нет информации в корпусе`. Это extractive/source-backed path, а не LLM answer synthesis.
 
-## `/api/v1/ask`
+## Sample processing, index и demo
 
-`AskResponse` включает `question`, `answer`, `sources`, `hits`, `strategy`.
-`sources` — это source-backed evidence snippets, а `hits` сохранён для обратной совместимости.
-Для `xlsx`/`xls` и табличных документов ответы строятся через flattened lexical retrieval по чанкам, а не через полноценную table-aware логику.
-Для `xlsx`/`xls` table chunks теперь получают row-level context с `sheet` / `table` / `row` / `column-value` текстом, что улучшает lexical retrieval по строкам таблиц без изменения API contract.
-Если в корпусе нет ответа, сервис возвращает `нет информации в корпусе`.
-
-## Batch обработка директории
+В clear checkout meaningful demo/search требует сначала создать локальный sample corpus:
 
 ```powershell
 conda run -n etl_env python -m scripts.batch_process --input-dir first_test_data
+conda run -n etl_env python -m scripts.rebuild_corpus
+conda run -n etl_env python -m scripts.demo_search --query "экология проект"
+conda run -n etl_env python -m scripts.demo_customer_flow
 ```
 
-С отчётом:
-
-```powershell
-conda run -n etl_env python -m scripts.batch_process --input-dir first_test_data --report-path .runtime_eval\last_batch_report.json
-```
-
-## Посмотреть структуру одного файла
+`first_test_data` - sample input corpus в репозитории. `storage/index`, `storage/results` и `storage/uploads` - generated runtime output; они не являются baseline и не коммитятся.
 
 Для ручной inspection/handoff проверки одного файла без загрязнения production `storage/`:
 
@@ -76,138 +83,99 @@ conda run -n etl_env python -m scripts.batch_process --input-dir first_test_data
 conda run -n etl_env python -m scripts.inspect_document_structure --input-path "D:\path\file.docx"
 ```
 
-По умолчанию временный workspace создается под `.runtime_eval\inspect_document_structure_workspace`. Можно явно сохранить Markdown/JSON отчет:
+По умолчанию inspector использует temporary workspace под `.runtime_eval`.
+
+## Configuration
+
+Настройки можно задавать через environment variables. Пример находится в `.env.example`.
+
+| Variable | Example/default | Meaning |
+| --- | --- | --- |
+| `ETL_STORAGE_DIR` | `storage` | Корневой каталог runtime storage для uploads/results/index. |
+| `ETL_ENABLE_OCR` | `false` | Включает optional local OCR path там, где доступен OCR engine. Не гарантирует наличие Tesseract. |
+| `ETL_API_PREFIX` | `/api/v1` | Prefix для API routes. |
+
+## Docker
+
+В репозитории есть `Dockerfile`; `docker-compose.yml` отсутствует и не обязателен для baseline-запуска.
 
 ```powershell
-conda run -n etl_env python -m scripts.inspect_document_structure --input-path "D:\path\file.docx" --output-path .runtime_eval\inspect_report.md --json-report-path .runtime_eval\inspect_report.json --clean-workspace
+docker build -t etl-service .
+docker run --rm -p 8000:8000 etl-service
 ```
 
-Inspector показывает metadata, processing warnings/features, sections, blocks, chunks, tables, images и workspace artifacts с bounded previews. Это диагностический инструмент, не UI, не RAG/LLM, не расширенный OCR и не table analytics.
-
-## Customer demo smoke runner
+Если нужно сохранить результаты обработки между запусками контейнера, монтируйте volume для `storage/`:
 
 ```powershell
-conda run -n etl_env python -m scripts.batch_process --input-dir first_test_data
-conda run -n etl_env python -m scripts.demo_customer_flow
+docker run --rm -p 8000:8000 -v ${PWD}\storage:/app/storage etl-service
 ```
 
-Опциональный JSON-отчёт:
+`storage/` внутри контейнера - generated runtime output. Docker baseline не обещает OCR: standalone image OCR остается optional и зависит от наличия Tesseract/language packs в конкретном image/environment.
 
-```powershell
-conda run -n etl_env python -m scripts.demo_customer_flow --json-report-path .runtime_eval\customer_demo_report.json
-```
+## Formats
 
-Режим по умолчанию read-only. Путь для опционального JSON-отчёта является runtime artifact, а `--refresh-index` может обновить локальный generated `storage/index`.
-В clear checkout meaningful demo/search требует сначала обработать документы, например через `scripts.batch_process --input-dir first_test_data`, потому что готовый corpus/index больше не хранится в Git.
-Этот demo показывает только текущий baseline: LLM generation, summarization, vector DB, semantic retrieval и full RAG не реализованы; OCR ограничен optional local baseline для standalone `jpg`/`jpeg`/`png`, а scanned PDF OCR и embedded image OCR inside DOCX/PDF не реализованы.
-Вывод демо-проверки русскоязычный и ориентирован на read-only просмотр текущего состояния корпуса; он также показывает OCR candidate summary без запуска OCR. Для более явного row-level table context при необходимости можно запустить `--refresh-index`.
+Поддержанные baseline-форматы:
 
-## Пересборка индекса корпуса
+- documents: `pdf`, `doc`, `docx`, `rtf`, `txt`;
+- spreadsheets: `xlsx`, `xls`;
+- standalone OCR-candidate images: `jpg`, `jpeg`, `png`.
 
-```powershell
-conda run -n etl_env python -m scripts.rebuild_corpus
-```
+`xlsx` и `xls` извлекают таблицы, сохраняют их в JSON и дают row/table context для lexical retrieval. Advanced Excel semantics вроде formulas, macros, styles, merged cells и hidden-sheet behavior остаются вне scope.
 
-Индекс корпуса хранится в `storage/index/corpus_index.json` и используется поиском, чтобы не сканировать все JSON-результаты на каждый запрос.
-Это локальный generated artifact; он не коммитится.
+`doc` baseline зависит от локального LibreOffice (`soffice`) для конвертации в `docx`, если он доступен.
 
-## Минимальная retrieval-проверка
-
-После пакетной обработки можно проверить, что структура документа уже даёт полезный корпус для задач последующей обработки:
-
-```powershell
-conda run -n etl_env python -m scripts.demo_search --query "экология проект"
-```
-
-Скрипт поднимает простой локальный retrieval по чанкам из локально созданных JSON-результатов в `storage/results`.
-
-## Corpus quality audit
-
-Для read-only аудита качества корпуса доступны команды:
-
-```powershell
-conda run -n etl_env python -m scripts.audit_corpus
-conda run -n etl_env python -m scripts.audit_corpus --report-path .runtime_eval\last_corpus_audit.json
-```
-
-Скрипт читает локальные JSON-результаты и при наличии corpus index / manifest, а затем печатает краткий summary без изменения `storage/results` и `storage/index`.
-
-## Metrics and acceptance criteria
-
-Метрики качества и финальные acceptance gates зафиксированы в `docs/project/METRICS_AND_ACCEPTANCE.md`. Документ описывает ETL/RAG-readiness quality gates для processing, chunks, table context, retrieval/source-backed QA, standalone image OCR smoke и operational acceptance без claims о full RAG, LLM generation, semantic retrieval, vector DB, scanned PDF OCR, embedded image OCR или table analytics.
-
-Эксплуатационный маршрут для быстрого запуска, демонстрации, временных workspace, cleanup и final handoff описан в `docs/project/OPERATION_GUIDE.md`.
-
-Language/comment audit и правила будущей локализации описаны в `docs/project/LANGUAGE_AUDIT.md`.
-
-Воспроизводимые experiments/evaluation workflows для сдачи описаны в `experiments/README.md`. Это scripts-based packaging без fake notebooks, external dataset copies или generated report artifacts.
-
-Финальный cleanup/verification checklist перед физической копией проекта описан в `docs/project/FINAL_DELIVERY_CHECKLIST.md`.
-
-## Очистка дубликатов в storage
-
-```powershell
-conda run -n etl_env python -m scripts.cleanup_storage
-conda run -n etl_env python -m scripts.cleanup_storage --apply
-```
-
-## Requirements extraction v1
-
-Для read-only извлечения возможных требований из уже обработанных JSON доступен deterministic source-backed слой:
-
-```powershell
-conda run -n etl_env python -m scripts.extract_requirements
-conda run -n etl_env python -m scripts.extract_requirements --json-report-path .runtime_eval\requirements_v1.json
-```
-
-Скрипт читает локальные `storage/results`, возвращает extractive candidates с `document_id`, `filename`, source context, category, score и matched terms. JSON-отчёт пишется только по явному `--json-report-path`. Это не LLM, не RAG, не генерация новых требований и не юридическая/compliance-гарантия.
-
-## Table evidence evaluation
-
-Для read-only оценки табличных источников и поиска возможных входных данных для экологических расчетов доступен deterministic source-backed слой:
-
-```powershell
-conda run -n etl_env python -m scripts.evaluate_tables
-conda run -n etl_env python -m scripts.evaluate_tables --json-report-path .runtime_eval\table_evidence_v1.json
-```
-
-Скрипт читает локально обработанные JSON из `storage/results`, показывает найденные таблицы, source-backed preview, категории и matched terms. JSON-отчет пишется только по явному `--json-report-path`. Это не SQL/table analytics, не table reasoning и не автоматические расчеты.
+Неподдерживаемые image-like formats: `HEIC`, `HEIF`, `TIFF`, `TIF`, `BMP`, `WEBP`.
 
 ## OCR
 
-OCR для standalone `jpg`/`jpeg`/`png` теперь optional local baseline: если локальный `tesseract` доступен, сервис извлекает текст и сохраняет его в обычный document output, чтобы он попадал в blocks/chunks/search/ask path.
-Если локальный OCR engine недоступен, упал или вернул пустой текст, сохраняется metadata-only OCR-candidate поведение.
-Если OCR engine технически вернул success, но standalone image OCR output выглядит как вероятный шум / misleading latinized-RU текст, quality gate сохраняет degraded metadata/warning и не выпускает такой текст как обычные OCR chunks.
-В `processing_info.features` для image-only intake теперь могут появляться `ocr_used`, `ocr_candidate`, `ocr_engine`, `ocr_text_length`, `ocr_raw_text_length`, `ocr_status`, `ocr_quality_status`, `ocr_quality_reason` и `ocr_quality_metrics`; top-level contract при этом не расширяется.
-`pdf` без meaningful extracted text / chunks по-прежнему может быть conservatively отмечен как `possible_scanned_pdf` / OCR candidate, но страницы не рендерятся в изображения и OCR для scanned PDF не запускается.
-`HEIC`/`HEIF`/`TIFF`/`TIF`/`BMP`/`WEBP` по-прежнему остаются неподдерживаемыми image-like форматами.
-Read-only audit и customer demo runner теперь показывают summary по OCR candidates и OCR-used documents без изменения storage.
-Для ручной проверки OCR engine и установленных language packs можно использовать `conda run -n etl_env python -m scripts.check_ocr`.
+OCR для standalone `jpg`/`jpeg`/`png` является optional local baseline. Если локальный OCR engine недоступен, упал или вернул пустой/подозрительный результат, сервис сохраняет metadata/warning вместо того, чтобы молча выдавать плохой текст как quality baseline.
 
-### OCR smoke/eval
-
-Для read-only smoke/eval проверки качества OCR на sample images можно использовать:
+Проверка engine/language packs:
 
 ```powershell
-conda run -n etl_env python -m scripts.evaluate_ocr
-conda run -n etl_env python -m scripts.evaluate_ocr --input-dir first_test_data --json-report-path .runtime_eval\ocr_smoke_report.json
+conda run -n etl_env python -m scripts.check_ocr
+```
+
+Read-only OCR smoke/eval:
+
+```powershell
 conda run -n etl_env python -m scripts.evaluate_ocr --input-dir first_test_data --json-report-path .runtime_eval\ocr_smoke_report.json --language rus+eng
 ```
 
-Этот скрипт читает входные image samples, использует локальный OCR adapter и не пишет в `storage/index`, `storage/results` или `storage/uploads`.
-`--language` задаёт Tesseract language config для smoke/eval; для русских документов рекомендуется `--language rus+eng`, если эти language packs установлены.
-Это smoke/eval слой для проверки readiness, а не production OCR quality guarantee: качество зависит от изображения, установленных языков Tesseract, preprocessing и будущего OCR module design.
-Scanned PDF OCR и OCR embedded images inside DOCX/PDF не входят в baseline; external/proprietary OCR API не используются.
-Будущий OCR module должен сохранять provenance: source path/name, page, artifact/image id, OCR engine/version, language config, confidence if available, processing timestamp и source modality.
-OCR-derived chunks в будущем должны быть явно отмечены как OCR-derived evidence и не смешиваться молча с обычным text layer.
-Table OCR не должен выдаваться за structured table extraction без отдельной layout/table model.
+Scanned PDF OCR, embedded OCR inside DOCX/PDF, layout/table OCR и external/proprietary OCR API не реализованы.
 
-## Поддержка DOC
+## Evaluation и handoff scripts
 
-Для старых файлов `DOC` baseline использует локальный `LibreOffice` (`soffice`) и конвертирует документ в `DOCX` перед извлечением. Внешние API не используются.
+Read-only workflows для проверки текущего baseline:
 
-## Поддержка XLS
+```powershell
+conda run -n etl_env python -m scripts.audit_corpus
+conda run -n etl_env python -m scripts.audit_rag_chunks --max-documents 1 --max-chunks-per-document 5
+conda run -n etl_env python -m scripts.extract_requirements
+conda run -n etl_env python -m scripts.evaluate_tables
+```
 
-- `.xls` теперь поддерживается на baseline-уровне через `XlsExtractor`.
-- `.xls` и `.xlsx` используют один и тот же flattened table extraction contract для search/ask, а дополнительные row-level lexical chunks улучшают поиск по строкам и значениям.
-- Advanced Excel semantics вроде formulas, macros, styles, merged cells и hidden-sheet behavior остаются вне scope.
+Эти scripts показывают diagnostics/source-backed candidates и не являются LLM generation, semantic retrieval, full RAG, table analytics или legal/compliance guarantee.
+
+## Limitations и future work
+
+- Нет full RAG.
+- Нет LLM generation / answer synthesis / summarization.
+- Нет semantic retrieval, reranking, embeddings или vector DB.
+- Нет scanned PDF OCR.
+- Нет embedded OCR inside DOCX/PDF.
+- Нет layout/table OCR.
+- Нет SQL/table analytics или automatic calculations.
+- Нет production UI.
+- Optional OCR зависит от локального Tesseract и language packs.
+- Existing processed JSON не мигрируется автоматически после splitter/chunk improvements.
+- External QA source matching может быть ambiguous/missing; это требует review, а не автоматического выбора первого файла.
+
+Будущая интеграция с RAG/LLM должна использовать текущий результат как ETL/RAG-readiness baseline: structured documents, chunks, table context, source/citation metadata и честные diagnostics.
+
+## Документация
+
+- `docs/project/OPERATION_GUIDE.md` - эксплуатационный маршрут, demo flow, temporary workspace policy и cleanup.
+- `docs/project/METRICS_AND_ACCEPTANCE.md` - метрики качества и final acceptance gates для ETL/RAG-readiness baseline.
+- `docs/project/FINAL_DELIVERY_CHECKLIST.md` - финальный verification/cleanup checklist перед физической копией проекта.
+- `experiments/README.md` - воспроизводимые scripts/evaluation workflows без notebooks, external dataset copies или generated report artifacts.

@@ -17,8 +17,6 @@ Checklist предназначен для финальной упаковки, �
 - operation guide: `docs/project/OPERATION_GUIDE.md`;
 - metrics/acceptance baseline: `docs/project/METRICS_AND_ACCEPTANCE.md`;
 - experiments README: `experiments/README.md`;
-- language audit: `docs/project/LANGUAGE_AUDIT.md`;
-- customer scenarios: `docs/project/CUSTOMER_SCENARIOS.md`;
 - single-file inspector: `scripts.inspect_document_structure`;
 - known limitations, зафиксированные в README, operation guide, metrics/acceptance и этом checklist.
 - clear repository baseline: готовые `storage/index`, `storage/results` и `storage/uploads` не коммитятся; они создаются локально после processing.
@@ -106,10 +104,6 @@ $files = @(
   'docs/project/FINAL_DELIVERY_CHECKLIST.md',
   'docs/project/OPERATION_GUIDE.md',
   'docs/project/METRICS_AND_ACCEPTANCE.md',
-  'docs/project/FINISH_LINE.md',
-  'docs/project/PLAN.md',
-  'docs/project/WORKLOG.md',
-  'docs/project/CUSTOMER_SCENARIOS.md',
   'experiments/README.md'
 )
 foreach ($file in $files) {

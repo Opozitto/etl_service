@@ -234,8 +234,6 @@ Reports/workspaces должны оставаться в `.runtime_eval` или �
 
 Метрики, acceptance gates и non-claims зафиксированы в [METRICS_AND_ACCEPTANCE.md](METRICS_AND_ACCEPTANCE.md).
 
-Language/comment audit и правила будущей локализации зафиксированы в [LANGUAGE_AUDIT.md](LANGUAGE_AUDIT.md). При полировке переводить только human-facing prose и не менять API/JSON/CLI identifiers, report fields или command examples.
-
 Для финальной сдачи использовать этот guide как операционный маршрут, а `METRICS_AND_ACCEPTANCE.md` как quality/acceptance baseline.
 Финальный cleanup/verification gate перед физической копией описан в [FINAL_DELIVERY_CHECKLIST.md](FINAL_DELIVERY_CHECKLIST.md).
 
