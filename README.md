@@ -1,6 +1,8 @@
 # ETL Service
 
-ETL Service - FastAPI-сервис для локальной обработки документов и подготовки структурированных данных для source-backed retrieval. Он извлекает текст, таблицы, базовые метаданные и сведения об изображениях, сохраняет результат в `StructuredDocument` JSON и строит локальный лексический индекс по обработанному корпусу.
+Локальный ETL-микросервис для структурированной обработки документов, lexical retrieval и source-backed evidence extraction.
+
+ETL Service — FastAPI-сервис для локальной обработки документов и подготовки структурированных данных для retrieval workflows. Он извлекает текст, таблицы, базовые метаданные и сведения об изображениях, сохраняет результат в `StructuredDocument` JSON и строит локальный lexical index по обработанному корпусу.
 
 Runtime-результаты создаются локально в `storage/` и не входят в репозиторий.
 
@@ -42,28 +44,41 @@ uvicorn app.main:app --reload
 
 ## Возможности
 
-- API для обработки документов, просмотра корпуса, лексического поиска и extractive source-backed ask.
-- Поддержка `pdf`, `doc`, `docx`, `rtf`, `txt`, `xlsx`, `xls`.
-- Опциональный OCR-путь для standalone `jpg`, `jpeg`, `png`, если локальный OCR engine доступен.
-- `StructuredDocument` JSON с sections, blocks, chunks, tables, image metadata и processing diagnostics.
-- Локальный lexical index по уже обработанным документам.
-- Sample corpus в `first_test_data/`.
+* API для обработки документов, просмотра корпуса, лексического поиска и extractive source-backed ask.
+* Поддержка `pdf`, `doc`, `docx`, `rtf`, `txt`, `xlsx`, `xls`.
+* Опциональный OCR-путь для standalone `jpg`, `jpeg`, `png`, если локальный OCR engine доступен.
+* `StructuredDocument` JSON с sections, blocks, chunks, tables, image metadata и processing diagnostics.
+* Локальный lexical index по уже обработанным документам.
+* Sample corpus в `first_test_data/`.
+
+## Результат обработки
+
+После ingest сервис сохраняет:
+
+* structured JSON (`StructuredDocument`);
+* chunks для retrieval;
+* table metadata;
+* image metadata;
+* lexical corpus index;
+* source-backed evidence для search/ask.
+
+Generated runtime output хранится локально в `storage/`.
 
 ## API
 
 Основные endpoints:
 
-- `GET /health`
-- `POST /api/v1/documents/process`
-- `GET /api/v1/documents`
-- `GET /api/v1/documents/{document_id}`
-- `POST /api/v1/search`
-- `POST /api/v1/ask`
-- `GET /api/v1/corpus/stats`
-- `POST /api/v1/corpus/reindex`
-- `GET /api/v1/corpus/manifest`
-- `GET /api/v1/corpus/requirements`
-- `GET /api/v1/corpus/tables`
+* `GET /health`
+* `POST /api/v1/documents/process`
+* `GET /api/v1/documents`
+* `GET /api/v1/documents/{document_id}`
+* `POST /api/v1/search`
+* `POST /api/v1/ask`
+* `GET /api/v1/corpus/stats`
+* `POST /api/v1/corpus/reindex`
+* `GET /api/v1/corpus/manifest`
+* `GET /api/v1/corpus/requirements`
+* `GET /api/v1/corpus/tables`
 
 `/api/v1/ask` возвращает extractive evidence из обработанного корпуса. Если ответ не найден, сервис возвращает явный no-information response вместо неподтвержденной генерации текста.
 
@@ -71,24 +86,34 @@ uvicorn app.main:app --reload
 
 Это не full RAG и не LLM-продукт.
 
-- Нет LLM generation, answer synthesis или summarization.
-- Нет semantic search, vector search, embeddings, reranking или vector DB.
-- Нет OCR для scanned PDF.
-- Нет embedded OCR внутри DOCX или PDF.
-- Нет table analytics, SQL-like QA или автоматических расчетов.
-- OCR для standalone images зависит от локального Tesseract и language packs.
+* Нет LLM generation, answer synthesis или summarization.
+* Нет semantic search, vector search, embeddings, reranking или vector DB.
+* Нет OCR для scanned PDF.
+* Нет embedded OCR внутри DOCX или PDF.
+* Нет table analytics, SQL-like QA или автоматических расчетов.
+* OCR для standalone images зависит от локального Tesseract и language packs.
 
 ## Архитектура
 
 ```text
-intake -> extractor -> StructuredDocument JSON -> chunks -> lexical index -> search / ask
+documents
+    ↓
+extractors
+    ↓
+StructuredDocument JSON
+    ↓
+chunks + metadata
+    ↓
+lexical index
+    ↓
+search / ask
 ```
 
-- `app/api` - FastAPI routes.
-- `app/pipeline` - extraction и transformation.
-- `app/storage` - filesystem-backed storage helpers.
-- `app/search` - локальный lexical index и retrieval path.
-- `scripts` - batch processing, rebuild, demo, audit и inspection utilities.
+* `app/api` — FastAPI routes.
+* `app/pipeline` — extraction и transformation.
+* `app/storage` — filesystem-backed storage helpers.
+* `app/search` — локальный lexical index и retrieval path.
+* `scripts` — processing, rebuild, audit и inspection utilities.
 
 ## Проверка качества
 
@@ -97,7 +122,11 @@ intake -> extractor -> StructuredDocument JSON -> chunks -> lexical index -> sea
 ```powershell
 python -m pytest -q
 python -m scripts.batch_process --input-dir first_test_data
-python -m scripts.demo_customer_flow
 ```
 
-Содержательный search и ask требуют предварительной локальной обработки корпуса. Подробные команды находятся в [docs/setup.md](docs/setup.md), короткие примеры - в [examples/README.md](examples/README.md).
+Содержательный search и ask требуют предварительной локальной обработки корпуса.
+
+Подробные команды и workflow:
+
+* [docs/setup.md](docs/setup.md)
+* [docs/api_and_workflows.md](docs/api_and_workflows.md)
