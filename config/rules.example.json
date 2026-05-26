@@ -1,0 +1,14 @@
+{
+  "tables": {
+    "additional_category_terms": {
+      "emissions": ["release rate"],
+      "costs_or_resources": ["resource use"]
+    }
+  },
+  "requirements": {
+    "additional_category_terms": {
+      "obligation": ["must provide"],
+      "monitoring_or_control": ["inspection frequency"]
+    }
+  }
+}

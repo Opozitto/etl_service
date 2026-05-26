@@ -105,4 +105,4 @@ storage/index/
 storage/results/
 storage/uploads/
 
-# first_test_data/ stays tracked as sample input data.
+# first_test_data/ contains only small synthetic/generic sample inputs.

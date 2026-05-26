@@ -58,7 +58,7 @@ def test_process_known_unsupported_image_format_returns_clear_error() -> None:
 
 def test_process_xls_document_returns_table_metadata(monkeypatch) -> None:
     project_root = Path(__file__).resolve().parents[1]
-    sample_path = project_root / "first_test_data" / "Форма 4 Затраты на сырье.XLS"
+    sample_path = project_root / "first_test_data" / "synthetic_table.xls"
     smoke_root = project_root / "tests" / ".stage14_api_smoke_xls"
     storage_dir = smoke_root / "storage"
     shutil.rmtree(smoke_root, ignore_errors=True)
@@ -91,29 +91,29 @@ def test_process_xls_document_returns_table_metadata(monkeypatch) -> None:
         assert document["blocks"]
         assert any(block["type"] == "table" for block in document["blocks"])
         assert document["chunks"]
-        assert any("Строка" in chunk["text"] for chunk in document["chunks"])
-        assert any("сырья" in chunk["text"].lower() for chunk in document["chunks"])
+        assert any("Line 1" in chunk["text"] for chunk in document["chunks"])
+        assert any("resource use" in chunk["text"].lower() for chunk in document["chunks"])
         assert document["processing_info"]["features"]["tables_detected"] is True
         assert Path(document["artifacts"]["result_json_path"]).is_file()
 
         search_response = client.post(
             "/api/v1/search",
-            json={"query": "сырья", "top_k": 3},
+            json={"query": "resource use", "top_k": 3},
         )
         assert search_response.status_code == 200
         search_data = search_response.json()
         assert search_data["hits"]
-        assert any("Строка" in hit["snippet"] for hit in search_data["hits"])
+        assert any("Line 1" in hit["snippet"] for hit in search_data["hits"])
 
         ask_response = client.post(
             "/api/v1/ask",
-            json={"question": "Где указаны затраты на приобретение сырья?", "top_k": 3, "max_sentences": 2},
+            json={"question": "Where is resource use shown?", "top_k": 3, "max_sentences": 2},
         )
         assert ask_response.status_code == 200
         ask_data = ask_response.json()
         assert ask_data["sources"]
         assert ask_data["hits"]
-        assert any("Строка" in source["snippet"] for source in ask_data["sources"])
+        assert any("Line 1" in source["snippet"] for source in ask_data["sources"])
     finally:
         get_settings.cache_clear()
         shutil.rmtree(smoke_root, ignore_errors=True)
@@ -290,3 +290,9 @@ def test_corpus_stats_and_reindex_endpoints() -> None:
     manifest_data = manifest_response.json()
     assert manifest_data
     assert any(item["filename"] == "stats.txt" for item in manifest_data)
+
+
+def test_no_rules_management_endpoint_is_exposed() -> None:
+    route_paths = {route.path for route in app.routes}
+
+    assert not any("rules" in path for path in route_paths)

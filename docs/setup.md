@@ -71,13 +71,13 @@ Endpoint `POST /api/v1/documents/process` принимает multipart upload с
 
 ```powershell
 curl.exe -X POST http://127.0.0.1:8000/api/v1/documents/process `
-  -F "file=@first_test_data/test.docx"
+  -F "file=@first_test_data/synthetic_requirements.txt"
 ```
 
 PowerShell-вариант:
 
 ```powershell
-$form = @{ file = Get-Item "first_test_data\test.docx" }
+$form = @{ file = Get-Item "first_test_data\synthetic_requirements.txt" }
 Invoke-RestMethod -Uri http://127.0.0.1:8000/api/v1/documents/process -Method Post -Form $form
 ```
 
@@ -246,10 +246,10 @@ python -m pip install -e .[dev,ocr]
 python -m scripts.check_ocr
 ```
 
-Запустить OCR smoke для sample corpus:
+Запустить OCR smoke можно на отдельном локальном каталоге со standalone image samples:
 
 ```powershell
-python -m scripts.evaluate_ocr --input-dir first_test_data --json-report-path .runtime_eval\ocr_smoke_report.json --language rus+eng
+python -m scripts.evaluate_ocr --input-dir D:\path\to\local_image_samples --json-report-path .runtime_eval\ocr_smoke_report.json --language rus+eng
 ```
 
 OCR поддерживается только как optional path для standalone `jpg`, `jpeg`, `png`. Scanned PDF OCR и embedded OCR внутри DOCX/PDF не входят в текущий scope.
@@ -262,6 +262,7 @@ OCR поддерживается только как optional path для standa
 ETL_STORAGE_DIR=storage
 ETL_ENABLE_OCR=false
 ETL_API_PREFIX=/api/v1
+ETL_RULES_CONFIG_PATH=
 ```
 
 Переменные:
@@ -269,6 +270,13 @@ ETL_API_PREFIX=/api/v1
 - `ETL_STORAGE_DIR`: корневой каталог для generated uploads, results и index files.
 - `ETL_ENABLE_OCR`: включает optional OCR path, если зависимости и OCR engine доступны.
 - `ETL_API_PREFIX`: prefix для API routes.
+- `ETL_RULES_CONFIG_PATH`: optional read-only JSON config для deterministic category terms в `/api/v1/corpus/requirements` и `/api/v1/corpus/tables`. Если путь пустой, отсутствует или config некорректен, используются built-in defaults с warning.
+
+Пример формата находится в `config/rules.example.json`. Config поддерживает только известные sections/categories для requirement/table category terms; это не generic rule engine, не LLM и не management endpoint.
+
+## Sample corpus
+
+`first_test_data/` содержит только маленькие synthetic/generic files для smoke checks. Реальные, customer или customer-adjacent датасеты держите вне repo и обрабатывайте через локальный путь или внешний workspace. `storage/uploads`, `storage/results` и `storage/index` остаются generated runtime output и не должны коммититься.
 
 ## Тесты
 

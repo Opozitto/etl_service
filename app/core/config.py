@@ -18,6 +18,7 @@ class Settings(BaseModel):
     default_chunk_size: int = 900
     default_chunk_overlap: int = 150
     enable_ocr: bool = False
+    rules_config_path: Path | None = None
 
     @property
     def resolved_storage_dir(self) -> Path:
@@ -31,8 +32,10 @@ def get_settings() -> Settings:
     storage_dir = os.getenv("ETL_STORAGE_DIR", "storage")
     enable_ocr = os.getenv("ETL_ENABLE_OCR", "false").strip().lower() in {"1", "true", "yes", "on"}
     api_prefix = os.getenv("ETL_API_PREFIX", "/api/v1")
+    rules_config_path = os.getenv("ETL_RULES_CONFIG_PATH", "").strip()
     return Settings(
         storage_dir=Path(storage_dir),
         enable_ocr=enable_ocr,
         api_prefix=api_prefix,
+        rules_config_path=Path(rules_config_path) if rules_config_path else None,
     )

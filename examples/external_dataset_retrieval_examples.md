@@ -1,6 +1,7 @@
 # Примеры retrieval по внешнему датасету
 
 Эти примеры демонстрируют source-backed lexical retrieval по внешней документации экологических и инженерных проектов.
+Внешние/customer datasets не входят в repo sample corpus и должны храниться вне репозитория; `first_test_data/` оставлен только для маленьких synthetic/generic smoke samples.
 
 ETL service:
 

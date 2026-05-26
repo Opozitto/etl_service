@@ -173,7 +173,7 @@ def test_local_ocr_adapter_handles_timeout_and_failure(
 
 def test_xls_table_baseline_is_structured_and_searchable(monkeypatch: pytest.MonkeyPatch) -> None:
     project_root = Path(__file__).resolve().parents[1]
-    sample_path = project_root / "first_test_data" / "Форма 4 Затраты на сырье.XLS"
+    sample_path = project_root / "first_test_data" / "synthetic_table.xls"
     smoke_root = project_root / "tests" / ".stage14_xls_smoke"
     storage_dir = smoke_root / "storage"
     shutil.rmtree(smoke_root, ignore_errors=True)
@@ -186,18 +186,14 @@ def test_xls_table_baseline_is_structured_and_searchable(monkeypatch: pytest.Mon
         assert extracted.extractor_name == "xls"
         assert any(block.kind == "heading" for block in extracted.blocks)
         assert any(block.kind == "table" for block in extracted.blocks)
-        assert "ф4 (пл.ф.)" in extracted.text
-        assert "Затраты на приобретение сырья" in extracted.text
+        assert "Synthetic demo" in extracted.text
+        assert "Resource use" in extracted.text
 
         sections, blocks, tables, images, chunks = build_structure(extracted)
         assert tables
         assert any(block.type == "table" for block in blocks)
         assert chunks
-        assert any("Строка" in chunk.text and "сырья" in chunk.text for chunk in chunks)
-        assert any(
-            "Форма № 4" in chunk.text and "Затраты на приобретение сырья" in chunk.text
-            for chunk in chunks
-        )
+        assert any("Line 1" in chunk.text and "Synthetic raw material" in chunk.text for chunk in chunks)
 
         service = DocumentService()
         outcome = service.process_path_with_status(sample_path)
@@ -214,16 +210,16 @@ def test_xls_table_baseline_is_structured_and_searchable(monkeypatch: pytest.Mon
         assert Path(document.artifacts.result_json_path).is_file()
 
         search_engine = CorpusSearchEngine(service.storage)
-        hits = search_engine.search("сырья", top_k=3)
+        hits = search_engine.search("resource use", top_k=3)
         assert hits
-        assert any("Строка" in hit.snippet for hit in hits)
-        assert any("сырья" in hit.snippet.lower() for hit in hits)
+        assert any("Line 1" in hit.snippet for hit in hits)
+        assert any("resource use" in hit.snippet.lower() for hit in hits)
 
-        ask_response = search_engine.ask("Где указаны затраты на приобретение сырья?", top_k=3, max_sentences=2)
+        ask_response = search_engine.ask("Where is resource use shown?", top_k=3, max_sentences=2)
         assert ask_response.sources
         assert ask_response.hits
-        assert any("Строка" in source.snippet for source in ask_response.sources)
-        assert any("сырья" in source.snippet.lower() for source in ask_response.sources)
+        assert any("Line 1" in source.snippet for source in ask_response.sources)
+        assert any("resource use" in source.snippet.lower() for source in ask_response.sources)
     finally:
         get_settings.cache_clear()
         shutil.rmtree(smoke_root, ignore_errors=True)
@@ -231,7 +227,7 @@ def test_xls_table_baseline_is_structured_and_searchable(monkeypatch: pytest.Mon
 
 def test_xlsx_table_baseline_is_structured_and_searchable(monkeypatch: pytest.MonkeyPatch) -> None:
     project_root = Path(__file__).resolve().parents[1]
-    sample_path = project_root / "first_test_data" / "Форма 2 Плановая калькуляция затрат.xlsx"
+    sample_path = project_root / "first_test_data" / "synthetic_table.xlsx"
     smoke_root = project_root / "tests" / ".stage13_xlsx_smoke"
     storage_dir = smoke_root / "storage"
     shutil.rmtree(smoke_root, ignore_errors=True)
@@ -247,8 +243,8 @@ def test_xlsx_table_baseline_is_structured_and_searchable(monkeypatch: pytest.Mo
         assert tables
         assert any(block.type == "table" for block in blocks)
         assert chunks
-        assert any("Строка" in chunk.text and "1199" in chunk.text for chunk in chunks)
-        assert any("Трудоемкость" in chunk.text and "1199" in chunk.text for chunk in chunks)
+        assert any("Line 1" in chunk.text and "1199" in chunk.text for chunk in chunks)
+        assert any("Labor hours" in chunk.text and "1199" in chunk.text for chunk in chunks)
 
         service = DocumentService()
         outcome = service.process_path_with_status(sample_path)
@@ -259,16 +255,16 @@ def test_xlsx_table_baseline_is_structured_and_searchable(monkeypatch: pytest.Mo
         assert Path(outcome.document.artifacts.result_json_path).is_file()
 
         search_engine = CorpusSearchEngine(service.storage)
-        hits = search_engine.search("Трудоемкость 1199", top_k=3)
+        hits = search_engine.search("Labor hours 1199", top_k=3)
         assert hits
-        assert any("Строка" in hit.snippet for hit in hits)
-        assert any("Трудоемкость" in hit.snippet and "1199" in hit.snippet for hit in hits)
+        assert any("Line 1" in hit.snippet for hit in hits)
+        assert any("Labor hours" in hit.snippet and "1199" in hit.snippet for hit in hits)
 
-        ask_response = search_engine.ask("Какая трудоемкость указана в документе?", top_k=3, max_sentences=2)
+        ask_response = search_engine.ask("Which labor hours value is shown?", top_k=3, max_sentences=2)
         assert ask_response.sources
         assert ask_response.hits
-        assert any("Строка" in source.snippet for source in ask_response.sources)
-        assert any("Трудоемкость" in source.snippet and "1199" in source.snippet for source in ask_response.sources)
+        assert any("Line 1" in source.snippet for source in ask_response.sources)
+        assert any("Labor hours" in source.snippet and "1199" in source.snippet for source in ask_response.sources)
     finally:
         get_settings.cache_clear()
         shutil.rmtree(smoke_root, ignore_errors=True)

@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Iterable, Literal
 
+from app.extraction.category_terms import configured_category_terms
 from app.schemas.document import StructuredDocument
 
 
@@ -78,12 +79,20 @@ DOMAIN_HINT_TERMS = (
     "мониторинг",
 )
 
-CATEGORY_TERMS: tuple[tuple[RequirementCategory, tuple[str, ...], str, float], ...] = (
+DEFAULT_CATEGORY_TERM_GROUPS: tuple[tuple[RequirementCategory, tuple[str, ...], str, float], ...] = (
     ("prohibition", PROHIBITION_TERMS, "prohibition_marker", 0.72),
     ("obligation", OBLIGATION_TERMS, "obligation_marker", 0.68),
     ("threshold_or_limit", THRESHOLD_TERMS, "threshold_or_limit_marker", 0.62),
     ("monitoring_or_control", MONITORING_TERMS, "monitoring_or_control_marker", 0.48),
     ("calculation_or_reporting", CALCULATION_TERMS, "calculation_or_reporting_marker", 0.5),
+)
+CONFIGURED_CATEGORY_TERMS = configured_category_terms(
+    "requirements",
+    {category: terms for category, terms, _, _ in DEFAULT_CATEGORY_TERM_GROUPS},
+)
+CATEGORY_TERMS: tuple[tuple[RequirementCategory, tuple[str, ...], str, float], ...] = tuple(
+    (category, CONFIGURED_CATEGORY_TERMS[category], reason_code, base_score)
+    for category, _, reason_code, base_score in DEFAULT_CATEGORY_TERM_GROUPS
 )
 
 

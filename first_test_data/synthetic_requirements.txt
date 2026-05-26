@@ -1,0 +1,5 @@
+1. Demo requirements
+
+The sample facility must provide a short emissions register.
+Inspection frequency is quarterly.
+The limit value is used only as synthetic demonstration data.

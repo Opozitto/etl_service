@@ -7,6 +7,7 @@ from datetime import datetime
 from pathlib import Path
 
 from fastapi.testclient import TestClient
+import pytest
 
 from app.core.config import get_settings
 from app.extraction.tables import (
@@ -183,6 +184,72 @@ def test_neutral_table_gets_unknown_or_low_score() -> None:
     assert low_threshold_records[0].category == "unknown"
     assert low_threshold_records[0].score < 0.45
     assert high_threshold_records == []
+
+
+def test_default_category_terms_work_without_config(monkeypatch) -> None:
+    monkeypatch.delenv("ETL_RULES_CONFIG_PATH", raising=False)
+    get_settings.cache_clear()
+    module = importlib.reload(importlib.import_module("app.extraction.tables"))
+    try:
+        document = _document([["ПДК", "ПДВ"], ["0.1", "0.2"]])
+
+        record = module.extract_table_evidence_from_document(document)[0]
+
+        assert record.category == "limits_or_norms"
+        assert {"пдк", "пдв"} <= set(record.matched_terms)
+    finally:
+        get_settings.cache_clear()
+        importlib.reload(module)
+
+
+def test_optional_rules_config_adds_table_category_terms(tmp_path: Path, monkeypatch) -> None:
+    config_path = tmp_path / "rules.json"
+    config_path.write_text(
+        json.dumps(
+            {
+                "tables": {
+                    "additional_category_terms": {
+                        "costs_or_resources": ["resource use"],
+                    }
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("ETL_RULES_CONFIG_PATH", str(config_path))
+    get_settings.cache_clear()
+    module = importlib.reload(importlib.import_module("app.extraction.tables"))
+    try:
+        document = _document(
+            [["Resource use", "Value"], ["Synthetic raw material", "10"]],
+            section_title="Synthetic resource table",
+        )
+
+        record = module.extract_table_evidence_from_document(document)[0]
+
+        assert record.category == "costs_or_resources"
+        assert "resource use" in record.matched_terms
+    finally:
+        monkeypatch.delenv("ETL_RULES_CONFIG_PATH", raising=False)
+        get_settings.cache_clear()
+        importlib.reload(module)
+
+
+def test_missing_rules_config_path_falls_back_to_table_defaults(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("ETL_RULES_CONFIG_PATH", str(tmp_path / "missing.json"))
+    get_settings.cache_clear()
+    with pytest.warns(RuntimeWarning):
+        module = importlib.reload(importlib.import_module("app.extraction.tables"))
+    try:
+        document = _document([["ПДК", "ПДВ"], ["0.1", "0.2"]])
+
+        record = module.extract_table_evidence_from_document(document)[0]
+
+        assert record.category == "limits_or_norms"
+    finally:
+        monkeypatch.delenv("ETL_RULES_CONFIG_PATH", raising=False)
+        get_settings.cache_clear()
+        importlib.reload(module)
 
 
 def test_source_fields_preview_and_counts_are_preserved() -> None:

@@ -5,6 +5,7 @@
 ETL Service — FastAPI-сервис для локальной обработки документов и подготовки структурированных данных для retrieval workflows. Он извлекает текст, таблицы, базовые метаданные и сведения об изображениях, сохраняет результат в `StructuredDocument` JSON и строит локальный lexical index по обработанному корпусу.
 
 Runtime-результаты создаются локально в `storage/` и не входят в репозиторий.
+`first_test_data/` содержит только минимальные synthetic/generic sample files; реальные, customer или customer-adjacent датасеты должны храниться вне репозитория.
 
 ## Быстрый старт через Docker
 
@@ -49,7 +50,8 @@ uvicorn app.main:app --reload
 * Опциональный OCR-путь для standalone `jpg`, `jpeg`, `png`, если локальный OCR engine доступен.
 * `StructuredDocument` JSON с sections, blocks, chunks, tables, image metadata и processing diagnostics.
 * Локальный lexical index по уже обработанным документам.
-* Sample corpus в `first_test_data/`.
+* Минимальный synthetic/generic sample corpus в `first_test_data/`.
+* Optional read-only `ETL_RULES_CONFIG_PATH` для deterministic category terms в `/api/v1/corpus/requirements` и `/api/v1/corpus/tables`.
 
 ## Результат обработки
 
@@ -82,6 +84,8 @@ Generated runtime output хранится локально в `storage/`.
 
 `/api/v1/ask` возвращает extractive evidence из обработанного корпуса. Если ответ не найден, сервис возвращает явный no-information response вместо неподтвержденной генерации текста.
 
+Category terms для `/api/v1/corpus/requirements` и `/api/v1/corpus/tables` можно расширить или заменить через optional read-only JSON config (`ETL_RULES_CONFIG_PATH`, пример: `config/rules.example.json`). Это deterministic term config, а не LLM, не generic rule engine и не runtime management endpoint.
+
 ## Ограничения
 
 Это не full RAG и не LLM-продукт.
@@ -92,6 +96,7 @@ Generated runtime output хранится локально в `storage/`.
 * Нет embedded OCR внутри DOCX или PDF.
 * Нет table analytics, SQL-like QA или автоматических расчетов.
 * OCR для standalone images зависит от локального Tesseract и language packs.
+* Нет API/UI для runtime управления rules config.
 
 ## Архитектура
 

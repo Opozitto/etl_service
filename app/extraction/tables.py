@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Iterable, Literal
 
+from app.extraction.category_terms import configured_category_terms
 from app.schemas.document import StructuredDocument, TableData
 
 
@@ -27,7 +28,7 @@ SCOPE_NOTE = (
 )
 WHITESPACE_RE = re.compile(r"\s+")
 
-CATEGORY_TERMS: dict[TableEvidenceCategory, tuple[str, ...]] = {
+DEFAULT_CATEGORY_TERMS: dict[TableEvidenceCategory, tuple[str, ...]] = {
     "emissions": (
         "выброс",
         "пдв",
@@ -72,6 +73,10 @@ CATEGORY_TERMS: dict[TableEvidenceCategory, tuple[str, ...]] = {
         "газоочистка",
     ),
 }
+CATEGORY_TERMS: dict[TableEvidenceCategory, tuple[str, ...]] = configured_category_terms(
+    "tables",
+    DEFAULT_CATEGORY_TERMS,
+)
 
 
 @dataclass(frozen=True)

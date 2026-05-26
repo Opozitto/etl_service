@@ -7,6 +7,7 @@ from datetime import datetime
 from pathlib import Path
 
 from fastapi.testclient import TestClient
+import pytest
 
 from app.core.config import get_settings
 from app.extraction.requirements import extract_requirements_from_document
@@ -164,6 +165,71 @@ def test_neutral_text_has_no_false_positive() -> None:
     document = _document("В документе приведено описание площадки и общие сведения о предприятии.")
 
     assert extract_requirements_from_document(document) == []
+
+
+def test_default_category_terms_work_without_config(monkeypatch) -> None:
+    monkeypatch.delenv("ETL_RULES_CONFIG_PATH", raising=False)
+    get_settings.cache_clear()
+    module = importlib.reload(importlib.import_module("app.extraction.requirements"))
+    try:
+        document = _document("Проект должен содержать раздел.")
+
+        candidate = module.extract_requirements_from_document(document)[0]
+
+        assert candidate.category == "obligation"
+        assert "должен" in candidate.matched_terms
+    finally:
+        get_settings.cache_clear()
+        importlib.reload(module)
+
+
+def test_optional_rules_config_adds_requirement_category_terms(tmp_path: Path, monkeypatch) -> None:
+    config_path = tmp_path / "rules.json"
+    config_path.write_text(
+        json.dumps(
+            {
+                "requirements": {
+                    "additional_category_terms": {
+                        "obligation": ["must provide"],
+                    }
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("ETL_RULES_CONFIG_PATH", str(config_path))
+    get_settings.cache_clear()
+    module = importlib.reload(importlib.import_module("app.extraction.requirements"))
+    try:
+        document = _document("The sample facility must provide a short emissions register.")
+
+        candidate = module.extract_requirements_from_document(document)[0]
+
+        assert candidate.category == "obligation"
+        assert candidate.matched_terms == ["must provide"]
+    finally:
+        monkeypatch.delenv("ETL_RULES_CONFIG_PATH", raising=False)
+        get_settings.cache_clear()
+        importlib.reload(module)
+
+
+def test_invalid_rules_config_falls_back_to_requirement_defaults(tmp_path: Path, monkeypatch) -> None:
+    config_path = tmp_path / "rules.json"
+    config_path.write_text("{not-json", encoding="utf-8")
+    monkeypatch.setenv("ETL_RULES_CONFIG_PATH", str(config_path))
+    get_settings.cache_clear()
+    with pytest.warns(RuntimeWarning):
+        module = importlib.reload(importlib.import_module("app.extraction.requirements"))
+    try:
+        document = _document("Проект должен содержать раздел.")
+
+        candidate = module.extract_requirements_from_document(document)[0]
+
+        assert candidate.category == "obligation"
+    finally:
+        monkeypatch.delenv("ETL_RULES_CONFIG_PATH", raising=False)
+        get_settings.cache_clear()
+        importlib.reload(module)
 
 
 def test_table_source_fields_are_preserved() -> None:

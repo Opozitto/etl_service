@@ -3,6 +3,7 @@
 API доступен после запуска сервиса на `http://127.0.0.1:8000`. Подробная установка и запуск описаны в [setup.md](setup.md).
 
 Этот walkthrough показывает ручной сценарий проверки ETL Service через HTTP API. Search и ask работают по уже обработанному локальному корпусу и не являются LLM/full RAG.
+Requirement/table category terms можно настроить через optional read-only `ETL_RULES_CONFIG_PATH`; это deterministic term config для `/api/v1/corpus/requirements` и `/api/v1/corpus/tables`, без runtime management endpoint.
 
 ## Рекомендуемый ручной сценарий
 
@@ -32,7 +33,7 @@ curl.exe http://127.0.0.1:8000/health
 
 ```powershell
 curl.exe -X POST http://127.0.0.1:8000/api/v1/documents/process `
-  -F "file=@first_test_data/test.docx"
+  -F "file=@first_test_data/synthetic_requirements.txt"
 ```
 
 Что смотреть в ответе: объект `document` с `metadata.document_id`, `source.filename`, `sections`, `blocks`, `tables`, `images`, `chunks`, `processing_info` и `artifacts`. Для дальнейших запросов сохраните `metadata.document_id`.
@@ -121,6 +122,8 @@ curl.exe "http://127.0.0.1:8000/api/v1/corpus/requirements?min_score=0.45"
 
 Что смотреть в ответе: `summary`, `candidates`, `category`, `score`, `matched_terms`, `snippet` и source location fields. Используйте результат как навигацию к возможным source fragments.
 
+Category detection использует built-in deterministic terms, которые можно расширить или заменить через optional read-only JSON config (`config/rules.example.json`). Некорректный или отсутствующий config безопасно оставляет defaults.
+
 ## GET /api/v1/corpus/tables
 
 Назначение: посмотреть deterministic table evidence candidates по обработанным таблицам и table-like fragments. Это не table analytics и не automatic calculations.
@@ -131,6 +134,8 @@ curl.exe "http://127.0.0.1:8000/api/v1/corpus/tables?min_score=0.25"
 
 Что смотреть в ответе: `summary`, `tables`, `headers`, `preview_rows`, `category`, `score`, `matched_terms`, `snippet`. Результат помогает проверить, какие таблицы и строки доступны для source-backed retrieval.
 
+Table category detection использует deterministic terms. Optional config поддерживает только известные table categories и не externalizes structural table heuristics, service table detection, OCR gates или search tokenization.
+
 ## Runtime files
 
 API и CLI создают локальные runtime files:
@@ -140,3 +145,5 @@ API и CLI создают локальные runtime files:
 - `storage/index` — lexical index и ingestion manifest.
 
 Эти файлы являются generated output, зависят от локального запуска и не коммитятся.
+
+`first_test_data/` в repo является минимальным synthetic/generic sample corpus. Реальные/customer datasets должны храниться вне репозитория.
